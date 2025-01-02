@@ -7,7 +7,7 @@ global thePath; rand('state',sum(100*clock));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 subnum = input('subnumber: ');
 isscan = input('is scan(practice = 0 scan = 1): ');
-whichrun = input('which run (just enter 1):'); 
+whichrun = input('which run:'); 
 
 
 % Add this at top of new scripts for maximum portability due to unified names on all systems:
@@ -40,7 +40,7 @@ cue_time = 1;
 target_time = 1;
 feedback_time = 1;
 
-load([ thePath.start '/timing/run' num2str(whichrun) '.mat'])
+load([ thePath.start '/timing/run' num2str(whichrun) '_noloss.mat'])
 
 %define intertrial fixation
 fix_isi = run.isi2;
@@ -150,12 +150,8 @@ for t = 1:length(trial_cond)
     if trial_cond(t) == 1
         Screen('DrawTexture', Window, high_cue_gain);
     elseif trial_cond(t) == 2
-        Screen('DrawTexture', Window, high_cue_gain);
+        Screen('DrawTexture', Window, low_cue_gain);
     elseif trial_cond(t) == 3
-        Screen('DrawTexture', Window, low_cue_gain);
-    elseif trial_cond(t) == 4
-        Screen('DrawTexture', Window, low_cue_gain);
-    elseif trial_cond(t) == 5
         Screen('DrawTexture', Window, neutral_cue);
     end
 
@@ -177,15 +173,10 @@ for t = 1:length(trial_cond)
          if trial_cond(t)==1
                 text_feedback = 'You DID NOT EARN a triangle.';
             elseif trial_cond(t)==2
-                text_feedback = 'You DID NOT EARN a triangle.';
+                text_feedback = 'You DID NOT EARN a square.';
             elseif trial_cond(t)==3
-                text_feedback = 'You DID NOT EARN a square.';
-            elseif trial_cond(t)==4
-                text_feedback = 'You DID NOT EARN a square.';
-            elseif trial_cond(t)==5
                 text_feedback = 'Your bank is the same.';
             end
-
 
     elseif RT(1) < RT_thresh(trial_cond(t))
 
@@ -194,12 +185,8 @@ for t = 1:length(trial_cond)
             if trial_cond(t)==1
                 text_feedback = 'You EARNED a triangle!';
             elseif trial_cond(t)==2
-                text_feedback = 'You EARNED a triangle!';
+                text_feedback = 'You EARNED a square!';
             elseif trial_cond(t)==3
-                text_feedback = 'You EARNED a square!';
-            elseif trial_cond(t)==4
-                text_feedback = 'You EARNED a square!';
-            elseif trial_cond(t)==5
                 text_feedback= 'Your bank is the same';
             end
        else 
@@ -210,12 +197,8 @@ for t = 1:length(trial_cond)
             if trial_cond(t)==1
                 text_feedback = 'You DID NOT EARN a triangle.';
             elseif trial_cond(t)==2
-                text_feedback = 'You DID NOT EARN a triangle.';
+                text_feedback = 'You DID NOT EARN a square.';
             elseif trial_cond(t)==3
-                text_feedback = 'You DID NOT EARN a square.';
-            elseif trial_cond(t)==4
-                text_feedback = 'You DID NOT EARN a square.';
-            elseif trial_cond(t)==5
                 text_feedback = 'Your bank is the same.';
             end
         end
