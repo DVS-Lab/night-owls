@@ -74,7 +74,7 @@ Screen('CloseAll')
 
 %%%SET UP SCREEN PARAMETERS FOR PTB
 
-%PsychDefaultSetup(2);
+PsychDefaultSetup(2);
 
 
 screens = Screen('Screens');
