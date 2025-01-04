@@ -1,4 +1,4 @@
-function MID2(isscan, subnum)
+function mid_noloss(isscan, subnum)
 Screen('Preference', 'SkipSyncTests', 1);
 global thePath; rand('state',sum(100*clock));
 
@@ -8,6 +8,7 @@ global thePath; rand('state',sum(100*clock));
 subnum = input('subnumber: ');
 isscan = input('is scan(practice = 0 scan = 1): ');
 whichrun = input('which run:'); 
+whichses = input('which session:');
 
 
 % Add this at top of new scripts for maximum portability due to unified names on all systems:
@@ -40,7 +41,7 @@ cue_time = 1;
 target_time = 1;
 feedback_time = 1;
 
-load([ thePath.start '/timing/run' num2str(whichrun) '_noloss.mat'])
+load([ thePath.start '/timing/ses-' num2str(whichses) '_run' num2str(whichrun) '_noloss.mat'])
 
 %define intertrial fixation
 fix_isi = run.isi2;
