@@ -233,6 +233,6 @@ try
 
 catch ME
     disp(ME.message)
-    keyboard
     sca
+    keyboard
 end
