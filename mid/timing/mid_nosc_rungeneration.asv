@@ -37,17 +37,16 @@ for ii = 1:length(sess)
     run.isi1 = isi11;
     run.isi2 = isi12;
     fileName = sprintf('ses-%d_run-1_noloss.mat', ii);
-    save(fileName,'run')
+    %save(fileName,'run')
     run.cond = cond_rand2;
     run.isi1 = isi21;
     run.isi2 = isi22;
     fileName = sprintf('ses-%d_run-2_noloss.mat', ii);
-    save(fileName,'run')
+    %save(fileName,'run')
 end
 
-maxTime = max(cellfun(@(x) max(x(:)), timing(:)));
-difTime = cellfun(@(x) (x - maxTime)*60, timing, 'UniformOutput', false);
-writecell(difTime,'padtimes.csv');
+maxValue = max(cellfun(@(x) max(x(:)), timing(:)));
+diffCellArray = cellfun(@(x) x - maxValue, cellArray, 'UniformOutput', false);
 
 
 

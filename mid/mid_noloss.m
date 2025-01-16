@@ -222,7 +222,11 @@ try
         Screen('Flip', Window);
         WaitSecs(fix_iti(t))
     end
-    WaitSecs(6)
+    %Adjust wait times so consistent across different trial lengths
+    padTimes = readtable(fullfile(thePath.start, 'padtimes.csv'));
+    timeToPad = padTimes{whichses, whichrun};
+    WaitSecs(6-timeToPad)
+
     if isscan == 0
         save([thePath.data '/sub-' num2str(subnum) '/practice_array.mat'], 'RTs')
     elseif isscan == 1
