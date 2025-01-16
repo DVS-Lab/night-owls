@@ -34,15 +34,13 @@ subjDlg.addField('ME:', choices=['1', '3', '4'])
 subjDlg.addField('IP:', choices=['0', '2'])
 subjDlg.show()
 
-if gui.OK:
-    subj_id=subjDlg.data[0]
-    #friend_id=subjDlg.data[1]
-    #stranger_id=subjDlg.data[1]
-    run = subjDlg.data[1]
-    mb = subjDlg.data[2]
-    me = subjDlg.data[3]
+if subjDlg.show():  # This displays the dialog
+    subj_id = subjDlg.data[0]  # Extract the Subject ID
+    run = subjDlg.data[1]  # Extract the selected Run
+    mb = subjDlg.data[2]  # Extract the MB value
+    me = subjDlg.data[3]  # Extract the ME value
 else:
-    sys.exit()
+    core.quit()  # Gracefully exit if "Cancel" is pressed
 
 run_data = {
     'Participant ID': subj_id,
