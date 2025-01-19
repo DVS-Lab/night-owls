@@ -230,7 +230,7 @@ try
     if isscan == 0
         save([thePath.data '/sub-' num2str(subnum) '/practice_array.mat'], 'RTs')
     elseif isscan == 1
-        save([thePath.data '/sub-' num2str(subnum) '/run-' num2str(whichrun) '_output.mat'], 'output')
+		save([thePath.data '/sub-' num2str(subnum) '/ses-' num2str(whichses) '_run-' num2str(whichrun) '_output.mat'], 'output')
     end
 
     sca;
