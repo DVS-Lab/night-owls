@@ -48,8 +48,41 @@ try
     fix_isi = run.isi2;
     fix_iti = run.isi1;
     trial_cond = run.cond;
+	
+	% Adjust for practice run (20 trials and halve ISI/ITI)
+	if isscan == 0  % Practice run
+		trial_cond = trial_cond(1:20);   % Use only the first 20 trials
+		fix_isi = fix_isi(1:20) / 2;     % Halve the ISI durations for practice
+		fix_iti = fix_iti(1:20) / 2;     % Halve the ITI durations for practice
+	end
 
-    backtick = '=';
+
+	% Prepare for instructions
+	if isscan == 0 || whichrun == 1  % Show instructions for practice run or first run
+		% Load instruction slides
+		Instruction_1 = Screen('MakeTexture', Window, imread(fullfile(thePath.stims, '/Instructions/Slide1'), 'PNG'));
+		Instruction_2 = Screen('MakeTexture', Window, imread(fullfile(thePath.stims, '/Instructions/Slide2'), 'PNG'));
+		Instruction_3 = Screen('MakeTexture', Window, imread(fullfile(thePath.stims, '/Instructions/Slide3'), 'PNG'));
+		Instruction_4 = Screen('MakeTexture', Window, imread(fullfile(thePath.stims, '/Instructions/Slide4'), 'PNG'));
+		Instruction_5 = Screen('MakeTexture', Window, imread(fullfile(thePath.stims, '/Instructions/Slide5'), 'PNG'));
+		Instruction_6 = Screen('MakeTexture', Window, imread(fullfile(thePath.stims, '/Instructions/Slide6'), 'PNG'));
+		Instruction_7 = Screen('MakeTexture', Window, imread(fullfile(thePath.stims, '/Instructions/Slide7'), 'PNG'));
+
+		% Display each instruction slide and wait for user to press backtick key
+		slides = {Instruction_1, Instruction_2, Instruction_3, Instruction_4, Instruction_5, Instruction_6, Instruction_7};
+		for i = 1:length(slides)
+			Screen('DrawTexture', Window, slides{i});
+			Screen('Flip', Window);
+			if IsOSX
+				getKey('2', k);  % Wait for the trigger key
+			else
+				getKey('2');
+			end
+		end
+	end
+
+
+    backtick = '2';
     mkdir([thePath.data '/sub-' num2str(subnum)]);
 
     RTs  =[];
