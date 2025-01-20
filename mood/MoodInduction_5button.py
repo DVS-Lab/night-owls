@@ -1,7 +1,7 @@
 import os
 import csv
 import textwrap
-from psychopy import visual, event, core, gui, sound
+from psychopy import visual, event, sound, core, gui, prefs
 
 #get subjID
 subjDlg=gui.Dlg(title="Mood Induction")
@@ -165,7 +165,7 @@ instruction_text = visual.TextStim(
 # Show the instruction page for 20 seconds
 instruction_text.draw()
 win.flip()
-core.wait(5) 
+core.wait(2) 
 
 # Load and wrap text
 def load_and_wrap_text(filename, max_width=60):
@@ -190,43 +190,32 @@ text_stim = visual.TextStim(
     height=20,
 )
 
-
 # Load audio files
-audio_files = ["test1.wav", "test2.wav", "test3.wav"]  # Replace with actual paths
+audio_files = ["song1.wav", "song2.wav", "song3.wav", "song4.wav"]  
+#audio_files = ["test1.wav", "test2.wav"]  
+
+prefs.general['audioLib'] = ['sounddevice']
+import sounddevice as sd
+print(sd.query_devices())
+sd.default.device[1] = 3  # Replace with preferred device ID
+
 audio_sounds = [sound.Sound(file) for file in audio_files]
 
 # Total time to display the text and play audio
 display_duration = 15  # in seconds
 
-# Display text for 15 seconds, while playing audio sequentially
+# Display text while playing audio sequentially
 text_stim.draw()  # Draw the text on screen
 win.flip()  # Update window to show the text
 
-# Start playing audio and let text stay visible
-audio_index = 0  # Track which audio is playing
-current_audio = audio_sounds[audio_index]
-current_audio.play()
-core.wait(current_audio.getDuration()) 
-
-audio_index += 1
-if audio_index < len(audio_sounds):
-    current_audio = audio_sounds[audio_index]
-    current_audio.play()
-    core.wait(current_audio.getDuration())  # Wait for the second audio to finish
-
-# Play the final audio file
-audio_index += 1
-if audio_index < len(audio_sounds):
-    current_audio = audio_sounds[audio_index]
-    current_audio.play()
-    core.wait(current_audio.getDuration())  # Wait for the final audio to finish
-
-
-# After the audio finishes, stop everything
-core.wait(display_duration - sum([audio.getDuration() for audio in audio_sounds]))  # Fill the remaining time
+# Play each audio file one after the other
 for audio in audio_sounds:
-    audio.stop()  # Stop any audio still playing
-
+    audio.play()  # Start playing the audio
+    core.wait(audio.getDuration()) # Wait for the audio to finish
+    
+    # After all audio files are played, wait for the remaining time to reach 600 seconds
+core.wait(display_duration - sum([audio.getDuration() for audio in audio_sounds]))
+    
 
 #### Post Mood Induction Check #### 
 
