@@ -56,6 +56,9 @@ try
 		fix_iti = fix_iti(1:20) / 2;     % Halve the ITI durations for practice
 	end
 
+    %Adjust wait times so consistent across different trial lengths
+    padTimes = readtable(fullfile(thePath.start, 'padtimes.csv'));
+    timeToPad = padTimes{whichses, whichrun};
 
 	% Prepare for instructions
 	if isscan == 0 || whichrun == 1  % Show instructions for practice run or first run
@@ -83,12 +86,15 @@ try
 
 
     backtick = '2';
-    mkdir([thePath.data '/sub-' num2str(subnum)]);
+	
+	if ~exist([thePath.data '/sub-' num2str(subnum)], 'dir')
+		mkdir([thePath.data '/sub-' num2str(subnum)]);
+	end
 
     RTs  =[];
-
+	
     try
-        practice_files = ls([fullfile(thePath.data ,num2str(subnum)),'/practice_array.mat']);
+        practice_files = ls([thePath.data, ['/sub-' num2str(subnum), '/ses-' num2str(whichses) '_practice_array.mat']));
     catch
         practice_files = [];
     end
@@ -132,8 +138,6 @@ try
     Screen('TextFont', Window, 'Arial');
     Screen('TextSize',Window,text_size);
     Screen('FillRect', Window, grey);  % 0 = black background
-
-
 
     trial_starts = []; %trial starts not including saturation scans
 
@@ -255,13 +259,11 @@ try
         Screen('Flip', Window);
         WaitSecs(fix_iti(t))
     end
-    %Adjust wait times so consistent across different trial lengths
-    padTimes = readtable(fullfile(thePath.start, 'padtimes.csv'));
-    timeToPad = padTimes{whichses, whichrun};
+
     WaitSecs(6-timeToPad)
 
     if isscan == 0
-        save([thePath.data '/sub-' num2str(subnum) '/practice_array.mat'], 'RTs')
+		save([thePath.data '/sub-' num2str(subnum) '/ses-' num2str(whichses) '_practicearray.mat'], 'RTs')
     elseif isscan == 1
 		save([thePath.data '/sub-' num2str(subnum) '/ses-' num2str(whichses) '_run-' num2str(whichrun) '_output.mat'], 'output')
     end
