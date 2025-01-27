@@ -30,7 +30,7 @@ file_name = f"{folder_path}/sub-{subj_id}_ses-{ses}_obs-3_mood.csv"
 
 # Initialize the window
 win = visual.Window(
-    size=[800, 600], fullscr=False, color="black", units="pix"
+    size=[2400, 1800], fullscr=False, color="black", units="pix"
 )
 
 # Create visual stimuli
@@ -39,14 +39,14 @@ question_stim = visual.TextStim(
     text="Loading...",
     color="white",
     pos=(0, 200),
-    height=30,
+    height=100,
     alignText="center",
 )
 
 slider_line = visual.Rect(
     win,
     width=600,
-    height=2,
+    height=10,
     pos=(0, 0),
     fillColor="white",
     lineColor="white",
@@ -54,7 +54,7 @@ slider_line = visual.Rect(
 
 slider_marker = visual.Circle(
     win,
-    radius=10,
+    radius=15,
     fillColor="red",
     lineColor="red",
     pos=(0, 0),  # Will be updated dynamically
@@ -65,7 +65,7 @@ number_stim = visual.TextStim(
     text="50",
     color="white",
     pos=(0, -50),
-    height=20,
+    height=100,
 )
 
 left_label = visual.TextStim(
@@ -73,7 +73,7 @@ left_label = visual.TextStim(
     text="Not at all",
     color="white",
     pos=(-300, -75),  # Position on the left side of the slider
-    height=20,
+    height=100,
     alignText="center",
 )
 
@@ -82,7 +82,7 @@ right_label = visual.TextStim(
     text="Extremely",
     color="white",
     pos=(300, -75),  # Position on the right side of the slider
-    height=20,
+    height=100,
     alignText="center",
 )
 
