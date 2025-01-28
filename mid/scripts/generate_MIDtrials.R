@@ -1,8 +1,10 @@
 set.seed(125) # Set a seed for reproducibility
 
 
+ntrials = 100
+
 colors <- c('Green','Blue')
-csequence <- sample(colors, size = 45, replace = TRUE)
+csequence <- sample(colors, size = ntrials, replace = TRUE)
 print(csequence)
 table(csequence) / length(csequence)
 
@@ -12,7 +14,7 @@ numbers <- c(1,1,1,1)
 probabilities <- c(0.50, 0.25, 0.15, 0.10)
 
 # Generate the sequence of 45 numbers
-sequence <- sample(numbers, size = 45, replace = TRUE, prob = probabilities)
+sequence <- sample(numbers, size = ntrials, replace = TRUE, prob = probabilities)
 
 # Display the sequence
 print(sequence)

@@ -1,7 +1,9 @@
 import os
 import csv
 import textwrap
-from psychopy import visual, event, sound, core, gui, prefs
+from psychopy import visual, event, sound, core, gui, prefs, monitors
+import pyglet
+import sys
 
 #get subjID
 subjDlg=gui.Dlg(title="Mood Induction")
@@ -15,8 +17,27 @@ if subjDlg.show():  # This displays the dialog
 else:
     core.quit()  # Gracefully exit if "Cancel" is pressed
     
+
+def make_screen():
+    """Generates screen variables"""
+    platform = pyglet.canvas.get_display()
+    display = pyglet.canvas.get_display()
+    screens = display.get_screens()
+    win_res = [screens[-1].width, screens[-1].height]
+    exp_mon = monitors.Monitor('exp_mon')
+    exp_mon.setSizePix(win_res)
+    win = visual.Window(size=win_res, screen=len(screens)-1, allowGUI=True,
+                        fullscr=True, monitor=exp_mon, units='height',
+                        color=(0.2, 0.2, 0.2))
+    return(win_res, win)
     
-#### Pre Induction Mood Check ###
+[win_res, win] = make_screen()
+xScr = float(win_res[0])/win_res[1]
+yScr = 1.
+fontH = yScr/25
+wrapW = xScr/1.5
+
+
     
 # Folder structure
 folder_path = f"logs/sub-{subj_id}/ses-{ses}"
@@ -29,24 +50,26 @@ if not os.path.exists(folder_path):
 file_name = f"{folder_path}/sub-{subj_id}_ses-{ses}_obs-3_mood.csv"
 
 # Initialize the window
-win = visual.Window(
-    size=[2400, 1800], fullscr=False, color="black", units="pix"
-)
+display = pyglet.canvas.get_display()
+screens = display.get_screens()
+sWidth = screens[-1].width
+sHeight = screens[-1].height
+
 
 # Create visual stimuli
 question_stim = visual.TextStim(
     win,
     text="Loading...",
     color="white",
-    pos=(0, 200),
-    height=100,
+    pos=(0, .2*yScr),
+    height=fontH*1.5,
     alignText="center",
 )
 
 slider_line = visual.Rect(
     win,
-    width=600,
-    height=10,
+    width=(.75*xScr),
+    height=fontH/2,
     pos=(0, 0),
     fillColor="white",
     lineColor="white",
@@ -54,7 +77,7 @@ slider_line = visual.Rect(
 
 slider_marker = visual.Circle(
     win,
-    radius=15,
+    radius=fontH/2,
     fillColor="red",
     lineColor="red",
     pos=(0, 0),  # Will be updated dynamically
@@ -64,16 +87,16 @@ number_stim = visual.TextStim(
     win,
     text="50",
     color="white",
-    pos=(0, -50),
-    height=100,
+    pos=(0, -.1*yScr),
+    height=fontH,
 )
 
 left_label = visual.TextStim(
     win,
     text="Not at all",
     color="white",
-    pos=(-300, -75),  # Position on the left side of the slider
-    height=100,
+    pos=(-.375*xScr, -.1*yScr),  # Position on the left side of the slider
+    height=fontH,
     alignText="center",
 )
 
@@ -81,18 +104,29 @@ right_label = visual.TextStim(
     win,
     text="Extremely",
     color="white",
-    pos=(300, -75),  # Position on the right side of the slider
-    height=100,
+    pos=(.375*xScr, -.1*yScr),  # Position on the right side of the slider
+    height=fontH,
     alignText="center",
 )
 
 # Function to display a slider question
 def display_slider_question(question_text, initial_value=50):
     slider_value = initial_value
-    slider_marker.pos = (-300 + (slider_value * 6), 0)  # Update marker position
+    slider_marker.pos = (-.375*xScr + (slider_value/100)*.75*xScr, 0)  # Update marker position
 
     # Update question text
     question_stim.text = question_text
+    
+        # Add instruction text
+    instruction_stim = visual.TextStim(
+        win,
+        text="Index = Up 10, Middle = Up 1 \nPinky = Down 10, Ring = Down 1\nThumb = Confirm",
+        color="green",
+        pos=(0, -.25*yScr),
+        height=fontH,
+        alignText="center",
+    )
+    
 
     while True:
         # Draw all stimuli
@@ -103,6 +137,7 @@ def display_slider_question(question_text, initial_value=50):
         number_stim.draw()
         left_label.draw()
         right_label.draw()
+        instruction_stim.draw()
         win.flip()
 
         # Wait for key input
@@ -120,14 +155,37 @@ def display_slider_question(question_text, initial_value=50):
             return slider_value  # Return the final slider value
 
         # Update marker position based on slider value
-        slider_marker.pos = (-300 + (slider_value * 6), 0)
+        slider_marker.pos = (-.375*xScr + (slider_value/100)*.75*xScr, 0)
 
 # Define button controls
-increment_large = 'right'  # Move slider up by 10
-decrement_large = 'left'  # Move slider down by 10
-increment_small = 'up'  # Move slider up by 1
-decrement_small = 'down'  # Move slider down by 1
-finalize = 'space'  # Finalize the answer
+increment_large = '2'  # Move slider up by 10
+decrement_large = '5'  # Move slider down by 10
+increment_small = '3'  # Move slider up by 1
+decrement_small = '4'  # Move slider down by 1
+finalize = '1'  # Finalize the answer
+
+# Function to display a "Get ready" screen
+def display_get_ready_screen():
+    # Create a "Get ready" visual stimulus
+    get_ready_stim = visual.TextStim(
+        win,
+        text="Get ready...",
+        color="white",
+        pos=(0, 0),
+        height=fontH,
+        alignText="center",
+    )
+
+    # Draw the "Get ready" screen
+    while True:
+        get_ready_stim.draw()
+        win.flip()
+        # Wait for the fMRI scanner button (e.g., '=' key)
+        keys = event.waitKeys(keyList=('equal'))
+        if "equal" in keys:  # Break the loop when the scanner button is pressed
+            break
+
+
 
 # Sequence of screens
 # Display the first question
@@ -152,13 +210,14 @@ with open(file_name, "w", newline="") as file:
 
 ####### Mood Induction #######
 
+
 # Instruction page
 instruction_text = visual.TextStim(
     win,
     text="You are about to see the memory you described earlier. Please reminisce on different parts of this memory for the next 10 minutes while listening to music. Feel free to daydream about the memory (relive it), but please keep your eyes open. Your goal is to get in as good of a mood as possible with this memory!", 
     color="white",
     pos=(0, 0),
-    height=30,
+    height=fontH,
     alignText="center",
 )
 
@@ -166,6 +225,9 @@ instruction_text = visual.TextStim(
 instruction_text.draw()
 win.flip()
 core.wait(2) 
+
+# Show "Get ready" screen
+display_get_ready_screen()
 
 # Load and wrap text
 def load_and_wrap_text(filename, max_width=60):
@@ -185,9 +247,9 @@ text_stim = visual.TextStim(
     win,
     text=text_content,
     wrapWidth=1.8,
-    color="white",
+    color=(0.5, 1, 0),
     alignText="center",
-    height=20,
+    height=fontH,
 )
 
 # Load audio files
@@ -196,13 +258,13 @@ audio_files = ["song1.wav", "song2.wav", "song3.wav", "song4.wav"]
 
 prefs.general['audioLib'] = ['sounddevice']
 import sounddevice as sd
-print(sd.query_devices())
+#print(sd.query_devices())
 sd.default.device[1] = 3  # Replace with preferred device ID
 
 audio_sounds = [sound.Sound(file) for file in audio_files]
 
 # Total time to display the text and play audio
-display_duration = 15  # in seconds
+display_duration = 600  # in seconds
 
 # Display text while playing audio sequentially
 text_stim.draw()  # Draw the text on screen
@@ -215,7 +277,6 @@ for audio in audio_sounds:
     
     # After all audio files are played, wait for the remaining time to reach 600 seconds
 core.wait(display_duration - sum([audio.getDuration() for audio in audio_sounds]))
-    
 
 #### Post Mood Induction Check #### 
 
