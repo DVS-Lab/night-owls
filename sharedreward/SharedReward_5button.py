@@ -8,6 +8,7 @@ import datetime
 import random
 import numpy
 import os
+import pyglet
 
 #parameters
 useFullScreen = True
@@ -21,17 +22,17 @@ initial_fixation_dur = 4
 decision_dur=2.5
 outcome_dur=1
 
-responseKeys=('2','7','z')
+responseKeys=('3','2','z')
 
 #get subjID
 subjDlg=gui.Dlg(title="Shared Reward Task")
-subjDlg.addField('Enter Subject ID: ')
+subjDlg.addField('Participant:')
 #subjDlg.addField('Enter Friend Name: ') #1
 #subjDlg.addField('Enter Partner Name: ')#NOTE: PARTNER IS THE CONFEDERATE/STRANGER #2
 subjDlg.addField('Session:', choices=['1', '2','3','4','5','6','7','8','9','10','11','12'])
 subjDlg.addField('Run:', choices=['1', '2'])
-subjDlg.addField('MB:', choices=['2', '3'])
-subjDlg.addField('ME:', choices=['1', '3', '4'])
+#subjDlg.addField('MB:', choices=['2', '3'])
+#subjDlg.addField('ME:', choices=['1', '3', '4'])
 #subjDlg.addField('IP:', choices=['0', '2'])
 subjDlg.show()
 
@@ -39,8 +40,8 @@ if subjDlg.show():  # This displays the dialog
     subj_id = subjDlg.data[0]  # Extract the Subject ID
     ses = subjDlg.data[1]  # Extract the selected session
     run = subjDlg.data[2]  # Extract the selected Run
-    mb = subjDlg.data[3]  # Extract the MB value
-    me = subjDlg.data[4]  # Extract the ME value
+    #mb = subjDlg.data[3]  # Extract the MB value
+    #me = subjDlg.data[4]  # Extract the ME value
 else:
     core.quit()  # Gracefully exit if "Cancel" is pressed
 
@@ -50,12 +51,14 @@ run_data = {
     'Description': 'RF1 Sequence Pilot - SharedReward Task',
     'Session': ses,
     'Run': run,
-    'MB': mb,
-    'ME': me
+    #'MB': mb,
+    #'ME': me
     }
 
 #window setup
-win = visual.Window([800,600], monitor="testMonitor", units="deg", fullscr=useFullScreen, allowGUI=False, screen=useDualScreen)
+display = pyglet.canvas.get_display()
+screens = display.get_screens()
+win = visual.Window([800,600], monitor="testMonitor", units="deg", fullscr=useFullScreen, allowGUI=False, screen=len(screens)-1)
 
 #checkpoint
 print("got to check 1")
@@ -78,7 +81,7 @@ outcome_text = visual.TextStim(win=win, name='text',text='',font='Arial',pos=(0,
 outcome_money = visual.TextStim(win=win, name='text',text='',font='Wingdings 3',pos=(0, 2.0), height=2, wrapWidth=None, ori=0, colorSpace='rgb', opacity=1,depth=-1.0);
 
 #instructions
-instruct_screen = visual.TextStim(win, text='Welcome to the Card Guessing Game!\n\nIn this game you will have to guess the numerical value of a card for a chance to win some money.\n\nIf you think the value of the card will be lower than 5, press with your left index finger.\n\nIf you think the value of the card will be higher than 5, press with your right index finger.', pos = (0,1), wrapWidth=20, height = 1.2)
+instruct_screen = visual.TextStim(win, text='Welcome to the Card Guessing Game!\n\nIn this game you will have to guess the numerical value of a card for a chance to win some money.\n\nIf you think the value of the card will be lower than 5, press with your middle finger.\n\nIf you think the value of the card will be higher than 5, press with your index finger.', pos = (0,1), wrapWidth=20, height = 1.2)
 instruct_screen2 = visual.TextStim(win, text='Remember, you will be sharing monetary outcomes on each trial with the partner displayed at the top of the screen––either the computer or a previous participant.\n\nIf you guess correctly, you and your partner earn $10 ($5 each).\n If you guess incorrectly, you and your partner lose $5 ($2.50 each).', pos = (0,1), wrapWidth=20, height = 1.2)
 
 #exit
@@ -89,7 +92,7 @@ expdir = os.getcwd()
 subjdir = '%s/logs/%s' % (expdir, subj_id)
 if not os.path.exists(subjdir):
     os.makedirs(subjdir)
-log_file = os.path.join(f'sub-{subj_id}_task-sharedreward_ses-{ses}_run-{run}_acq-mb{mb}me{me}_raw.csv')
+log_file = os.path.join(f'sub-{subj_id}_task-sharedreward_ses-{ses}_run-{run}_raw.csv')
 
 globalClock = core.Clock()
 logging.setDefaultClock(globalClock)
@@ -151,7 +154,7 @@ event.waitKeys(keyList=('2'))
 # main task loop
 def do_run(run, trials):
     resp=[]
-    fileName=log_file.format(subj_id,ses,run,mb,me)
+    fileName=log_file.format(subj_id,ses,run)
 
     #wait for trigger
     ready_screen.draw()
@@ -218,7 +221,7 @@ def do_run(run, trials):
                     question.setColor('darkorange')
                     #rt = resp_onset - decision_onset
                     #core.wait(decision_dur - rt)
-                if resp_val==7:
+                if resp_val==3:
                     #resp_onset = globalClock.getTime()
                     question.setColor('darkorange')
                     #rt = resp_onset - decision_onset
@@ -283,7 +286,7 @@ def do_run(run, trials):
             #nameStim.draw()
             #win.flip()
 
-            if trial['Feedback'] == '3' and resp_val == 7:
+            if trial['Feedback'] == '3' and resp_val == 3:
                 outcome_txt = int(random.randint(1,4))
                 outcome_moneyTxt= 'h'
                 outcome_color='lime'
@@ -293,7 +296,7 @@ def do_run(run, trials):
                 outcome_moneyTxt= 'h'
                 outcome_color='lime'
                 trials.addData('outcome_val', int(outcome_txt))
-            elif trial['Feedback'] == '2' and resp_val == 7:
+            elif trial['Feedback'] == '2' and resp_val == 3:
                 outcome_txt = int(5)
                 outcome_moneyTxt= 'n'
                 outcome_color='white'
@@ -303,7 +306,7 @@ def do_run(run, trials):
                 outcome_moneyTxt= 'n'
                 outcome_color='white'
                 trials.addData('outcome_val', int(outcome_txt))
-            elif trial['Feedback'] == '1' and resp_val == 7:
+            elif trial['Feedback'] == '1' and resp_val == 3:
                 outcome_txt = int(random.randint(6,9))
                 outcome_moneyTxt= 'i'
                 outcome_color='darkred'
