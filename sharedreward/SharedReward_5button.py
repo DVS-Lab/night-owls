@@ -58,7 +58,7 @@ run_data = {
 #window setup
 display = pyglet.canvas.get_display()
 screens = display.get_screens()
-win = visual.Window([800,600], monitor="testMonitor", units="deg", fullscr=useFullScreen, allowGUI=False, screen=len(screens)-1)
+win = visual.Window([800,600], monitor="testMonitor", units="deg", fullscr=useFullScreen, screen=useDualScreen, allowGUI=False)
 
 #checkpoint
 print("got to check 1")
