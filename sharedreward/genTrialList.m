@@ -79,3 +79,53 @@ for s = subs
         end
     end
 end 
+
+
+% For practice file
+maindir = pwd;
+outfiles = fullfile(maindir, 'event-related', 'params');
+mkdir(outfiles);
+
+subout = fullfile(outfiles, 'prac');
+mkdir(subout);
+
+ntrials = 18;
+trial_types = [repmat([1 3 4 6], 1, 3), repmat([2 5], 1, 3)];
+ISI_distribution = repmat([0.85 1.7 2.55], 1, 6);
+ISI_distribution = ISI_distribution(randperm(length(ISI_distribution)));
+ITI_distribution = repmat([1 2 3 4], 1, 6);
+ITI_distribution = ITI_distribution(randperm(length(ITI_distribution)));
+
+rand_trials = randperm(ntrials);
+fname = fullfile(subout, 'sub-prac_ses-1_run-1_design.csv');
+fid = fopen(fname, 'w');
+fprintf(fid, 'Trialn,TrialType,Partner,Feedback,ITI,ISI\n');
+
+for t = 1:ntrials
+    tt = rand_trials(t);
+    switch trial_types(tt)
+        case 1 % Computer Punishment
+            partner = 1;
+            feedback_mat = 1;
+        case 2 % Computer Neutral
+            partner = 1;
+            feedback_mat = 2;
+        case 3 % Computer Reward
+            partner = 1;
+            feedback_mat = 3;
+        case 4 % Stranger Punishment
+            partner = 2;
+            feedback_mat = 1;
+        case 5 % Stranger Neutral
+            partner = 2;
+            feedback_mat = 2;
+        case 6 % Stranger Reward
+            partner = 2;
+            feedback_mat = 3;
+    end
+    fprintf(fid, '%d,%d,%d,%d,%d,%d\n', t, trial_types(tt), partner, feedback_mat, ITI_distribution(tt), ISI_distribution(tt));
+end
+
+fclose(fid);
+
+ 

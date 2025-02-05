@@ -45,9 +45,9 @@ version = "1.0" #
 data_dir = "data" # location of outputs to be generated; includes data for participants as well as trial selection and trial presentation sequence
 inst_dir = "text" # location of instructions directory
 inst_file = ["instructions_MID.txt"] # name of instructions files (needs to be .txt)
-trials_file = "prac_MID_trials.csv" # name of external file determining allocation of trials to color (=condition of trials: rewarding or not rewarding)
+trials_file = "MID_trials.csv" # name of external file determining allocation of trials to color (=condition of trials: rewarding or not rewarding)
 study_times = [0.5, 2.25, 0.5, 1, 0.5] # component duration (s): cue, delay, target, feedback, lastfixation
-initial_fix_dur = 4 # added time to make sure homogenicity of magnetic field is reached
+initial_fix_dur = 8 # added time to make sure homogenicity of magnetic field is reached
 closing_fix_dur = 10 # added time to make sure haemodynamic responses of the last trials are properly modeled 
 min_target_dur = 0.13 # sets the minimum presentation time for target (in seconds)
 
@@ -66,13 +66,13 @@ def initialization(expName,version):
     """Present initial dialog; initialize some parameters"""
     # Store info about the experiment session
     expName = expName + version  
-    expInfo = {u'participant': 'prac', u'session':'prac',u'run':'prac'}
+    expInfo = {u'participant': '', u'session':'prac',u'run':'prac'}
     dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
     if dlg.OK == False:
         core.quit()  # user pressed cancel
     expInfo['date'] = data.getDateStr()  # add a simple timestamp
     expInfo['expName'] = expName
-    sn = expInfo['participant']
+    sn = int(expInfo['participant'])
     ses = expInfo['session']
     run = expInfo['run']
     
@@ -93,35 +93,35 @@ def make_screen():
                         color=(0.2, 0.2, 0.2))
     return(win_res, win)
 
-#def start_datafiles(_thisDir, expName, expInfo, data_dir, sn, ses, run):
+def start_datafiles(_thisDir, expName, expInfo, data_dir, sn, ses, run):
 
         # Create the subject folder path
-    #subject_folder = os.path.join(_thisDir, data_dir, f"sub-{sn}")
+    subject_folder = os.path.join(_thisDir, data_dir, f"sub-{sn}")
     
     # Check if the folder exists, if not, create it
-   # if not os.path.exists(subject_folder):
-    #    os.makedirs(subject_folder)
+    if not os.path.exists(subject_folder):
+        os.makedirs(subject_folder)
 
-    #fname = f"mid_sub-{sn}_ses-{ses}_run-{run}"
-    #curdirlist = os.listdir(_thisDir + os.sep + data_dir)
-    #for i in curdirlist:
-     #       if i == fname + '.csv':
-      #          warndlg = gui.Dlg(title='Warning!')
-       #         warndlg.addText('A data file with this number already exists.')
-        #        warndlg.addField('Overwrite?\t\t', initial="no")
-         #       warndlg.addField('If no, new SN:\t', initial='0')
-          #      warndlg.show()
-           #     if gui.OK:
-            #        over = warndlg.data[0].lower() == 'no'
-             #   else:
-              #      core.quit()
-               # if over:
-                #    sn = int(warndlg.data[1])
-                 #   pad = 4-len(str(sn))
-                  #  snstr = '0'*pad + str(sn)
-                   # fname=f"mid_sub-{sn}_ses-{ses}"
-    #filename = os.path.join(subject_folder, fname)
-    #return(filename)
+    fname = f"mid_sub-{sn}_ses-{ses}_run-{run}"
+    curdirlist = os.listdir(_thisDir + os.sep + data_dir)
+    for i in curdirlist:
+            if i == fname + '.csv':
+                warndlg = gui.Dlg(title='Warning!')
+                warndlg.addText('A data file with this number already exists.')
+                warndlg.addField('Overwrite?\t\t', initial="no")
+                warndlg.addField('If no, new SN:\t', initial='0')
+                warndlg.show()
+                if gui.OK:
+                    over = warndlg.data[0].lower() == 'no'
+                else:
+                    core.quit()
+                if over:
+                    sn = int(warndlg.data[1])
+                    pad = 4-len(str(sn))
+                    snstr = '0'*pad + str(sn)
+                    fname=f"mid_sub-{sn}_ses-{ses}"
+    filename = os.path.join(subject_folder, fname)
+    return(filename)
     
 def display_inst(instr_part,task,forwardKey,backKey,startKey,instructFinish):
     """ display instructions for a specific experimental task; input includes: 
@@ -164,15 +164,15 @@ os.chdir(_thisDir)
 [expInfo,expName,sn,ses,run] = initialization(expName,version) 
 
 # Data file name creation; later add .psyexp, .csv, .log, etc
-#filename = start_datafiles(_thisDir, expName, expInfo, data_dir, sn, ses, run)
+filename = start_datafiles(_thisDir, expName, expInfo, data_dir, sn, ses, run)
 
 # An ExperimentHandler isn't essential but helps with data saving
 thisExp = data.ExperimentHandler(name=expName, version=version, extraInfo=expInfo, runtimeInfo=None,
-    originPath=None, savePickle=True, saveWideText=True)
+    originPath=None, savePickle=True, saveWideText=True, dataFileName=filename)
 
 # save a log file for detail verbose info
-#logFile = logging.LogFile(filename+'.log', level=logging.EXP)
-#logging.console.setLevel(logging.WARNING)  # this outputs to the screen, not a file
+logFile = logging.LogFile(filename+'.log', level=logging.EXP)
+logging.console.setLevel(logging.WARNING)  # this outputs to the screen, not a file
 
 endExpNow = False  # flag for 'escape' or other condition => quit the exp
 
@@ -195,13 +195,13 @@ random.seed(ses)
 
 # determine accepted inputs 
 forwardKey = "2"
-backKey = "3"
+backKey = "1"
 startKey = "2"
 expKeys = ["1","2","3","4","5"] # including all response button keys to catch misaligned fingers/responses
-endKey = "z"
+endKey = "5"
 # Initialize components for Routine "instructions"
-instructFirst = visual.TextStim(win, text="Press 2 to continue", height=fontH, color=textCol, pos=[0, -yScr/4])
-instructMove = visual.TextStim(win, text="Press 2 to continue, or 3 to go back.", height=fontH, color=textCol, pos=[0, -yScr/4])
+instructFirst = visual.TextStim(win, text="Use your index finger to continue", height=fontH, color=textCol, pos=[0, -yScr/4])
+instructMove = visual.TextStim(win, text="Use your index finger to continue, or middle to go back.", height=fontH, color=textCol, pos=[0, -yScr/4])
 
 #import instructions
 instr_part = [[],[],[]]
@@ -230,11 +230,11 @@ DotsClock = core.Clock()
 
 # Initialize components for Routine "instructions"
 instructPrompt = visual.TextStim(win=win, font='Arial', pos=(0, yScr/10), height=fontH, wrapWidth=wrapW, color=textCol);
-instructFinish = visual.TextStim(win, text="You have reached the end of the instructions. Press 2 to continue.",
+instructFinish = visual.TextStim(win, text="You have reached the end of the instructions. When you are ready to begin the task, place your fingers on the keys notify the experimenter.",
                                      height=fontH, color=textCol, pos=[0, 0], wrapWidth=wrapW)    
 
 # Initialize components for task transitions
-wait = visual.TextStim(win, pos=[0, 0], text="Press '=' to begin the task.", height=fontH, color=textCol)
+wait = visual.TextStim(win, pos=[0, 0], text="The task will begin momentarily. Get ready...", height=fontH, color=textCol)
 wait_str = "The task will begin momentarily. Get ready..."
 endf = visual.TextStim(win, pos=[0, 0], text="Thank you. This part of the experiment is now complete.",wrapWidth=wrapW, height=fontH, color=textCol)                                     
 
@@ -288,10 +288,10 @@ Tot_Earn = 0
 # create the staircase handler to adjust for individual threshold (stairs defined in units of screen frames; actual minimum presentation duration is determined by the min_target_dur parameter, the staircase procedure can only add frame rates to that minimum value)
 trials = data.StairHandler(startVal=10.0,
     stepType='lin',
-    stepSizes=[4, 2, 1],  
+    stepSizes=[6, 3, 3, 2, 2, 1, 1],  # reduce step size every two reversals
     minVal=0, maxVal=15,
     nUp=1, nDown=2,  # will home in on the 65% threshold (nUp=1, nDown=3 homes in on 80%)
-    nTrials=12,
+    nTrials=45,
     extraInfo=expInfo)
 print(f"Number of stimuli rows: {len(stimuli)}")
 
@@ -631,14 +631,14 @@ for thisTrial in trials:
             thisComponent.setAutoDraw(False)
 
     # add data to log file
-   # trials.addOtherData('time.global', globalClock.getTime())      
-    #trials.addOtherData('time.nominal', nominalTime)      
-    #trials.addOtherData('time.trial', CueClock.getTime())
+    trials.addOtherData('time.global', globalClock.getTime())      
+    trials.addOtherData('time.nominal', nominalTime)      
+    trials.addOtherData('time.trial', CueClock.getTime())
     #trials.addOtherData('time.plannedfixlength', iti_time)
     #trials.addOtherData('time.actualfixlength', globalClock.getTime() - tend)
                 
     # advance to next trial/line in logFile
-    #thisExp.nextEntry()
+    thisExp.nextEntry()
     
 # ------Prepare to start Routine "dots"-------
 t = 0
@@ -648,7 +648,7 @@ continueRoutine = True
 # set fixation time duration 
 tend = globalClock.getTime()
 total_task_duration = tend - task_start_time
-dots_add = 85 - total_task_duration
+dots_add = 300 - total_task_duration
 dotsClock = core.Clock()
 
 routineTimer.reset()  # Reset the routine timer to ensure it's used from the correct starting point
@@ -660,7 +660,7 @@ for thisComponent in dotsComponents:
     if hasattr(thisComponent, 'status'):
         thisComponent.status = NOT_STARTED
 
-# -------Start Routine "dots"-------
+# -------Start Routine "fix"-------
 while continueRoutine and routineTimer.getTime() > 0:
     # get current time
     t = dotsClock.getTime()
@@ -684,13 +684,13 @@ final_duration = fend - task_start_time
 
 endf.draw()
 win.flip()
-event.waitKeys(keyList=['2'])
+event.waitKeys(keyList=['0'])
 
 # these shouldn't be strictly necessary (should auto-save)
-#thisExp.addData('Total_Task_Duration', final_duration)
-#thisExp.saveAsWideText(filename+'.csv',fileCollisionMethod = 'overwrite')
-#thisExp.saveAsPickle(filename, fileCollisionMethod = 'rename')
-#logging.flush()
+thisExp.addData('Total_Task_Duration', final_duration)
+thisExp.saveAsWideText(filename+'.csv',fileCollisionMethod = 'overwrite')
+thisExp.saveAsPickle(filename, fileCollisionMethod = 'rename')
+logging.flush()
 
 # make sure everything is closed down
 thisExp.abort()  # or data files will save again on exit

@@ -1,5 +1,6 @@
-###SRNDNA
-###shared reward, block design
+###RF-1 sequence pilot
+###shared reward, ER design
+###Dominic Fareri
 
 from psychopy import visual, core, event, gui, data, sound, logging
 import csv
@@ -7,48 +8,58 @@ import datetime
 import random
 import numpy
 import os
-
-#maindir = os.getcwd()
-
+import pyglet
 
 #parameters
 useFullScreen = True
-useDualScreen=1
+useDualScreen=2
 DEBUG = False
 
 frame_rate=1
 instruct_dur=3
 initial_fixation_dur = 4
-#final_fixation_dur = 2
+final_fixation_dur = 8
 decision_dur=2.5
 outcome_dur=1
 
-responseKeys=('1','3','z','num_1','num_3')
+responseKeys=('3','2','z')
 
 #get subjID
 subjDlg=gui.Dlg(title="Shared Reward Task")
-subjDlg.addField('Enter Subject ID: ')
+subjDlg.addField('Participant:',choices=['prac'])
 #subjDlg.addField('Enter Friend Name: ') #1
-#subjDlg.addField('Enter Partner Name: ') #NOTE: PARTNER IS THE CONFEDERATE/STRANGER #2
+#subjDlg.addField('Enter Partner Name: ')#NOTE: PARTNER IS THE CONFEDERATE/STRANGER #2
+subjDlg.addField('Session:', choices=['1'])
+subjDlg.addField('Run:', choices=['1'])
+subjDlg.addText("DO NOT ALTER!")
+#subjDlg.addField('MB:', choices=['2', '3'])
+#subjDlg.addField('ME:', choices=['1', '3', '4'])
+#subjDlg.addField('IP:', choices=['0', '2'])
 subjDlg.show()
 
-if gui.OK:
-    subj_id=subjDlg.data[0]
-    #friend_id=subjDlg.data[1]
-    #stranger_id=subjDlg.data[1]
-    run = range(0,1)
-
+if subjDlg.show():  # This displays the dialog
+    subj_id = subjDlg.data[0]  # Extract the Subject ID
+    ses = subjDlg.data[1]  # Extract the selected session
+    run = subjDlg.data[2]  # Extract the selected Run
+    #mb = subjDlg.data[3]  # Extract the MB value
+    #me = subjDlg.data[4]  # Extract the ME value
 else:
-    sys.exit()
+    core.quit()  # Gracefully exit if "Cancel" is pressed
 
 run_data = {
     'Participant ID': subj_id,
     'Date': str(datetime.datetime.now()),
-    'Description': 'SRNDNA Pilot - SharedReward Task'
+    'Description': 'NOSC - SharedReward Practice',
+    'Session': ses,
+    'Run': run,
+    #'MB': mb,
+    #'ME': me
     }
 
 #window setup
-win = visual.Window([800,600], monitor="testMonitor", units="deg", fullscr=useFullScreen, allowGUI=False, screen=useDualScreen)
+display = pyglet.canvas.get_display()
+screens = display.get_screens()
+win = visual.Window([800,600], monitor="testMonitor", units="deg", fullscr=useFullScreen, screen=useDualScreen, allowGUI=False)
 
 #checkpoint
 print("got to check 1")
@@ -57,7 +68,7 @@ print("got to check 1")
 fixation = visual.TextStim(win, text="+", height=2)
 
 #waiting for trigger
-ready_screen = visual.TextStim(win, text="Please wait for the block of trials to begin. \n\nRemember to keep your head still!", height=1.5)
+ready_screen = visual.TextStim(win, text="Remember to make your choice when the question mark is on the screen. \n press the = key to begin", height=1.5)
 
 #decision screen
 nameStim = visual.TextStim(win=win,font='Arial',pos=(0, 5.5), height=1, color='white', colorSpace='rgb', opacity=1,depth=-1.0);
@@ -71,19 +82,18 @@ outcome_text = visual.TextStim(win=win, name='text',text='',font='Arial',pos=(0,
 outcome_money = visual.TextStim(win=win, name='text',text='',font='Wingdings 3',pos=(0, 2.0), height=2, wrapWidth=None, ori=0, colorSpace='rgb', opacity=1,depth=-1.0);
 
 #instructions
-instruct_screen = visual.TextStim(win, text='Welcome to the Card Guessing Game! In this game you will be guessing the numerical value of a card.\n\n Press with your left index finger \n(1 key) to guess low.\nPress with your right index finger \n(3 key) to guess higher than 5.\n\n If you guess correctly, you gain $10.\n If you guess incorrectly, you will lose $5.\n\n Remember, you will be sharing monetary outcomes on each trial with the partner displayed at the top of the screen.', pos = (0,1), wrapWidth=20, height = 1.2)
-#instruct_screen2 = visual.TextStim(win, text='Press Button 2 to send the amount on the lower left of the screen and press Button 3 to send the amount on the lower right of the screen.\n\n Remember, whatever you send means your partner receives 3 times that amount; your partner will be notified of your decision.\n\n If you sent money s/he will choose to share it back evenly with you or keep it all for him/herself.', pos = (0,1), wrapWidth=20, height = 1.2)
-
+instruct_screen = visual.TextStim(win, text='Welcome to the Card Guessing Game!\n\nIn this game you will have to guess the numerical value of a card for a chance to win some money.\n\nIf you think the value of the card will be lower than 5, press 3.\n\nIf you think the value of the card will be higher than 5, press 2.', pos = (0,1), wrapWidth=20, height = 1.2)
+instruct_screen2 = visual.TextStim(win, text='Remember, you will be sharing monetary outcomes on each trial with the partner displayed at the top of the screen––either the computer or a previous participant.\n\nIf you guess correctly, you and your partner earn $10 ($5 each).\n If you guess incorrectly, you and your partner lose $5 ($2.50 each).', pos = (0,1), wrapWidth=20, height = 1.2)
 
 #exit
 exit_screen = visual.TextStim(win, text='Thanks for playing! Please wait for instructions from the experimenter.', pos = (0,1), wrapWidth=20, height = 1.2)
 
 #logging
 expdir = os.getcwd()
-subjdir = '%s/logs/%s' % (expdir, subj_id)
-if not os.path.exists(subjdir):
-    os.makedirs(subjdir)
-log_file = os.path.join(subjdir,'sub-{}_task-sharedreward_run-{}_raw.csv')
+#subjdir = '%s/logs/%s' % (expdir, subj_id)
+#if not os.path.exists(subjdir):
+ #   os.makedirs(subjdir)
+#log_file = os.path.join(f'sub-{subj_id}_task-sharedreward_ses-{ses}_run-{run}_raw.csv')
 
 globalClock = core.Clock()
 logging.setDefaultClock(globalClock)
@@ -91,29 +101,25 @@ logging.setDefaultClock(globalClock)
 timer = core.Clock()
 
 #trial handler
-trial_data_1 = [r for r in csv.DictReader(open('event-related/params/sub-' + subj_id + '/sub-'
-    + subj_id + '_run-1_design.csv','rU'))]
-trial_data_2  = [r for r in csv.DictReader(open('event-related/params/sub-' + subj_id + '/sub-'
-    + subj_id + '_run-2_design.csv','rU'))]
+trial_data = [r for r in csv.DictReader(open('%s/event-related/params/sub-' % (os.getcwd()) + subj_id + '/sub-'
+    + subj_id + '_ses-' + ses + '_run-' + run + '_design.csv','rU'))]
+
 
 #trial_data = [r for r in csv.DictReader(open('SharedReward_design.csv','rU'))]
 #trials = data.TrialHandler(trial_data[:], 1, method="sequential") #change to [] for full run
 
-trials_run1 = data.TrialHandler(trial_data_1[:], 1, method="sequential") #change to [] for full run
-trials_run2 = data.TrialHandler(trial_data_2[:], 1, method="sequential") #change to [] for full run
+trials_run = data.TrialHandler(trial_data[:], 1, method="sequential") #change to [] for full run
 
 #set partner names
 # 3 = friend, 2 = confederate, 1 = computer
 # change names accordingly here
 
 stim_map = {
-  #'3': friend_id,
   '2': 'Jack',
   '1': 'Computer',
   }
 
 image_map = {
-  #'3': 'friend',
   '2': 'stranger',
   '1': 'computer',
 }
@@ -140,29 +146,35 @@ for run in range(1):
 # Instructions
 instruct_screen.draw()
 win.flip()
-event.waitKeys(keyList=('space'))
+event.waitKeys(keyList=('2'))
 
-#instruct_screen2.draw()
-#win.flip()
-#event.waitKeys(keyList=('space'))
+instruct_screen2.draw()
+win.flip()
+event.waitKeys(keyList=('2'))
 
 # main task loop
 def do_run(run, trials):
     resp=[]
-    fileName=log_file.format(subj_id,run)
+   # fileName=log_file.format(subj_id,ses,run)
 
     #wait for trigger
     ready_screen.draw()
     win.flip()
-    event.waitKeys(keyList=('equal'))
     globalClock.reset()
     studyStart = globalClock.getTime()
+    event.waitKeys(keyList=('equal'))
+    trials.addData('studyStart',studyStart)
 
     #Initial Fixation screen
     fixation.draw()
     win.flip()
+    initial_fixation_Onset = globalClock.getTime()
+    trials.addData('InitFixOnset',initial_fixation_Onset)
     core.wait(initial_fixation_dur)
+    initial_fixation_offset = globalClock.getTime()
+    trials.addData('InitFixOffset',initial_fixation_offset)
 
+    #globalClock.reset()
 
     for trial in trials:
         condition_label = stim_map[trial['Partner']]
@@ -171,7 +183,6 @@ def do_run(run, trials):
         image = os.path.join(imagepath, "%s.png") % image_label
         nameStim.setText(condition_label)
         pictureStim.setImage(image)
-
 
         #decision phase
         timer.reset()
@@ -184,90 +195,124 @@ def do_run(run, trials):
         decision_onset = globalClock.getTime()
         trials.addData('decision_onset',decision_onset)
 
-
         while timer.getTime() < decision_dur:
             cardStim.draw()
             question.draw()
             pictureStim.draw()
             nameStim.draw()
+            #dec_screen_pre = globalClock.getTime()
             win.flip()
+            #dec_screen_post = globalClock.getTime()
 
             resp = event.getKeys(keyList = responseKeys)
+            #trials.addData('dec_screen_pre',dec_screen_pre)
+            #trials.addData('dec_screen_post',dec_screen_post)
+
             if len(resp)>0:
-                resp_str = str(resp[-1])[-1]
-                resp_val = int(resp_str)
-                if resp_str == 'z':
+                if resp[0] == 'z':
                 #trials.saveAsText(fileName=log_file.format(subj_id),delim=',',dataOut='all_raw')
-                    os.chdir(subjdir)
-                    trials.saveAsWideText(fileName)
-                    os.chdir(expdir)
+                    #os.chdir(subjdir)
+                    #trials.saveAsWideText(fileName)
+                    #os.chdir(expdir)
                     win.close()
                     core.quit()
-                if resp_val==1:
-                    resp_onset = globalClock.getTime()
+                resp_val = int(resp[0])
+                if resp_val==2:
+                    #resp_onset = globalClock.getTime()
                     question.setColor('darkorange')
-                    rt = resp_onset - decision_onset
+                    #rt = resp_onset - decision_onset
                     #core.wait(decision_dur - rt)
                 if resp_val==3:
-                    resp_onset = globalClock.getTime()
+                    #resp_onset = globalClock.getTime()
                     question.setColor('darkorange')
-                    rt = resp_onset - decision_onset
+                    #rt = resp_onset - decision_onset
                     #core.wait(decision_dur -rt)
                 cardStim.draw()
                 question.draw()
                 pictureStim.draw()
                 nameStim.draw()
+                #orangeText_pre = globalClock.getTime()
                 win.flip()
-                core.wait(decision_dur - rt)
+                #orangeText_post = globalClock.getTime()
+                resp_onset = globalClock.getTime()
+                rt = resp_onset - decision_onset
+                core.wait(0.1)
+                #core.wait(decision_dur - rt)
                 break
             else:
                 resp_val = 0
-                resp_onset = 999
-                rt = 999
+                #resp_onset = 999
+                resp_onset = globalClock.getTime()
+                #rt = 0
+                rt = resp_onset - decision_onset
+                core.wait(0.1)
 
         trials.addData('resp', int(resp_val))
         trials.addData('resp_onset', resp_onset)
         trials.addData('rt', rt)
+        #trials.addData('orangeText_pre',orangeText_pre)
+        #trials.addData('orangeText_post',orangeText_post)
 
         ###reset question mark color
         question.setColor('white')
-#outcome phase
+
+        #ISI
+
+        timer.reset()
+
+        given_ISI = float(trial['ISI'])
+        isi_for_trial = float(given_ISI+(2.5-(rt+0.1)))
+        ISI_onset = globalClock.getTime()
+        trials.addData('ISI_onset', ISI_onset)
+        trials.addData('isi_for_trial', isi_for_trial)
+
+        fixation.draw()
+        #ISI_pre_onset = globalClock.getTime()
+        win.flip()
+        #ISI_post_onset = globalClock.getTime()
+        core.wait(isi_for_trial)
+
+        ISI_offset = globalClock.getTime()
+        trials.addData('ISI_offset', ISI_offset)
+        #trials.addData('ISI_pre_onset',ISI_pre_onset)
+        #trials.addData('ISI_post_onset',ISI_post_onset)
+        #outcome phase
         timer.reset()
         #win.flip()
         outcome_onset = globalClock.getTime()
 
         while timer.getTime() < outcome_dur:
             outcome_cardStim.draw()
-            pictureStim.draw()
-            nameStim.draw()
+            #pictureStim.draw()
+            #nameStim.draw()
             #win.flip()
 
-            if trial['Feedback'] == '3' and resp_val == 1:
+            if trial['Feedback'] == '3' and resp_val == 3:
                 outcome_txt = int(random.randint(1,4))
                 outcome_moneyTxt= 'h'
                 outcome_color='lime'
                 trials.addData('outcome_val', int(outcome_txt))
-            elif trial['Feedback'] == '3' and resp_val == 3:
+            elif trial['Feedback'] == '3' and resp_val == 2:
                 outcome_txt = int(random.randint(6,9))
                 outcome_moneyTxt= 'h'
                 outcome_color='lime'
-                trials.addData('outcome_val', int(outcome_txt))
-            elif trial['Feedback'] == '2' and resp_val == 1:
-                outcome_txt = int(5)
-                outcome_moneyTxt= 'n'
-                outcome_color='white'
                 trials.addData('outcome_val', int(outcome_txt))
             elif trial['Feedback'] == '2' and resp_val == 3:
                 outcome_txt = int(5)
                 outcome_moneyTxt= 'n'
                 outcome_color='white'
                 trials.addData('outcome_val', int(outcome_txt))
-            elif trial['Feedback'] == '1' and resp_val == 1:
+            elif trial['Feedback'] == '2' and resp_val == 2:
+                outcome_txt = int(5)
+                outcome_moneyTxt= 'n'
+                outcome_color='white'
+                trials.addData('outcome_val', int(outcome_txt))
+            elif trial['Feedback'] == '1' and resp_val == 3:
                 outcome_txt = int(random.randint(6,9))
                 outcome_moneyTxt= 'i'
                 outcome_color='darkred'
                 trials.addData('outcome_val', int(outcome_txt))
-            elif trial['Feedback'] == '1' and resp_val == 3:
+            elif trial['Feedback'] == '1' and resp_val == 2:
                 outcome_txt = int (random.randint(1,4))
                 outcome_moneyTxt= 'i'
                 outcome_color='darkred'
@@ -280,23 +325,26 @@ def do_run(run, trials):
                 trials.addData('outcome_val',int(outcome_value))
 
 
-
-        #print outcome_txt
             outcome_text.setText(outcome_txt)
             outcome_money.setText(outcome_moneyTxt)
             outcome_money.setColor(outcome_color)
             outcome_text.draw()
             outcome_money.draw()
+            #outcome_pre_onset = globalClock.getTime()
             win.flip()
+            #outcome_post_onset = globalClock.getTime()
             core.wait(outcome_dur)
             #trials.addData('outcome_val', outcome_txt)
             trials.addData('outcome_onset', outcome_onset)
+            #trials.addData('outcome_pre_onset', outcome_pre_onset)
+            #trials.addData('outcome_post_onset', outcome_post_onset)
 
             outcome_offset = globalClock.getTime()
             trials.addData('outcome_offset', outcome_offset)
 
             duration = outcome_offset - decision_onset
             trials.addData('trialDuration', duration)
+
             event.clearEvents()
         print("got to check 3")
 
@@ -306,33 +354,40 @@ def do_run(run, trials):
         timer.reset()
         ITI_onset = globalClock.getTime()
         iti_for_trial = float(trial['ITI'])
-        while timer.getTime() < iti_for_trial:
-            fixation.draw()
-            win.flip()
+        #while timer.getTime() < iti_for_trial:
+        fixation.draw()
+        #ITI_pre_onset = globalClock.getTime()
+        win.flip()
+        #ITI_post_onset = globalClock.getTime()
+        core.wait(iti_for_trial)
         ITI_offset = globalClock.getTime()
         trials.addData('ITIonset', ITI_onset)
         trials.addData('ITIoffset', ITI_offset)
+        #trials.addData('ITI_pre_onset',ITI_pre_onset)
+        #trials.addData('ITI_post_onset',ITI_post_onset)
 
-
-    # Final Fixation screen after trials completed
+    #Final Fixation screen after trials completed
     fixation.draw()
     win.flip()
-    #core.wait(final_fixation_dur)
-    os.chdir(subjdir)
-    trials.saveAsWideText(fileName)
-    os.chdir(expdir)
-    endTime = 0.01 # not sure if this will take a 0, so giving it 0.01 and making sure it is defined
-    #expected_dur = 398
-    #buffer_dur = 10
-    #total_dur = expected_dur + buffer_dur
-    #if globalClock.getTime() < total_dur:
-    #    endTime = (total_dur - globalClock.getTime())
-    #else:
-    #    endTime = buffer_dur
-    #core.wait(endTime)
-    #print(globalClock.getTime())
+    expected_dur = 126
+    buffer_dur = 4
+    total_dur = expected_dur + buffer_dur
+    if globalClock.getTime() < total_dur:
+        endTime = (total_dur - globalClock.getTime())
+    else:
+        endTime = buffer_dur
+    core.wait(endTime)
+    final_fixation_offset = globalClock.getTime()
+    trials.addData('final_fix_offset', final_fixation_offset)
 
-for run, trials in enumerate([trials_run1, trials_run2]):
+    #os.chdir(subjdir)
+    #trials.saveAsWideText(fileName)
+    #os.chdir(expdir)
+
+    #endTime = 0.01 # not sure if this will take a 0, so giving it 0.01 and making sure it is defined
+
+
+for run, trials in enumerate([trials_run]):
     do_run(run, trials)
 
 # Exit
