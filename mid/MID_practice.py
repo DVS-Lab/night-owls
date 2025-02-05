@@ -45,7 +45,7 @@ version = "1.0" #
 data_dir = "data" # location of outputs to be generated; includes data for participants as well as trial selection and trial presentation sequence
 inst_dir = "text" # location of instructions directory
 inst_file = ["instructions_MID.txt"] # name of instructions files (needs to be .txt)
-trials_file = "prac_MID_trials.csv" # name of external file determining allocation of trials to color (=condition of trials: rewarding or not rewarding)
+trials_file = "/timing/prac_MID_trials.csv" # name of external file determining allocation of trials to color (=condition of trials: rewarding or not rewarding)
 study_times = [0.5, 2.25, 0.5, 1, 0.5] # component duration (s): cue, delay, target, feedback, lastfixation
 initial_fix_dur = 4 # added time to make sure homogenicity of magnetic field is reached
 closing_fix_dur = 10 # added time to make sure haemodynamic responses of the last trials are properly modeled 

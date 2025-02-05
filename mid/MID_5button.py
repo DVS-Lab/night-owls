@@ -45,7 +45,6 @@ version = "1.0" #
 data_dir = "data" # location of outputs to be generated; includes data for participants as well as trial selection and trial presentation sequence
 inst_dir = "text" # location of instructions directory
 inst_file = ["instructions_MID.txt"] # name of instructions files (needs to be .txt)
-trials_file = "MID_trials.csv" # name of external file determining allocation of trials to color (=condition of trials: rewarding or not rewarding)
 study_times = [0.5, 2.25, 0.5, 1, 0.5] # component duration (s): cue, delay, target, feedback, lastfixation
 initial_fix_dur = 8 # added time to make sure homogenicity of magnetic field is reached
 closing_fix_dur = 10 # added time to make sure haemodynamic responses of the last trials are properly modeled 
@@ -66,7 +65,7 @@ def initialization(expName,version):
     """Present initial dialog; initialize some parameters"""
     # Store info about the experiment session
     expName = expName + version  
-    expInfo = {u'participant': '', u'session':'prac',u'run':'prac'}
+    expInfo = {u'participant': '', u'session':['1', '2','3','4','5','6','7','8','9','10','11','12'],u'run':['1','2']}
     dlg = gui.DlgFromDict(dictionary=expInfo, title=expName)
     if dlg.OK == False:
         core.quit()  # user pressed cancel
@@ -162,6 +161,8 @@ os.chdir(_thisDir)
 
 # present initialization dialog
 [expInfo,expName,sn,ses,run] = initialization(expName,version) 
+trials_file = f"/timing/ses-{ses}_run-{run}_MID_trials.csv"
+
 
 # Data file name creation; later add .psyexp, .csv, .log, etc
 filename = start_datafiles(_thisDir, expName, expInfo, data_dir, sn, ses, run)
@@ -190,7 +191,7 @@ if expInfo['frameRate'] != None and expInfo['frameRate'] <200: # inserted a manu
 else:
     frameDur = 1.0 / 60.0  # could not measure, so guess
 
-# set random seed - participant dependent
+# set random seed - session dependent
 random.seed(ses)
 
 # determine accepted inputs 
@@ -280,6 +281,8 @@ wait.draw()
 win.flip()
 event.waitKeys(keyList=['equal'])
 task_start_time = globalClock.getTime()  # Record the start time of the task
+nominalTime = 0 # set up virtual time keeper to align actual with a-priori time allocation
+
     
 # set up counters for trials (to determine cue color and for total earnings
 trial_counter = 0
@@ -291,14 +294,14 @@ trials = data.StairHandler(startVal=10.0,
     stepSizes=[6, 3, 3, 2, 2, 1, 1],  # reduce step size every two reversals
     minVal=0, maxVal=15,
     nUp=1, nDown=2,  # will home in on the 65% threshold (nUp=1, nDown=3 homes in on 80%)
-    nTrials=45,
+    nTrials=64,
     extraInfo=expInfo)
 print(f"Number of stimuli rows: {len(stimuli)}")
 
     
 thisExp.addLoop(trials)  # add the loop to the experiment
-nominalTime = 0 # set up virtual time keeper to align actual with a-priori time allocation
-globalClock.reset() # to align actual time with virtual time keeper
+#nominalTime = 0 # set up virtual time keeper to align actual with a-priori time allocation
+#globalClock.reset() # to align actual time with virtual time keeper
     
 # present initial fixation
 t_start = globalClock.getTime()
@@ -381,7 +384,7 @@ for thisTrial in trials:
     continueRoutine = True
     
     # set ISI duration 
-    isi_time = random.uniform(1.5, 4)
+    isi_time = stimuli.iloc[trial_counter-1]['isiTime']  # Get ISI from current trial row
     nominalTime += isi_time
     routineTimer.add(isi_time)
 
@@ -584,12 +587,10 @@ for thisTrial in trials:
     continueRoutine = True
     
     # set ITI duration 
-    iti_base = stimuli.iloc[trial_counter-1]['itiTime']  # Get ITI from current trial row
-    iti_time = iti_base - (2.25-isi_time)  # subtract the random ISI adjustment
+    iti_time = stimuli.iloc[trial_counter-1]['itiTime']  # Get ITI from current trial row
     nominalTime += iti_time
     routineTimer.add(iti_time)
     
-    trials.addOtherData('iti_base', iti_base)  # store original ITI value
     trials.addOtherData('iti_final', iti_time)  # store final adjusted ITI
     
     # keep track of which components have finished
@@ -648,7 +649,7 @@ continueRoutine = True
 # set fixation time duration 
 tend = globalClock.getTime()
 total_task_duration = tend - task_start_time
-dots_add = 300 - total_task_duration
+dots_add = 530 - total_task_duration
 dotsClock = core.Clock()
 
 routineTimer.reset()  # Reset the routine timer to ensure it's used from the correct starting point
@@ -684,7 +685,7 @@ final_duration = fend - task_start_time
 
 endf.draw()
 win.flip()
-event.waitKeys(keyList=['0'])
+event.waitKeys(keyList=['2'])
 
 # these shouldn't be strictly necessary (should auto-save)
 thisExp.addData('Total_Task_Duration', final_duration)

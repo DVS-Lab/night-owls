@@ -81,11 +81,11 @@ outcome_text = visual.TextStim(win=win, name='text',text='',font='Arial',pos=(0,
 outcome_money = visual.TextStim(win=win, name='text',text='',font='Wingdings 3',pos=(0, 2.0), height=2, wrapWidth=None, ori=0, colorSpace='rgb', opacity=1,depth=-1.0);
 
 #instructions
-instruct_screen = visual.TextStim(win, text='Welcome to the Card Guessing Game!\n\nIn this game you will have to guess the numerical value of a card for a chance to win some money.\n\nIf you think the value of the card will be lower than 5, press with your middle finger.\n\nIf you think the value of the card will be higher than 5, press with your index finger.', pos = (0,1), wrapWidth=20, height = 1.2)
-instruct_screen2 = visual.TextStim(win, text='Remember, you will be sharing monetary outcomes on each trial with the partner displayed at the top of the screen––either the computer or a previous participant.\n\nIf you guess correctly, you and your partner earn $10 ($5 each).\n If you guess incorrectly, you and your partner lose $5 ($2.50 each).', pos = (0,1), wrapWidth=20, height = 1.2)
+instruct_screen = visual.TextStim(win, text='Welcome to the Card Guessing Game!\n\nIn this game you will have to guess the numerical value of a card for a chance to win some money.\n\nIf you think the value of the card will be lower than 5, press with your middle finger.\n\nIf you think the value of the card will be higher than 5, press with your index finger.', pos = (0,1), wrapWidth=20, height = 1.5)
+instruct_screen2 = visual.TextStim(win, text='Remember, you will be sharing monetary outcomes on each trial with the partner displayed at the top of the screen––either the computer or a previous participant.\n\nIf you guess correctly, you and your partner earn $10 ($5 each).\n If you guess incorrectly, you and your partner lose $5 ($2.50 each).', pos = (0,1), wrapWidth=20, height = 1.5)
 
 #exit
-exit_screen = visual.TextStim(win, text='Thanks for playing! Please wait for instructions from the experimenter.', pos = (0,1), wrapWidth=20, height = 1.2)
+exit_screen = visual.TextStim(win, text='Thanks for playing! Please wait for instructions from the experimenter.', pos = (0,1), wrapWidth=20, height = 1.5)
 
 #logging
 expdir = os.getcwd()
@@ -159,9 +159,9 @@ def do_run(run, trials):
     #wait for trigger
     ready_screen.draw()
     win.flip()
+    event.waitKeys(keyList=('equal'))
     globalClock.reset()
     studyStart = globalClock.getTime()
-    event.waitKeys(keyList=('equal'))
     trials.addData('studyStart',studyStart)
 
     #Initial Fixation screen
@@ -368,13 +368,13 @@ def do_run(run, trials):
     #Final Fixation screen after trials completed
     fixation.draw()
     win.flip()
-    expected_dur = 426
-    buffer_dur = 4
-    total_dur = expected_dur + buffer_dur
-    if globalClock.getTime() < total_dur:
-        endTime = (total_dur - globalClock.getTime())
-    else:
-        endTime = buffer_dur
+    expected_dur = 430
+    #buffer_dur = 4
+    #total_dur = expected_dur + buffer_dur
+    #if globalClock.getTime() < expected_dur:
+    endTime = (expected_dur - globalClock.getTime())
+   # else:
+    #    endTime = buffer_dur
     core.wait(endTime)
     final_fixation_offset = globalClock.getTime()
     trials.addData('final_fix_offset', final_fixation_offset)
