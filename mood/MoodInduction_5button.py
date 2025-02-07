@@ -214,30 +214,20 @@ with open(file_name, "w", newline="") as file:
 # Instruction page
 instruction_text = visual.TextStim(
     win,
-    text="You are about to see the memory you described earlier. Please reminisce on different parts of this memory for the next 10 minutes while listening to music. Feel free to daydream about the memory (relive it), but please keep your eyes open. Your goal is to get in as good of a mood as possible with this memory!", 
+    text="You are about to see the memory you described earlier. Please reminisce on different parts of this memory for the next 10 minutes while listening to music.\nFeel free to daydream about the memory (relive it), but please keep your eyes open. Your goal is to get in as good of a mood as possible with this memory!\n\nAlso please remember not to move", 
     color="white",
     pos=(0, 0),
     height=fontH,
     alignText="center",
 )
 
-# Show the instruction page for 20 seconds
-instruction_text.draw()
-win.flip()
-core.wait(2) 
-
-# Show "Get ready" screen
-display_get_ready_screen()
-
+# Load text from file and wrap
 # Load and wrap text
 def load_and_wrap_text(filename, max_width=60):
     with open(filename, 'r') as file:
         content = file.read()
     wrapped_text = textwrap.fill(content, width=max_width)
     return wrapped_text
-
-
-# Load text from file and wrap
 filename = "example.txt"  # Replace with text file path
 max_width = 60  # Adjust as needed for text wrapping
 text_content = load_and_wrap_text(filename, max_width)
@@ -253,8 +243,21 @@ text_stim = visual.TextStim(
 )
 
 # Load audio files
-audio_files = ["song1.wav", "song2.wav", "song3.wav", "song4.wav"]  
+audio_files = ["song1.wav", "song2.wav", "song3.wav"]  
 #audio_files = ["test1.wav", "test2.wav"]  
+
+# Show the instruction page
+instruction_text.draw()
+win.flip()
+core.wait(15) 
+
+# Show "Get ready" screen
+display_get_ready_screen()
+
+
+
+
+
 
 prefs.general['audioLib'] = ['sounddevice']
 import sounddevice as sd
@@ -264,7 +267,7 @@ sd.default.device[1] = 3  # Replace with preferred device ID
 audio_sounds = [sound.Sound(file) for file in audio_files]
 
 # Total time to display the text and play audio
-display_duration = 600  # in seconds
+display_duration = 420  # in seconds
 
 # Display text while playing audio sequentially
 text_stim.draw()  # Draw the text on screen
