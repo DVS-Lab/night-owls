@@ -190,12 +190,12 @@ def display_get_ready_screen():
 # Sequence of screens
 # Display the first question
 positive_emotions = display_slider_question(
-    "To what extent are you experiencing POSITIVE emotions RIGHT NOW?", initial_value=50
+    "To what extent are you experiencing POSITIVE emotions RIGHT NOW?\n\n(e.g., Excited, Strong, Interested, \nEnthusiastic, Determined, Inspired", initial_value=50
 )
 
 # Display the second question
 negative_emotions = display_slider_question(
-    "To what extent are you experiencing NEGATIVE emotions RIGHT NOW?", initial_value=50
+    "To what extent are you experiencing NEGATIVE emotions RIGHT NOW?\n\n (e.g., Distressed, Irritable, Nervous, \nUpset, Ashamed, Scared", initial_value=50
 )
 
 # Save the responses to the file
@@ -214,7 +214,7 @@ with open(file_name, "w", newline="") as file:
 # Instruction page
 instruction_text = visual.TextStim(
     win,
-    text="You are about to see the memory you described earlier. Please reminisce on different parts of this memory for the next 10 minutes while listening to music.\nFeel free to daydream about the memory (relive it), but please keep your eyes open. Your goal is to get in as good of a mood as possible with this memory!\n\nAlso please remember not to move", 
+    text="You are about to see the memory you described earlier. Please reminisce on different parts of this memory for the next few minutes while listening to music.\nFeel free to daydream about the memory (relive it), but please keep your eyes open. Your goal is to get in as good of a mood as possible with this memory!\n\nPlease stay awake and remember not to move", 
     color="white",
     pos=(0, 0),
     height=fontH,
@@ -285,8 +285,8 @@ core.wait(display_duration - sum([audio.getDuration() for audio in audio_sounds]
 
 # Prepare the file name based on the inputs
 file_name2 = f"{folder_path}/sub-{subj_id}_ses-{ses}_obs-4_mood.csv"
-positive_emotions = display_slider_question("To what extent are you experiencing POSITIVE emotions RIGHT NOW?", initial_value=50)
-negative_emotions = display_slider_question("To what extent are you experiencing NEGATIVE emotions RIGHT NOW?", initial_value=50)
+positive_emotions = display_slider_question("To what extent are you experiencing POSITIVE emotions RIGHT NOW?\n\n(e.g., Excited, Strong, Interested, \nEnthusiastic, Determined, Inspired", initial_value=50)
+negative_emotions = display_slider_question("To what extent are you experiencing NEGATIVE emotions RIGHT NOW?\n\n (e.g., Distressed, Irritable, Nervous, \nUpset, Ashamed, Scared", initial_value=50)
 
 
 # Save the responses to the file
