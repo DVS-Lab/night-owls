@@ -169,12 +169,12 @@ finalize = '1'  # Finalize the answer
 # Sequence of screens
 # Display the first question
 positive_emotions = display_slider_question(
-    "To what extent are you experiencing POSITIVE emotions RIGHT NOW?", initial_value=50
+    "To what extent are you experiencing POSITIVE emotions RIGHT NOW?\n\n(e.g., Excited, Strong, Interested, \nEnthusiastic, Determined, Inspired", initial_value=50
 )
 
 # Display the second question
 negative_emotions = display_slider_question(
-    "To what extent are you experiencing NEGATIVE emotions RIGHT NOW?", initial_value=50
+    "To what extent are you experiencing NEGATIVE emotions RIGHT NOW?\n\n (e.g., Distressed, Irritable, Nervous, \nUpset, Ashamed, Scared", initial_value=50
 )
 
 # Save the responses to the file
