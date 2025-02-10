@@ -49,6 +49,7 @@ study_times = [0.5, 2.25, 0.5, 1, 0.5] # component duration (s): cue, delay, tar
 initial_fix_dur = 8 # added time to make sure homogenicity of magnetic field is reached
 closing_fix_dur = 10 # added time to make sure haemodynamic responses of the last trials are properly modeled 
 min_target_dur = 0.13 # sets the minimum presentation time for target (in seconds)
+useDualScreen=2
 
 # settings for fMRI emulation:
 MR_settings = {
@@ -84,11 +85,11 @@ def make_screen():
     platform = pyglet.canvas.get_display()
     display = pyglet.canvas.get_display()
     screens = display.get_screens()
-    win_res = [screens[-1].width, screens[-1].height]
+    win_res = [screens[-2].width, screens[-2].height]
     exp_mon = monitors.Monitor('exp_mon')
     exp_mon.setSizePix(win_res)
-    win = visual.Window(size=win_res, screen=len(screens)-1, allowGUI=True,
-                        fullscr=True, monitor=exp_mon, units='height',
+    win = visual.Window(size=win_res, screen=useDualScreen, allowGUI=True,
+                        fullscr=True, monitor='testMonitor', units='height',
                         color=(0.2, 0.2, 0.2))
     return(win_res, win)
 
@@ -161,7 +162,7 @@ os.chdir(_thisDir)
 
 # present initialization dialog
 [expInfo,expName,sn,ses,run] = initialization(expName,version) 
-trials_file = f"/timing/ses-{ses}_run-{run}_MID_trials.csv"
+trials_file = f"timing/ses-{ses}_run-{run}_MID_trials.csv"
 
 
 # Data file name creation; later add .psyexp, .csv, .log, etc
