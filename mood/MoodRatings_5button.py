@@ -4,7 +4,7 @@ import re
 from psychopy import visual, event, core, gui, prefs, monitors
 import pyglet
 import sys
-
+useDualScreen=2
 
 #get subjID
 subjDlg=gui.Dlg(title="Mood Check")
@@ -30,8 +30,8 @@ def make_screen():
     win_res = [screens[-1].width, screens[-1].height]
     exp_mon = monitors.Monitor('exp_mon')
     exp_mon.setSizePix(win_res)
-    win = visual.Window(size=win_res, screen=len(screens)-1, allowGUI=True,
-                        fullscr=True, monitor=exp_mon, units='height',
+    win = visual.Window(size=win_res, screen=useDualScreen, allowGUI=True,
+                        fullscr=True, monitor='testMonitor', units='height',
                         color=(0.2, 0.2, 0.2))
     return(win_res, win)
     

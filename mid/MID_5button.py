@@ -86,7 +86,7 @@ def make_screen():
     display = pyglet.canvas.get_display()
     screens = display.get_screens()
     win_res = [screens[-2].width, screens[-2].height]
-    exp_mon = monitors.Monitor('exp_mon')
+    exp_mon = monitors.Monitor('testMonitor')
     exp_mon.setSizePix(win_res)
     win = visual.Window(size=win_res, screen=useDualScreen, allowGUI=True,
                         fullscr=True, monitor='testMonitor', units='height',
@@ -262,7 +262,7 @@ routineTimer = core.CountdownTimer()  # to track time remaining of each (non-sli
 
 # create content to be displayed
 stimuli = pd.read_csv(Cue_trials_template) # read template stimuli
-stimuli = stimuli.reindex(np.random.permutation(stimuli.index)) # shuffle order of stimuli
+#stimuli = stimuli.reindex(np.random.permutation(stimuli.index)) # shuffle order of stimuli
 
 ## Displaying Instructions
 
