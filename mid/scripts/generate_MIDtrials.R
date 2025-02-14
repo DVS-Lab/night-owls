@@ -17,7 +17,7 @@ colnames(mid_trials) <- c('CueColor','itiTime')
 write.csv(mid_trials,'C:/Users/mmatt/Desktop/Projects/NightOwls/night-owls/mid/timing/prac_MID_trials.csv',row.names = F)
 
 
-
+sum(itis) + sum(isis)
 
 set.seed(125)
 #Full

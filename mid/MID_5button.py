@@ -45,11 +45,23 @@ version = "1.0" #
 data_dir = "data" # location of outputs to be generated; includes data for participants as well as trial selection and trial presentation sequence
 inst_dir = "text" # location of instructions directory
 inst_file = ["instructions_MID.txt"] # name of instructions files (needs to be .txt)
-study_times = [0.5, 2.25, 0.5, 1, 0.5] # component duration (s): cue, delay, target, feedback, lastfixation
+study_times = [0.75, 2.25, 0.50, 1, 0.75] # component duration (s): cue, delay, target, feedback, lastfixation
 initial_fix_dur = 8 # added time to make sure homogenicity of magnetic field is reached
 closing_fix_dur = 10 # added time to make sure haemodynamic responses of the last trials are properly modeled 
 min_target_dur = 0.13 # sets the minimum presentation time for target (in seconds)
 useDualScreen=2
+
+# Initialize timing variables
+cue_onset_time = None
+cue_duration = None
+isi_onset_time = None
+isi_duration = None
+target_onset_time = None
+target_duration = None
+feedback_onset_time = None
+feedback_duration = None
+iti_onset_time = None
+iti_duration = None
 
 # settings for fMRI emulation:
 MR_settings = {
@@ -156,6 +168,8 @@ def display_inst(instr_part,task,forwardKey,backKey,startKey,instructFinish):
     
 ### START SET UP OF STUDY 
 
+# New text for feedback
+
 # Ensure that relative paths start from the same directory as this script
 _thisDir = os.path.dirname(os.path.abspath(__file__))#.decode(sys.getfilesystemencoding())
 os.chdir(_thisDir)
@@ -200,7 +214,7 @@ forwardKey = "2"
 backKey = "1"
 startKey = "2"
 expKeys = ["1","2","3","4","5"] # including all response button keys to catch misaligned fingers/responses
-endKey = "5"
+endKey = "z"
 # Initialize components for Routine "instructions"
 instructFirst = visual.TextStim(win, text="Use your index finger to continue", height=fontH, color=textCol, pos=[0, -yScr/4])
 instructMove = visual.TextStim(win, text="Use your index finger to continue, or middle to go back.", height=fontH, color=textCol, pos=[0, -yScr/4])
@@ -229,10 +243,12 @@ dots = visual.TextStim(win,
     height=fontH*2, 
     color='black')
 DotsClock = core.Clock()
+blankText = visual.TextStim(win, text='', color='black', pos=(0, 0), height=0.1)  # Empty text
+blankClock = core.Clock()
 
 # Initialize components for Routine "instructions"
 instructPrompt = visual.TextStim(win=win, font='Arial', pos=(0, yScr/10), height=fontH, wrapWidth=wrapW, color=textCol);
-instructFinish = visual.TextStim(win, text="You have reached the end of the instructions. When you are ready to begin the task, place your fingers on the keys notify the experimenter.",
+instructFinish = visual.TextStim(win, text="You have reached the end of the instructions.\n\nPlease remember to STAY STILL.\n\nWe will select 10 random trials to determine your bonus reward.",
                                      height=fontH, color=textCol, pos=[0, 0], wrapWidth=wrapW)    
 
 # Initialize components for task transitions
@@ -252,9 +268,10 @@ Target = visual.Rect(win,width=0.5, height=0.5, fillColor = "white", lineWidth=0
 
 # Initialize components for Routine "Feedback"
 FeedbackClock = core.Clock()
-Trial_FB = visual.TextStim(win=win, name='Trial_FB', text='✓', font='Arial', pos=(0, 0), height=fontH*4, wrapWidth=None, ori=0, 
+Fig_FB = visual.TextStim(win=win, name='Fig_FB', text='✓', font='Arial', pos=(0, 0), height=fontH*3, wrapWidth=None, ori=0, 
     color='lime', colorSpace='rgb', opacity=1, bold=True)
-Blank_FB_Rectangle = visual.ImageStim(win=win, name='Blank_FB', mask=None,ori=0, pos=(0, 0), size=(xScr/8, xScr/8),texRes=128, interpolate=True)
+Text_FB = visual.TextStim(win=win, name='Fig_FB', text='blank', font='Arial', pos=(0, -fontH*3), height=fontH*2, wrapWidth=None, ori=0, 
+    color='lime', colorSpace='rgb', opacity=1, bold=False)
 
 # Create some handy timers
 globalClock = core.Clock()  # to track the time since experiment started
@@ -281,6 +298,7 @@ event.clearEvents(eventType='keyboard')
 wait.draw()
 win.flip()
 event.waitKeys(keyList=['equal'])
+globalClock.reset()  # Resets the global clock time to zero
 task_start_time = globalClock.getTime()  # Record the start time of the task
 nominalTime = 0 # set up virtual time keeper to align actual with a-priori time allocation
 
@@ -290,12 +308,12 @@ trial_counter = 0
 Tot_Earn = 0
 
 # create the staircase handler to adjust for individual threshold (stairs defined in units of screen frames; actual minimum presentation duration is determined by the min_target_dur parameter, the staircase procedure can only add frame rates to that minimum value)
-trials = data.StairHandler(startVal=10.0,
+trials = data.StairHandler(startVal=8.0,
     stepType='lin',
     stepSizes=[6, 3, 3, 2, 2, 1, 1],  # reduce step size every two reversals
     minVal=0, maxVal=15,
-    nUp=1, nDown=2,  # will home in on the 65% threshold (nUp=1, nDown=3 homes in on 80%)
-    nTrials=64,
+    nUp=1, nDown=2,  # will home in on the 65% threshold 
+    nTrials=56,
     extraInfo=expInfo)
 print(f"Number of stimuli rows: {len(stimuli)}")
 
@@ -309,13 +327,15 @@ t_start = globalClock.getTime()
 t = t_start
 while t < t_start + initial_fix_dur:
     t = globalClock.getTime()
-    fix.draw()
+    dots.draw()
     win.flip()              
 nominalTime = t # set up virtual time keeper to align actual with a-priori time allocation
 
 for thisTrial in trials:
     trials.addOtherData('time.onset', globalClock.getTime()) # add trial onset time to the data file
     currentLoop = trials
+    
+
         
     # update component parameters for each repeat
     Choice_Resp = event.BuilderKeyResponse()
@@ -350,6 +370,7 @@ for thisTrial in trials:
         if t >= 0.0 and Cue.status == NOT_STARTED:
             # keep track of start time/frame for later
             Cue.tStart = t
+            cue_onset_time = globalClock.getTime()
             Cue.setAutoDraw(True)
         frameRemains = 0.0 + study_times[0] - win.monitorFramePeriod * 0.75  # most of one frame period left
         if Cue.status == STARTED and t >= frameRemains:
@@ -373,10 +394,13 @@ for thisTrial in trials:
             win.flip()
     
     # -------Ending Routine "Cue"-------
+    cue_duration = globalClock.getTime() - cue_onset_time
     for thisComponent in CueComponents:
         if hasattr(thisComponent, "setAutoDraw"):
             thisComponent.setAutoDraw(False)
 
+    trials.addOtherData('cue_onset_time', cue_onset_time)
+    trials.addOtherData('cue_duration', cue_duration)
     # ------Prepare to start Routine "ISI"-------
     t = 0
     FixClock.reset()  # clock    
@@ -389,7 +413,7 @@ for thisTrial in trials:
     nominalTime += isi_time
     routineTimer.add(isi_time)
 
-    trials.addOtherData('isi_duration', isi_time)   # store total ISI duration
+    trials.addOtherData('isi_duration_int', isi_time)   # store total ISI duration
 
 
     # keep track of which components have finished
@@ -403,6 +427,7 @@ for thisTrial in trials:
         t = FixClock.getTime()
         if t >= 0 and fix.status == NOT_STARTED:
             fix.tStart = t
+            isi_onset_time = globalClock.getTime()
             fix.setAutoDraw(True)
         frameRemains = 0.0 + isi_time - win.monitorFramePeriod * 0.75  
         if fix.status == STARTED and t >= frameRemains:
@@ -426,9 +451,13 @@ for thisTrial in trials:
             win.flip()
     
     # -------Ending Routine "ISI"-------
+    isi_duration = globalClock.getTime() - isi_onset_time
+    trials.addOtherData('isi_onset_time', isi_onset_time)
+    trials.addOtherData('isi_duration_act', isi_duration)
     for thisComponent in isiComponents:
         if hasattr(thisComponent, "setAutoDraw"):
             thisComponent.setAutoDraw(False)    
+
     
     # ------Prepare to start Routine "Target"-------
     t = 0
@@ -458,6 +487,7 @@ for thisTrial in trials:
         if t >= 0.0 and Target.status == NOT_STARTED:
             # keep track of start time/frame for later
             Target.tStart = t
+            target_onset_time = globalClock.getTime()
             # display target 
             Target.setAutoDraw(True)
             # open response options
@@ -500,6 +530,7 @@ for thisTrial in trials:
             win.flip()
     
     # -------Ending Routine "Target"-------
+    target_duration = globalClock.getTime() - target_onset_time
     for thisComponent in TargetComponents:
         if hasattr(thisComponent, "setAutoDraw"):
             thisComponent.setAutoDraw(False)
@@ -510,6 +541,9 @@ for thisTrial in trials:
     # check responses to add RT
     if ThisResp:  # we had a response
         trials.addOtherData('Target_Resp.rt', Target_Resp.rt)
+
+    trials.addOtherData('target_onset_time', target_onset_time)
+    trials.addOtherData('target_duration', frameRemainsResp)
     
     # ------Prepare to start Routine "Feedback"-------
     t = 0
@@ -519,25 +553,40 @@ for thisTrial in trials:
     continueRoutine = True
     routineTimer.add(study_times[3])
     nominalTime += study_times[3]
+    earnedText = visual.TextStim(win, text="You earned $5!", height=fontH*2, color='lime', pos=(0, -fontH*4))  # Position below the checkmark
+    noEarnedText = visual.TextStim(win, text="You did not earn any money.", height=fontH*2, color='black', pos=(0, -fontH*4))  # Position below the horizontal bar
     
-    # update trial components
     if ThisResp and CueColor=='Green': # if it was a rewarded trial and a response was given
         Tot_Earn += 1
-        Trial_FB.setText('✓')  # Show checkmark
-        Trial_FB.setColor('lime')  # Bright green color
-        Trial_FB.setHeight(fontH*4)  # Make check larger
+        Fig_FB.setText('✓')  # Show checkmark
+        Fig_FB.setColor((0.0, 1.0, 0.0))  # Bright green color
+        Fig_FB.setHeight(fontH*5)  # Make check larger
+        Text_FB.setText('Trial earnings: $5')
+        Text_FB.setColor((0.0, 1.0, 0.0))  # Bright green color
         trials.addOtherData('Trial.rewardType', '1')
+
+    elif ThisResp and CueColor == 'Blue':  # Blue Cue Positive Response
+        Fig_FB.setText('✓')  # Show checkmark
+        Fig_FB.setColor((0.0, 1.0, 0.0))  # Bright green color
+        Fig_FB.setHeight(fontH*5)  # Make check larger
+        Text_FB.setText('Trial earnings: $0')
+        Text_FB.setColor('black') 
+        trials.addOtherData('Trial.rewardType', '1')
+
     else:    
-        Trial_FB.setText('−')  # Show horizontal bar
-        Trial_FB.setColor('#404040')  # Darker grey color
-        Trial_FB.setHeight(fontH*8)  # Made bar much larger
+        Fig_FB.setText('−')  # Show horizontal bar
+        Fig_FB.setColor('black')  # Darker grey color for better visibility
+        Fig_FB.setHeight(fontH*8)  # Made bar much larger
+        Text_FB.setText('Trial earnings: $0')
+        Text_FB.setColor('black')  
         trials.addOtherData('Trial.rewardType', '-1')
+
 
     # add to be presented stimuli to output
     trials.addOtherData('Total_Earned', Tot_Earn) 
             
     # keep track of which components have finished
-    FeedbackComponents = [Trial_FB]
+    FeedbackComponents = [Fig_FB, Text_FB]
     for thisComponent in FeedbackComponents:
         if hasattr(thisComponent, 'status'):
             thisComponent.status = NOT_STARTED
@@ -548,13 +597,19 @@ for thisTrial in trials:
         t = FeedbackClock.getTime()
         
         # feedback screen updates
-        if t >= 0.0 and Trial_FB.status == NOT_STARTED:
+        if t >= 0.0 and Fig_FB.status == NOT_STARTED:
+            feedback_onset_time = globalClock.getTime()
             # keep track of start time/frame for later
-            Trial_FB.tStart = t
-            Trial_FB.setAutoDraw(True)
+            Fig_FB.tStart = t
+            Fig_FB.setAutoDraw(True)
+            Text_FB.tStart = t
+            Text_FB.setAutoDraw(True)
+
         frameRemains = 0.0 + study_times[3] - win.monitorFramePeriod * 0.75  # most of one frame period left
-        if Trial_FB.status == STARTED and t >= frameRemains:
-            Trial_FB.setAutoDraw(False)
+        if Fig_FB.status == STARTED and t >= frameRemains:
+            Text_FB.setAutoDraw(False)
+            Fig_FB.setAutoDraw(False)
+            
 
         # check if all components have finished
         if not continueRoutine:  # a component has requested a forced-end of Routine
@@ -574,14 +629,18 @@ for thisTrial in trials:
             win.flip()
     
     # -------Ending Routine "Feedback"-------
+    feedback_duration = globalClock.getTime() - feedback_onset_time
     for thisComponent in FeedbackComponents:
         if hasattr(thisComponent, "setAutoDraw"):
             thisComponent.setAutoDraw(False)
+    trials.addOtherData('feedback_onset_time', feedback_onset_time)
+    trials.addOtherData('feedback_duration', feedback_duration)
 
     # ------Prepare to start Routine "ITI"-------
     t = 0
     FixClock.reset()  # clock    
-    DotsClock.reset()  # clock    
+    blankClock.reset()  # clock    
+    
 
     # reset the non-slip timer for next routine
     routineTimer.reset()   
@@ -592,23 +651,25 @@ for thisTrial in trials:
     nominalTime += iti_time
     routineTimer.add(iti_time)
     
-    trials.addOtherData('iti_final', iti_time)  # store final adjusted ITI
+    trials.addOtherData('iti_int', iti_time)  # store final adjusted ITI
     
     # keep track of which components have finished
-    itiComponents = [dots]
+    itiComponents = [blankText]
     for thisComponent in itiComponents:
         if hasattr(thisComponent, 'status'):
             thisComponent.status = NOT_STARTED
     
     # -------Start Routine "ITI"-------
     while continueRoutine and routineTimer.getTime() > 0:
-        t = DotsClock.getTime()
-       # if t >= 0 and dots.status == NOT_STARTED:
-        #    dots.tStart = t
-        #    dots.setAutoDraw(True)
-        #frameRemains = 0.0 + iti_time - win.monitorFramePeriod * 0.75  
-        #if dots.status == STARTED and t >= frameRemains:
-        #    dots.setAutoDraw(False)
+        t = blankClock.getTime()
+        
+        if t >= 0 and blankText.status == NOT_STARTED:
+            iti_onset_time = globalClock.getTime()
+            blankText.tStart = t
+            blankText.setAutoDraw(True)
+        frameRemains = 0.0 + iti_time - win.monitorFramePeriod * 0.75  
+        if blankText.status == STARTED and t >= frameRemains:
+            blankText.setAutoDraw(False)
 
         # check if all components have finished
         if not continueRoutine:  # a component has requested a forced-end of Routine
@@ -628,11 +689,14 @@ for thisTrial in trials:
             win.flip()
     
     # -------Ending Routine "ITI"-------
+    iti_duration = globalClock.getTime() - iti_onset_time
     for thisComponent in itiComponents:
         if hasattr(thisComponent, "setAutoDraw"):
             thisComponent.setAutoDraw(False)
 
     # add data to log file
+    trials.addOtherData('iti_onset_time', iti_onset_time)
+    trials.addOtherData('iti_duration', iti_duration)
     trials.addOtherData('time.global', globalClock.getTime())      
     trials.addOtherData('time.nominal', nominalTime)      
     trials.addOtherData('time.trial', CueClock.getTime())
@@ -650,7 +714,7 @@ continueRoutine = True
 # set fixation time duration 
 tend = globalClock.getTime()
 total_task_duration = tend - task_start_time
-dots_add = 530 - total_task_duration
+dots_add = 462 - total_task_duration
 dotsClock = core.Clock()
 
 routineTimer.reset()  # Reset the routine timer to ensure it's used from the correct starting point
