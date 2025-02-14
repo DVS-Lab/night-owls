@@ -21,10 +21,10 @@ sum(itis) + sum(isis)
 
 set.seed(125)
 #Full
-ntrials = 64
+ntrials = 56
 colors <- c(rep('Green', ntrials/2), rep('Blue', ntrials/2))
-isis <- c(rep(1.5, ntrials/2), rep(2, ntrials/4),  rep(2.5, ntrials/8), rep(3, ntrials/16), rep(3.5, ntrials/32),  rep(4, ntrials/32))
-itis <- c(rep(2, ntrials/2), rep(4, ntrials/4), rep(6, ntrials/8), rep(8, ntrials/8))
+isis <- c(rep(1.5, ntrials/2), rep(2, ntrials/4),  rep(2.5, ntrials/8), rep(3, ntrials/8))
+itis <- c(rep(2, ntrials/2), rep(3, ntrials/4), rep(5, ntrials/8), rep(7, ntrials/8))
 
 for (ses in 1:12){
   for (run in 1:2){
@@ -32,7 +32,7 @@ for (ses in 1:12){
     isisequence <- sample(isis)
     itisequence <- sample(itis)
     mid_trials <- as.data.frame(cbind(csequence,isisequence,itisequence))
-    mid_trials[4] <- as.numeric(mid_trials[,3]) - (1.75-as.numeric(mid_trials[,2]))
+    mid_trials[4] <- as.numeric(mid_trials[,3]) - (1.5-as.numeric(mid_trials[,2]))
     mid_trials <- mid_trials[-3]
     colnames(mid_trials) <- c('CueColor','isiTime','itiTime')
     print(sum(as.numeric(mid_trials[,2]))+sum(mid_trials[3]))
