@@ -64,25 +64,33 @@ win = visual.Window([800,600], monitor="testMonitor", units="deg", fullscr=useFu
 print("got to check 1")
 
 #define stimulus
-fixation = visual.TextStim(win, text="+", height=2)
+fixation = visual.TextStim(win, text="+", height=5,color="black")
+
+#create ellipsis stimulus
+dots = visual.TextStim(win, 
+    pos=[0, 0], 
+    text='...', 
+    height=5, 
+    color='black')
+DotsClock = core.Clock()
 
 #waiting for trigger
-ready_screen = visual.TextStim(win, text="Please wait for the block of trials to begin. \n\nRemember to make your choice when the question mark is on the screen and keep your head still!\n You do NOT need to be as quick as possible, but don't be too slow.", height=2.5)
+ready_screen = visual.TextStim(win, text="Please wait for the block of trials to begin. \n\nRemember to make your choice when the question mark is on the screen and keep your head still!\n You do NOT need to be as quick as possible, but don't be too slow.", height=2.5,wrapWidth=30)
 
 #decision screen
-nameStim = visual.TextStim(win=win,font='Arial',pos=(0, 5.5), height=1, color='white', colorSpace='rgb', opacity=1,depth=-1.0);
-cardStim = visual.Rect(win=win, name='polygon', width=(7.0,7.0)[0], height=(9.0,9.0)[1], ori=0, pos=(0, 0),lineWidth=5, lineColor=[1,1,1], lineColorSpace='rgb',fillColor=[0,0,0], fillColorSpace='rgb',opacity=1, depth=0.0, interpolate=True)
-question = visual.TextStim(win=win, name='text',text='?',font='Arial',pos=(0, 0), height=1, wrapWidth=None, ori=0, color='white', colorSpace='rgb', opacity=1,depth=-1.0);
-pictureStim =  visual.ImageStim(win, pos=(0,9.5), size=(6.65,6.65))
+nameStim = visual.TextStim(win=win,font='Arial',pos=(0, 6.5), height=2, color='white', colorSpace='rgb', opacity=1,depth=-1.0);
+cardStim = visual.Rect(win=win, name='polygon', width=9, height=15, ori=0, pos=(0, -4),lineWidth=5, lineColor=[1,1,1], lineColorSpace='rgb',fillColor=[0,0,0], fillColorSpace='rgb',opacity=1, depth=0.0, interpolate=True)
+question = visual.TextStim(win=win, name='text',text='?',font='Arial',pos=(0, -4), height=5, wrapWidth=None, ori=0, color='white', colorSpace='rgb', opacity=1,depth=-1.0);
+pictureStim =  visual.ImageStim(win, pos=(0,14), size=(12,12))
 
 #outcome screen
-outcome_cardStim = visual.Rect(win=win, name='polygon', width=(7.0,7.0)[0], height=(9.0,9.0)[1], ori=0, pos=(0, 0),lineWidth=5, lineColor=[1,1,1], lineColorSpace='rgb',fillColor=[0,0,0], fillColorSpace='rgb',opacity=1, depth=0.0, interpolate=True)
-outcome_text = visual.TextStim(win=win, name='text',text='',font='Arial',pos=(0, 0), height=2, wrapWidth=None, ori=0, color='white', colorSpace='rgb', opacity=1,depth=-1.0);
-outcome_money = visual.TextStim(win=win, name='text',text='',font='Wingdings 3',pos=(0, 2.0), height=2, wrapWidth=None, ori=0, colorSpace='rgb', opacity=1,depth=-1.0);
+outcome_cardStim = visual.Rect(win=win, name='polygon', width=9, height=15, ori=0, pos=(0, -4),lineWidth=5, lineColor=[1,1,1], lineColorSpace='rgb',fillColor=[0,0,0], fillColorSpace='rgb',opacity=1, depth=0.0, interpolate=True)
+outcome_text = visual.TextStim(win=win, name='text',text='',font='Arial',pos=(0, -4), height=4, wrapWidth=None, ori=0, color='white', colorSpace='rgb', opacity=1,depth=-1.0);
+outcome_money = visual.TextStim(win=win, name='text',text='',font='Wingdings 3',pos=(0, 1), height=5, wrapWidth=None, ori=0, colorSpace='rgb', opacity=1,depth=-1.0);
 
 #instructions
-instruct_screen = visual.TextStim(win, text='Welcome to the Card Guessing Game!\n\nIn this game you will have to guess the numerical value of a card for a chance to win some money.\n\nIf you think the value of the card will be lower than 5, press with your middle finger.\n\nIf you think the value of the card will be higher than 5, press with your index finger.', pos = (0,1), wrapWidth=20, height = 2.5)
-instruct_screen2 = visual.TextStim(win, text='Remember, you will be sharing monetary outcomes on each trial with the partner displayed at the top of the screen––either the computer or a previous participant.\n\nIf you guess correctly, you and your partner earn $10 ($5 each).\n If you guess incorrectly, you and your partner lose $5 ($2.50 each).', pos = (0,1), wrapWidth=20, height = 2.5)
+instruct_screen = visual.TextStim(win, text='Welcome to the Card Guessing Game!\n\nIn this game you will have to guess the numerical value of a card for a chance to win some money.\n\nIf you think the value of the card will be lower than 5, press with your middle finger.\n\nIf you think the value of the card will be higher than 5, press with your index finger.', pos = (0,1), wrapWidth=30, height = 2.5)
+instruct_screen2 = visual.TextStim(win, text='Remember, you will be sharing monetary outcomes on each trial with the partner displayed at the top of the screen––either the computer or a previous participant.\n\nIf you guess correctly, you and your partner earn $10 ($5 each).\n If you guess incorrectly, you and your partner lose $5 ($2.50 each).', pos = (0,1), wrapWidth=30, height = 2.5)
 
 #exit
 exit_screen = visual.TextStim(win, text='Thanks for playing! Please wait for instructions from the experimenter.', pos = (0,1), wrapWidth=20, height = 2.5)
@@ -165,7 +173,7 @@ def do_run(run, trials):
     trials.addData('studyStart',studyStart)
 
     #Initial Fixation screen
-    fixation.draw()
+    dots.draw()
     win.flip()
     initial_fixation_Onset = globalClock.getTime()
     trials.addData('InitFixOnset',initial_fixation_Onset)
@@ -354,7 +362,7 @@ def do_run(run, trials):
         ITI_onset = globalClock.getTime()
         iti_for_trial = float(trial['ITI'])
         #while timer.getTime() < iti_for_trial:
-        #fixation.draw()
+        dots.draw()
         #ITI_pre_onset = globalClock.getTime()
         win.flip()
         #ITI_post_onset = globalClock.getTime()
@@ -366,9 +374,9 @@ def do_run(run, trials):
         #trials.addData('ITI_post_onset',ITI_post_onset)
 
     #Final Fixation screen after trials completed
-    fixation.draw()
+    dots.draw()
     win.flip()
-    expected_dur = 430
+    expected_dur = 428
     #buffer_dur = 4
     #total_dur = expected_dur + buffer_dur
     #if globalClock.getTime() < expected_dur:
