@@ -1,2 +1,0 @@
-10.4890     WARNING     Requested an unavailable screen number - using first available.
-################ Experiment ended with exit code 0 [pid:10116] #################

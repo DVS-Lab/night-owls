@@ -67,7 +67,7 @@ print("got to check 1")
 fixation = visual.TextStim(win, text="+", height=2)
 
 #waiting for trigger
-ready_screen = visual.TextStim(win, text="Please wait for the block of trials to begin. \n\nRemember to make your choice when the question mark is on the screen and keep your head still!", height=1.5)
+ready_screen = visual.TextStim(win, text="Please wait for the block of trials to begin. \n\nRemember to make your choice when the question mark is on the screen and keep your head still!\n You do NOT need to be as quick as possible, but don't be too slow.", height=2.5)
 
 #decision screen
 nameStim = visual.TextStim(win=win,font='Arial',pos=(0, 5.5), height=1, color='white', colorSpace='rgb', opacity=1,depth=-1.0);
@@ -81,11 +81,11 @@ outcome_text = visual.TextStim(win=win, name='text',text='',font='Arial',pos=(0,
 outcome_money = visual.TextStim(win=win, name='text',text='',font='Wingdings 3',pos=(0, 2.0), height=2, wrapWidth=None, ori=0, colorSpace='rgb', opacity=1,depth=-1.0);
 
 #instructions
-instruct_screen = visual.TextStim(win, text='Welcome to the Card Guessing Game!\n\nIn this game you will have to guess the numerical value of a card for a chance to win some money.\n\nIf you think the value of the card will be lower than 5, press with your middle finger.\n\nIf you think the value of the card will be higher than 5, press with your index finger.', pos = (0,1), wrapWidth=20, height = 1.5)
-instruct_screen2 = visual.TextStim(win, text='Remember, you will be sharing monetary outcomes on each trial with the partner displayed at the top of the screen––either the computer or a previous participant.\n\nIf you guess correctly, you and your partner earn $10 ($5 each).\n If you guess incorrectly, you and your partner lose $5 ($2.50 each).', pos = (0,1), wrapWidth=20, height = 1.5)
+instruct_screen = visual.TextStim(win, text='Welcome to the Card Guessing Game!\n\nIn this game you will have to guess the numerical value of a card for a chance to win some money.\n\nIf you think the value of the card will be lower than 5, press with your middle finger.\n\nIf you think the value of the card will be higher than 5, press with your index finger.', pos = (0,1), wrapWidth=20, height = 2.5)
+instruct_screen2 = visual.TextStim(win, text='Remember, you will be sharing monetary outcomes on each trial with the partner displayed at the top of the screen––either the computer or a previous participant.\n\nIf you guess correctly, you and your partner earn $10 ($5 each).\n If you guess incorrectly, you and your partner lose $5 ($2.50 each).', pos = (0,1), wrapWidth=20, height = 2.5)
 
 #exit
-exit_screen = visual.TextStim(win, text='Thanks for playing! Please wait for instructions from the experimenter.', pos = (0,1), wrapWidth=20, height = 1.5)
+exit_screen = visual.TextStim(win, text='Thanks for playing! Please wait for instructions from the experimenter.', pos = (0,1), wrapWidth=20, height = 2.5)
 
 #logging
 expdir = os.getcwd()
@@ -354,7 +354,7 @@ def do_run(run, trials):
         ITI_onset = globalClock.getTime()
         iti_for_trial = float(trial['ITI'])
         #while timer.getTime() < iti_for_trial:
-        fixation.draw()
+        #fixation.draw()
         #ITI_pre_onset = globalClock.getTime()
         win.flip()
         #ITI_post_onset = globalClock.getTime()

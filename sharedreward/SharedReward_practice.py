@@ -68,7 +68,7 @@ print("got to check 1")
 fixation = visual.TextStim(win, text="+", height=2)
 
 #waiting for trigger
-ready_screen = visual.TextStim(win, text="Remember to make your choice when the question mark is on the screen. \n press the = key to begin", height=1.5)
+ready_screen = visual.TextStim(win, text="Remember to make your choice when the question mark is on the screen. Speed is NOT critical here, but don't be slow.\n press the = key to begin", height=1.5)
 
 #decision screen
 nameStim = visual.TextStim(win=win,font='Arial',pos=(0, 5.5), height=1, color='white', colorSpace='rgb', opacity=1,depth=-1.0);
@@ -82,11 +82,11 @@ outcome_text = visual.TextStim(win=win, name='text',text='',font='Arial',pos=(0,
 outcome_money = visual.TextStim(win=win, name='text',text='',font='Wingdings 3',pos=(0, 2.0), height=2, wrapWidth=None, ori=0, colorSpace='rgb', opacity=1,depth=-1.0);
 
 #instructions
-instruct_screen = visual.TextStim(win, text='Welcome to the Card Guessing Game!\n\nIn this game you will have to guess the numerical value of a card for a chance to win some money.\n\nIf you think the value of the card will be lower than 5, press 3.\n\nIf you think the value of the card will be higher than 5, press 2.', pos = (0,1), wrapWidth=20, height = 1.2)
-instruct_screen2 = visual.TextStim(win, text='Remember, you will be sharing monetary outcomes on each trial with the partner displayed at the top of the screen––either the computer or a previous participant.\n\nIf you guess correctly, you and your partner earn $10 ($5 each).\n If you guess incorrectly, you and your partner lose $5 ($2.50 each).', pos = (0,1), wrapWidth=20, height = 1.2)
+instruct_screen = visual.TextStim(win, text='Welcome to the Card Guessing Game!\n\nIn this game you will have to guess the numerical value of a card for a chance to win some money.\n\nIf you think the value of the card will be lower than 5, press 3.\n\nIf you think the value of the card will be higher than 5, press 2.', pos = (0,1), wrapWidth=20, height = 2)
+instruct_screen2 = visual.TextStim(win, text='Remember, you will be sharing monetary outcomes on each trial with the partner displayed at the top of the screen––either the computer or a previous participant.\n\nIf you guess correctly, you and your partner earn $10 ($5 each).\n If you guess incorrectly, you and your partner lose $5 ($2.50 each).', pos = (0,1), wrapWidth=20, height = 2)
 
 #exit
-exit_screen = visual.TextStim(win, text='Thanks for playing! Please wait for instructions from the experimenter.', pos = (0,1), wrapWidth=20, height = 1.2)
+exit_screen = visual.TextStim(win, text='Thanks for playing! Please wait for instructions from the experimenter.', pos = (0,1), wrapWidth=20, height = 2)
 
 #logging
 expdir = os.getcwd()
@@ -160,9 +160,9 @@ def do_run(run, trials):
     #wait for trigger
     ready_screen.draw()
     win.flip()
+    event.waitKeys(keyList=('equal'))
     globalClock.reset()
     studyStart = globalClock.getTime()
-    event.waitKeys(keyList=('equal'))
     trials.addData('studyStart',studyStart)
 
     #Initial Fixation screen
@@ -355,7 +355,7 @@ def do_run(run, trials):
         ITI_onset = globalClock.getTime()
         iti_for_trial = float(trial['ITI'])
         #while timer.getTime() < iti_for_trial:
-        fixation.draw()
+        #fixation.draw()
         #ITI_pre_onset = globalClock.getTime()
         win.flip()
         #ITI_post_onset = globalClock.getTime()
@@ -369,7 +369,7 @@ def do_run(run, trials):
     #Final Fixation screen after trials completed
     fixation.draw()
     win.flip()
-    expected_dur = 126
+    expected_dur = 90
     buffer_dur = 4
     total_dur = expected_dur + buffer_dur
     if globalClock.getTime() < total_dur:
@@ -386,7 +386,8 @@ def do_run(run, trials):
 
     #endTime = 0.01 # not sure if this will take a 0, so giving it 0.01 and making sure it is defined
 
-
+print(f"Total trials read from CSV: {len(trial_data)}")
+print(f"Total trials in TrialHandler: {trials_run.nTotal}")
 for run, trials in enumerate([trials_run]):
     do_run(run, trials)
 

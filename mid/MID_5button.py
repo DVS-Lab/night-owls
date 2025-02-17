@@ -65,8 +65,8 @@ iti_duration = None
 
 # settings for fMRI emulation:
 MR_settings = {
-    'TR': 2.000,     # duration (sec) per whole-brain volume
-    'volumes': 110,    # number of whole-brain 3D volumes per scanning run
+    'TR': 1.615,     # duration (sec) per whole-brain volume
+    'volumes': 283,    # number of whole-brain 3D volumes per scanning run
     'sync': 'equal', # character to use as the sync timing event; assumed to come at start of a volume
     'skip': 2,       # number of volumes lacking a sync pulse at start of scan (for T1 stabilization)
     'sound': True    # in test mode: play a tone as a reminder of scanner noise
@@ -243,9 +243,13 @@ dots = visual.TextStim(win,
     height=fontH*2, 
     color='black')
 DotsClock = core.Clock()
+#Blank stimulus
 blankText = visual.TextStim(win, text='', color='black', pos=(0, 0), height=0.1)  # Empty text
 blankClock = core.Clock()
 
+#Create circle
+circle_outline = visual.Circle(win, radius=fontH, edges=128, lineWidth=2, lineColor='white',fillColor=None, pos=(0, 0))  # Adjust radius and color as needed
+CircleClock = core.Clock()
 # Initialize components for Routine "instructions"
 instructPrompt = visual.TextStim(win=win, font='Arial', pos=(0, yScr/10), height=fontH, wrapWidth=wrapW, color=textCol);
 instructFinish = visual.TextStim(win, text="You have reached the end of the instructions.\n\nPlease remember to STAY STILL.\n\nWe will select 10 random trials to determine your bonus reward.",
@@ -639,7 +643,7 @@ for thisTrial in trials:
     # ------Prepare to start Routine "ITI"-------
     t = 0
     FixClock.reset()  # clock    
-    blankClock.reset()  # clock    
+    DotsClock.reset()  # clock    
     
 
     # reset the non-slip timer for next routine
@@ -654,22 +658,22 @@ for thisTrial in trials:
     trials.addOtherData('iti_int', iti_time)  # store final adjusted ITI
     
     # keep track of which components have finished
-    itiComponents = [blankText]
+    itiComponents = [dots]
     for thisComponent in itiComponents:
         if hasattr(thisComponent, 'status'):
             thisComponent.status = NOT_STARTED
     
     # -------Start Routine "ITI"-------
     while continueRoutine and routineTimer.getTime() > 0:
-        t = blankClock.getTime()
+        t = DotsClock.getTime()
         
-        if t >= 0 and blankText.status == NOT_STARTED:
+        if t >= 0 and dots.status == NOT_STARTED:
             iti_onset_time = globalClock.getTime()
-            blankText.tStart = t
-            blankText.setAutoDraw(True)
+            dots.tStart = t
+            dots.setAutoDraw(True)
         frameRemains = 0.0 + iti_time - win.monitorFramePeriod * 0.75  
-        if blankText.status == STARTED and t >= frameRemains:
-            blankText.setAutoDraw(False)
+        if dots.status == STARTED and t >= frameRemains:
+            dots.setAutoDraw(False)
 
         # check if all components have finished
         if not continueRoutine:  # a component has requested a forced-end of Routine
@@ -714,7 +718,7 @@ continueRoutine = True
 # set fixation time duration 
 tend = globalClock.getTime()
 total_task_duration = tend - task_start_time
-dots_add = 462 - total_task_duration
+dots_add = 457 - total_task_duration
 dotsClock = core.Clock()
 
 routineTimer.reset()  # Reset the routine timer to ensure it's used from the correct starting point

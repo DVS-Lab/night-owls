@@ -253,7 +253,11 @@ FeedbackClock = core.Clock()
 Trial_FB = visual.TextStim(win=win, name='Trial_FB', text='✓', font='Arial', pos=(0, 0), height=fontH*4, wrapWidth=None, ori=0, 
     color='lime', colorSpace='rgb', opacity=1, bold=True)
 Blank_FB_Rectangle = visual.ImageStim(win=win, name='Blank_FB', mask=None,ori=0, pos=(0, 0), size=(xScr/8, xScr/8),texRes=128, interpolate=True)
-
+Fig_FB = visual.TextStim(win=win, name='Fig_FB', text='✓', font='Arial', pos=(0, 0), height=fontH*3, wrapWidth=None, ori=0, 
+    color='lime', colorSpace='rgb', opacity=1, bold=True)
+Text_FB = visual.TextStim(win=win, name='Fig_FB', text='blank', font='Arial', pos=(0, -fontH*3), height=fontH*2, wrapWidth=None, ori=0, 
+    color='lime', colorSpace='rgb', opacity=1, bold=False)
+    
 # Create some handy timers
 globalClock = core.Clock()  # to track the time since experiment started
 routineTimer = core.CountdownTimer()  # to track time remaining of each (non-slip) routine 
@@ -305,7 +309,7 @@ t_start = globalClock.getTime()
 t = t_start
 while t < t_start + initial_fix_dur:
     t = globalClock.getTime()
-    fix.draw()
+    dots.draw()
     win.flip()              
 nominalTime = t # set up virtual time keeper to align actual with a-priori time allocation
 
@@ -515,25 +519,40 @@ for thisTrial in trials:
     continueRoutine = True
     routineTimer.add(study_times[3])
     nominalTime += study_times[3]
+    earnedText = visual.TextStim(win, text="You earned $5!", height=fontH*2, color='lime', pos=(0, -fontH*4))  # Position below the checkmark
+    noEarnedText = visual.TextStim(win, text="You did not earn any money.", height=fontH*2, color='black', pos=(0, -fontH*4))  # Position below the horizontal bar
     
-    # update trial components
     if ThisResp and CueColor=='Green': # if it was a rewarded trial and a response was given
         Tot_Earn += 1
-        Trial_FB.setText('✓')  # Show checkmark
-        Trial_FB.setColor('lime')  # Bright green color
-        Trial_FB.setHeight(fontH*4)  # Make check larger
+        Fig_FB.setText('✓')  # Show checkmark
+        Fig_FB.setColor((0.0, 1.0, 0.0))  # Bright green color
+        Fig_FB.setHeight(fontH*5)  # Make check larger
+        Text_FB.setText('Trial earnings: $5')
+        Text_FB.setColor((0.0, 1.0, 0.0))  # Bright green color
+        #trials.addOtherData('Trial.rewardType', '1')
+
+    elif ThisResp and CueColor == 'Blue':  # Blue Cue Positive Response
+        Fig_FB.setText('✓')  # Show checkmark
+        Fig_FB.setColor((0.0, 1.0, 0.0))  # Bright green color
+        Fig_FB.setHeight(fontH*5)  # Make check larger
+        Text_FB.setText('Trial earnings: $0')
+        Text_FB.setColor('black') 
         trials.addOtherData('Trial.rewardType', '1')
+
     else:    
-        Trial_FB.setText('−')  # Show horizontal bar
-        Trial_FB.setColor('#404040')  # Darker grey color
-        Trial_FB.setHeight(fontH*8)  # Made bar much larger
-        trials.addOtherData('Trial.rewardType', '-1')
+        Fig_FB.setText('−')  # Show horizontal bar
+        Fig_FB.setColor('black')  # Darker grey color for better visibility
+        Fig_FB.setHeight(fontH*8)  # Made bar much larger
+        Text_FB.setText('Trial earnings: $0')
+        Text_FB.setColor('black')  
+        #trials.addOtherData('Trial.rewardType', '-1')
+
 
     # add to be presented stimuli to output
-    trials.addOtherData('Total_Earned', Tot_Earn) 
+    #trials.addOtherData('Total_Earned', Tot_Earn) 
             
     # keep track of which components have finished
-    FeedbackComponents = [Trial_FB]
+    FeedbackComponents = [Fig_FB, Text_FB]
     for thisComponent in FeedbackComponents:
         if hasattr(thisComponent, 'status'):
             thisComponent.status = NOT_STARTED
@@ -544,13 +563,19 @@ for thisTrial in trials:
         t = FeedbackClock.getTime()
         
         # feedback screen updates
-        if t >= 0.0 and Trial_FB.status == NOT_STARTED:
+        if t >= 0.0 and Fig_FB.status == NOT_STARTED:
+            feedback_onset_time = globalClock.getTime()
             # keep track of start time/frame for later
-            Trial_FB.tStart = t
-            Trial_FB.setAutoDraw(True)
+            Fig_FB.tStart = t
+            Fig_FB.setAutoDraw(True)
+            Text_FB.tStart = t
+            Text_FB.setAutoDraw(True)
+
         frameRemains = 0.0 + study_times[3] - win.monitorFramePeriod * 0.75  # most of one frame period left
-        if Trial_FB.status == STARTED and t >= frameRemains:
-            Trial_FB.setAutoDraw(False)
+        if Fig_FB.status == STARTED and t >= frameRemains:
+            Text_FB.setAutoDraw(False)
+            Fig_FB.setAutoDraw(False)
+            
 
         # check if all components have finished
         if not continueRoutine:  # a component has requested a forced-end of Routine
@@ -570,9 +595,12 @@ for thisTrial in trials:
             win.flip()
     
     # -------Ending Routine "Feedback"-------
+    feedback_duration = globalClock.getTime() - feedback_onset_time
     for thisComponent in FeedbackComponents:
         if hasattr(thisComponent, "setAutoDraw"):
             thisComponent.setAutoDraw(False)
+    #trials.addOtherData('feedback_onset_time', feedback_onset_time)
+    #trials.addOtherData('feedback_duration', feedback_duration)
 
     # ------Prepare to start Routine "ITI"-------
     t = 0
@@ -648,7 +676,7 @@ continueRoutine = True
 # set fixation time duration 
 tend = globalClock.getTime()
 total_task_duration = tend - task_start_time
-dots_add = 85 - total_task_duration
+dots_add = 82 - total_task_duration
 dotsClock = core.Clock()
 
 routineTimer.reset()  # Reset the routine timer to ensure it's used from the correct starting point

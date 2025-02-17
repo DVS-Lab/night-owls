@@ -86,11 +86,11 @@ maindir = pwd;
 outfiles = fullfile(maindir, 'event-related', 'params');
 mkdir(outfiles);
 
-subout = fullfile(outfiles, 'prac');
+subout = fullfile(outfiles, 'sub-prac');
 mkdir(subout);
 
-ntrials = 18;
-trial_types = [repmat([1 3 4 6], 1, 3), repmat([2 5], 1, 3)];
+ntrials = 12;
+trial_types = [repmat([1 3 4 6], 1, 2), repmat([2 5], 1, 2)];
 ISI_distribution = repmat([0.85 1.7 2.55], 1, 6);
 ISI_distribution = ISI_distribution(randperm(length(ISI_distribution)));
 ITI_distribution = repmat([1 2 3 4], 1, 6);
