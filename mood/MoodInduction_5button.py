@@ -216,7 +216,7 @@ with open(file_name, "w", newline="") as file:
 # Instruction page
 instruction_text = visual.TextStim(
     win,
-    text="You are about to see the memory you described earlier. Please reminisce on different parts of this memory for the next few minutes while listening to music.\nFeel free to daydream about the memory (relive it), but please keep your eyes open. Your goal is to get in as good of a mood as possible with this memory!\n\nPlease stay awake and remember not to move", 
+    text="You are about to see the memory you described earlier. Please reminisce on different parts of this memory for the next few minutes while listening to music.\nFeel free to daydream about the memory (relive it), but please keep your eyes open. Your goal is to get in as good of a mood as possible with this memory!\nThe music will stop a bit early, please continue with the task.\n\nPlease stay awake and remember not to move.", 
     color="white",
     pos=(0, 0),
     height=fontH,
@@ -230,7 +230,7 @@ def load_and_wrap_text(filename, max_width=60):
         content = file.read()
     wrapped_text = textwrap.fill(content, width=max_width)
     return wrapped_text
-filename = "example.txt"  # Replace with text file path
+filename = f"memories/sub-{subj_id}/sub-{subj_id}_ses-{ses}_memory.txt"  
 max_width = 60  # Adjust as needed for text wrapping
 text_content = load_and_wrap_text(filename, max_width)
 
@@ -245,7 +245,7 @@ text_stim = visual.TextStim(
 )
 
 # Load audio files
-audio_files = ["song1.wav", "song2.wav", "song3.wav"]  
+audio_files = ["song1.wav", "song2.wav"]  
 #audio_files = ["test1.wav", "test2.wav"]  
 
 # Show the instruction page
@@ -269,7 +269,7 @@ sd.default.device[1] = 3  # Replace with preferred device ID
 audio_sounds = [sound.Sound(file) for file in audio_files]
 
 # Total time to display the text and play audio
-display_duration = 420  # in seconds
+display_duration = 316  # in seconds
 
 # Display text while playing audio sequentially
 text_stim.draw()  # Draw the text on screen
