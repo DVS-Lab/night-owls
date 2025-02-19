@@ -4,6 +4,10 @@ import re
 from psychopy import visual, event, core, gui, prefs, monitors
 import pyglet
 import sys
+import numpy
+
+useFullScreen = True
+
 useDualScreen=2
 
 #get subjID
@@ -27,15 +31,16 @@ def make_screen():
     platform = pyglet.canvas.get_display()
     display = pyglet.canvas.get_display()
     screens = display.get_screens()
-    win_res = [screens[-1].width, screens[-1].height]
-    exp_mon = monitors.Monitor('exp_mon')
+    win_res = [screens[-2].width, screens[-2].height]
+    exp_mon = monitors.Monitor('testMonitor')
     exp_mon.setSizePix(win_res)
     win = visual.Window(size=win_res, screen=useDualScreen, allowGUI=True,
                         fullscr=True, monitor='testMonitor', units='height',
                         color=(0.2, 0.2, 0.2))
     return(win_res, win)
-    
+  
 [win_res, win] = make_screen()
+  
 xScr = float(win_res[0])/win_res[1]
 yScr = 1.
 fontH = yScr/25

@@ -114,7 +114,7 @@ def start_datafiles(_thisDir, expName, expInfo, data_dir, sn, ses, run):
     if not os.path.exists(subject_folder):
         os.makedirs(subject_folder)
 
-    fname = f"mid_sub-{sn}_ses-{ses}_run-{run}"
+    fname = f"sub-{sn}_task-mid_ses-{ses}_run-{run}"
     curdirlist = os.listdir(_thisDir + os.sep + data_dir)
     for i in curdirlist:
             if i == fname + '.csv':
@@ -189,6 +189,8 @@ thisExp = data.ExperimentHandler(name=expName, version=version, extraInfo=expInf
 # save a log file for detail verbose info
 logFile = logging.LogFile(filename+'.log', level=logging.EXP)
 logging.console.setLevel(logging.WARNING)  # this outputs to the screen, not a file
+outfile = f"data/sub-{sn}/sub-{sn}_task-mid_ses-{ses}_run-{run}.csv"
+
 
 endExpNow = False  # flag for 'escape' or other condition => quit the exp
 
@@ -258,7 +260,6 @@ instructFinish = visual.TextStim(win, text="You have reached the end of the inst
 # Initialize components for task transitions
 wait = visual.TextStim(win, pos=[0, 0], text="The task will begin momentarily. Get ready...", height=fontH, color=textCol)
 wait_str = "The task will begin momentarily. Get ready..."
-endf = visual.TextStim(win, pos=[0, 0], text="Thank you. This part of the experiment is now complete.",wrapWidth=wrapW, height=fontH, color=textCol)                                     
 
 # Initialize components for Routine "cue" 
 
@@ -557,7 +558,7 @@ for thisTrial in trials:
     continueRoutine = True
     routineTimer.add(study_times[3])
     nominalTime += study_times[3]
-    earnedText = visual.TextStim(win, text="You earned $5!", height=fontH*2, color='lime', pos=(0, -fontH*4))  # Position below the checkmark
+    earnedText = visual.TextStim(win, text="You earned $3!", height=fontH*2, color='lime', pos=(0, -fontH*4))  # Position below the checkmark
     noEarnedText = visual.TextStim(win, text="You did not earn any money.", height=fontH*2, color='black', pos=(0, -fontH*4))  # Position below the horizontal bar
     
     if ThisResp and CueColor=='Green': # if it was a rewarded trial and a response was given
@@ -751,11 +752,6 @@ while continueRoutine and routineTimer.getTime() > 0:
 # end of study message
 fend = globalClock.getTime()
 final_duration = fend - task_start_time
-
-endf.draw()
-win.flip()
-event.waitKeys(keyList=['2'])
-
 # these shouldn't be strictly necessary (should auto-save)
 thisExp.addData('Total_Task_Duration', final_duration)
 thisExp.saveAsWideText(filename+'.csv',fileCollisionMethod = 'overwrite')
@@ -764,5 +760,34 @@ logging.flush()
 
 # make sure everything is closed down
 thisExp.abort()  # or data files will save again on exit
+# Load the CSV file
+
+df = pd.read_csv(outfile)
+
+# Randomly select 10 trials
+selected_trials = df.sample(n=10, random_state=125)
+
+total_earnings = 0
+
+# Process each trial
+for index, row in selected_trials.iterrows():
+    resp = row['.response']
+    rcue = row['cue.color']
+    
+    if rcue == 'Green' and resp == 1:
+        change = 3
+    else:
+        change = 0     
+    total_earnings += change
+    
+if total_earnings > 20:
+    total_earnings = 20
+
+endf = visual.TextStim(win, pos=[0, 0], text=f"Thanks for playing, you earned ${total_earnings} for this run!\n\nPlease wait for instructions from the experimenter.",wrapWidth=wrapW, height=fontH, color=textCol)                                     
+
+endf.draw()
+win.flip()
+event.waitKeys(keyList=['2'])
+
 win.close()
 core.quit()
