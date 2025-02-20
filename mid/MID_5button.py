@@ -566,7 +566,7 @@ for thisTrial in trials:
         Fig_FB.setText('✓')  # Show checkmark
         Fig_FB.setColor((0.0, 1.0, 0.0))  # Bright green color
         Fig_FB.setHeight(fontH*5)  # Make check larger
-        Text_FB.setText('Trial earnings: $5')
+        Text_FB.setText('Trial earnings: $3')
         Text_FB.setColor((0.0, 1.0, 0.0))  # Bright green color
         trials.addOtherData('Trial.rewardType', '1')
 
@@ -788,6 +788,7 @@ endf = visual.TextStim(win, pos=[0, 0], text=f"Thanks for playing, you earned ${
 endf.draw()
 win.flip()
 event.waitKeys(keyList=['2'])
+print(f"total earnings: ${total_earnings}")
 
 win.close()
 core.quit()

@@ -519,7 +519,7 @@ for thisTrial in trials:
     continueRoutine = True
     routineTimer.add(study_times[3])
     nominalTime += study_times[3]
-    earnedText = visual.TextStim(win, text="You earned $5!", height=fontH*2, color='lime', pos=(0, -fontH*4))  # Position below the checkmark
+    earnedText = visual.TextStim(win, text="You earned $3!", height=fontH*2, color='lime', pos=(0, -fontH*4))  # Position below the checkmark
     noEarnedText = visual.TextStim(win, text="You did not earn any money.", height=fontH*2, color='black', pos=(0, -fontH*4))  # Position below the horizontal bar
     
     if ThisResp and CueColor=='Green': # if it was a rewarded trial and a response was given

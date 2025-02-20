@@ -379,62 +379,21 @@ def do_run(run, trials):
     core.wait(endTime)
     final_fixation_offset = globalClock.getTime()
     trials.addData('final_fix_offset', final_fixation_offset)
-    
-    #Calculate earnings
-    # Randomly select 10 trials
-    print(f"{trials.trialList}")
-    all_trials = trials.trialList
-    selected_trials = random.sample(all_trials, 10)
-
-    total_earnings = 0
-
-    # Process each trial
-    for trial in selected_trials:
-    # Convert values to int if necessary
-        resp = int(trial.get('resp', 0))
-        outcome_val = int(trial.get('outcome_val', 0))
+   
         
-        if outcome_val == 5:
-            change = 0
-        elif resp == 2 and outcome_val > 5:
-            change = 5
-        elif resp == 2 and outcome_val < 5:
-            change = -2.5
-        elif resp == 3 and outcome_val > 5:
-            change = -2.5
-        elif resp == 3 and outcome_val < 5:
-            change = 5
-        else:
-            change = 0
-        
-        total_earnings += change
-
-
-    # Adjust final sum based on conditions
-    #if total_earnings < 3:
-     #   total_earnings = 4
-    #elif total_earnings > 20:
-     #   total_earnings = 20
-        
-    for trial in all_trials:
-        trial['total_earnings'] = total_earnings
-    
-    
-
     #os.chdir(subjdir)
     #trials.saveAsWideText(fileName)
     #os.chdir(expdir)
-    return total_earnings
 
     #endTime = 0.01 # not sure if this will take a 0, so giving it 0.01 and making sure it is defined
 
 print(f"Total trials read from CSV: {len(trial_data)}")
 print(f"Total trials in TrialHandler: {trials_run.nTotal}")
 for run, trials in enumerate([trials_run]):
-   total_earnings= do_run(run, trials)
+   do_run(run, trials)
 
 # Exit
-exit_screen = visual.TextStim(win, text=f"Thanks for playing, you earned ${total_earnings} for this run!\n\nPlease wait for instructions from the experimenter.", pos = (0,1), wrapWidth=20, height = 2.5)
+exit_screen = visual.TextStim(win, text=f"Any questions?", pos = (0,1), wrapWidth=20, height = 2.5)
 exit_screen.draw()
 win.flip()
 event.waitKeys()

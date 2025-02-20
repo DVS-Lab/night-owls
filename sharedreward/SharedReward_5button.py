@@ -438,6 +438,7 @@ exit_screen = visual.TextStim(win, text=f"Thanks for playing, you earned ${total
 exit_screen.draw()
 win.flip()
 event.waitKeys()
+print(f"total earnings: ${total_earnings}")
 
 # End the experiment
 core.quit()
