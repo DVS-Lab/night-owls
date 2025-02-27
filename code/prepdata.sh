@@ -8,18 +8,11 @@
 
 # Notes:
 # 1) containers live under /data/tools on local computer. should these relative paths and shared? YODA principles would suggest so.
-# 2) other projects should use Jeff's python script for fixing the IntendedFor
-# 3) aside from containers, only absolute path in whole workflow (transparent to folks who aren't allowed to access to raw data)
-sourcedata=/ZPOOL/data/sourcedata/sourcedata/rf1-sra
-sub=$1
+# 2) aside from containers, only absolute path in whole workflow (transparent to folks who aren't allowed to access to raw data)
+sourcedata=/ZPOOL/data/sourcedata/sourcedata/NOSC
 
-except_subs=(1001)
-for i in "${except_subs[@]}" ; do
-    if [ "$i" -eq "$sub" ] ; then
-        echo "Exception ${sub}"
-	      exit 1
-    fi
-done
+sub=$1
+ses=$2
 
 
 # ensure paths are correct irrespective from where user runs the script
@@ -42,23 +35,22 @@ apptainer run --cleanenv \
 -B $dsroot:/out \
 -B $sourcedata:/sourcedata \
 /ZPOOL/data/tools/heudiconv-1.3.2.sif \
--d /sourcedata/Smith-SRA-{subject}/*/scans/*/*/DICOM/files/*.dcm \
+-d /sourcedata/Smith-NOSC-{subject}-SES{session}/*/scans/*/*/DICOM/files/*.dcm \
 -o /out/bids/ \
--f /out/code/heuristics_rf1.py \
+-f /out/code/heuristics.py \
 -s $sub \
+-ses $ses \
 -c dcm2niix \
 -b --minmeta --overwrite
 
 
-## PART 2: Defacing anatomicals and date shifting to ensure compatibility with data sharing.
+## PART 2: Defacing anatomicals and date shifting to ensure compatibility with data sharing. (do we really need to shift the dates? ask IRB?)
 
 ## note that you may need to install pydeface via pip or conda
 bidsroot=$dsroot/bids
 echo "defacing subject $sub"
 pydeface ${bidsroot}/sub-${sub}/anat/sub-${sub}_T1w.nii.gz
 mv -f ${bidsroot}/sub-${sub}/anat/sub-${sub}_T1w_defaced.nii.gz ${bidsroot}/sub-${sub}/anat/sub-${sub}_T1w.nii.gz
-pydeface ${bidsroot}/sub-${sub}/anat/sub-${sub}_FLAIR.nii.gz
-mv -f ${bidsroot}/sub-${sub}/anat/sub-${sub}_FLAIR_defaced.nii.gz ${bidsroot}/sub-${sub}/anat/sub-${sub}_FLAIR.nii.gz
 
 ## shift dates on scans to reduce likelihood of re-identification
 python $codedir/shiftdates.py $dsroot/bids/sub-${sub}/sub-${sub}_scans.tsv
