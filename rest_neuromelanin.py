@@ -37,7 +37,7 @@ while True:
 # Start task: Show sphere outline for 601 seconds or until 'z' is pressed
 sphere = visual.Circle(win, radius=1, edges=128, lineColor='white', fillColor=None,lineWidth=4)
 start_time = core.getTime()
-while core.getTime() - start_time < 601:
+while core.getTime() - start_time < 701:
     sphere.draw()
     win.flip()
     keys = event.getKeys()
