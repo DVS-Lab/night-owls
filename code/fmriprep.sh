@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # example code for FMRIPREP
-# runs FMRIPREP on input subject
+# runs FMRIPREP on input subject and session
 # usage: bash fmriprep.sh subject session
 # example: bash fmriprep.sh 102 01
 
@@ -35,7 +35,7 @@ apptainer run --cleanenv \
 /ZPOOL/data/tools/fmriprep-24.1.1.simg \
 /base/bids /base/derivatives/fmriprep \
 participant --participant_label $sub \
---longitudinal \
+--session-label $ses \
 --stop-on-first-crash \
 --me-output-echos \
 --output-spaces MNI152NLin6Asym \
@@ -51,4 +51,6 @@ participant --participant_label $sub \
 # Expect separate preprocessing outputs for each session.
 
 # --session-label $ses \
+# --longitudinal \
+
 
