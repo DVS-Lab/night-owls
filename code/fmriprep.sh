@@ -35,7 +35,7 @@ apptainer run --cleanenv \
 /ZPOOL/data/tools/fmriprep-24.1.1.simg \
 /base/bids /base/derivatives/fmriprep \
 participant --participant_label $sub \
---session-label $ses \
+--longitudinal \
 --stop-on-first-crash \
 --me-output-echos \
 --output-spaces MNI152NLin6Asym \
@@ -49,3 +49,6 @@ participant --participant_label $sub \
 # Use --session-label ses-XX to process a single session at a time.
 # Use --longitudinal to prevent anatomical image averaging across sessions.
 # Expect separate preprocessing outputs for each session.
+
+# --session-label $ses \
+

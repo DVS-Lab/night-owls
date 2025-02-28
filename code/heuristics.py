@@ -6,21 +6,22 @@ def create_key(template, outtype=('nii.gz',), annotation_classes=None):
         return template, outtype, annotation_classes
 
 def infotodict(seqinfo):
-    t1w = create_key('sub-{subject}/ses-{session}/anat/sub-{subject}_ses-{session}_T1w')
-    nm = create_key('sub-{subject}/ses-{session}/anat/sub-{subject}_ses-{session}_NM')
-    sharedreward_mag = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-sharedreward_run-{item:d}_part-mag_bold')
-    sharedreward_phase = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-sharedreward_run-{item:d}_part-phase_bold')
-    sharedreward_sbref = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-sharedreward_run-{item:d}_sbref')
-    mid_mag = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-mid_run-{item:d}_part-mag_bold')
-    mid_phase = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-mid_run-{item:d}_part-phase_bold')
-    mid_sbref = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-mid_run-{item:d}_sbref')
-    rest_mag = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-rest_run-{item:d}_part-mag_bold')
-    rest_phase = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-rest_run-{item:d}_part-phase_bold')
-    rest_sbref = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-rest_run-{item:d}_sbref')
+    t1w = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_T1w')
+    nm = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_NM')
+    sharedreward_mag = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-sharedreward_run-{item:d}_part-mag_bold')
+    sharedreward_phase = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-sharedreward_run-{item:d}_part-phase_bold')
+    sharedreward_sbref = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-sharedreward_run-{item:d}_sbref')
+    mid_mag = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-mid_run-{item:d}_part-mag_bold')
+    mid_phase = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-mid_run-{item:d}_part-phase_bold')
+    mid_sbref = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-mid_run-{item:d}_sbref')
+    rest_mag = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_run-{item:d}_part-mag_bold')
+    rest_phase = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_run-{item:d}_part-phase_bold')
+    rest_sbref = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-rest_run-{item:d}_sbref')
  
 
     info = {t1w: [], nm: [], 
             sharedreward_mag: [], sharedreward_phase: [], sharedreward_sbref: [],
+            rest_mag: [], rest_phase: [], rest_sbref: [],
             mid_mag: [], mid_phase: [], mid_sbref: []}
     
     list_of_ids = [s.series_id for s in seqinfo]
