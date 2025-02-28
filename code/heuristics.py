@@ -14,6 +14,9 @@ def infotodict(seqinfo):
     mid_mag = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-mid_run-{item:d}_part-mag_bold')
     mid_phase = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-mid_run-{item:d}_part-phase_bold')
     mid_sbref = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-mid_run-{item:d}_sbref')
+    rest_mag = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-rest_run-{item:d}_part-mag_bold')
+    rest_phase = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-rest_run-{item:d}_part-phase_bold')
+    rest_sbref = create_key('sub-{subject}/ses-{session}/func/sub-{subject}_ses-{session}_task-rest_run-{item:d}_sbref')
  
 
     info = {t1w: [], nm: [], 
@@ -44,6 +47,15 @@ def infotodict(seqinfo):
             info[mid_sbref].append(list_of_ids[idx -1])
         if (s.dim4 > 1000) and ('MID' in s.protocol_name) and ('NORM' not in s.image_type):
             info[mid_phase].append(s.series_id)
+
+        if (s.dim4 > 1200) and ('resting-state' in s.protocol_name) and ('NORM' in s.image_type):
+            info[rest_mag].append(s.series_id)
+            idx = list_of_ids.index(s.series_id)
+            info[rest_sbref].append(list_of_ids[idx -1])
+        if (s.dim4 > 1200) and ('resting-state' in s.protocol_name) and ('NORM' not in s.image_type):
+            info[rest_phase].append(s.series_id)
+
+
 
     return info
 
