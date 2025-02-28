@@ -2,10 +2,11 @@
 
 # example code for FMRIPREP
 # runs FMRIPREP on input subject
-# usage: bash run_fmriprep.sh sub
-# example: bash run_fmriprep.sh 102
+# usage: bash fmriprep.sh subject session
+# example: bash fmriprep.sh 102 01
 
 sub=$1
+ses=$2 
 
 # ensure paths are correct irrespective from where user runs the script
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -24,37 +25,27 @@ fi
 
 
 TEMPLATEFLOW_DIR=/ZPOOL/data/tools/templateflow
-export SINGULARITYENV_TEMPLATEFLOW_HOME=/opt/templateflow
+export APPTAINERENV_TEMPLATEFLOW_HOME=/opt/templateflow
 
-# use fieldmap-less distortion for these subjects until we can fix their AddIntendedFor files. Even then, we may still need to use this to ensure the SDC is optimal
-if [ $sub -eq 10317 ] || [ $sub -eq 10369 ] || [ $sub -eq 10402 ] || [ $sub -eq 10486 ] || [ $sub -eq 10541 ] || [ $sub -eq 10572 ] || [ $sub -eq 10584 ] || [ $sub -eq 10589 ] || [ $sub -eq 10691 ] || [ $sub -eq 10701 ] || [ $sub -eq 10690 ]; then
-#if [ $sub -eq 10402 ] || [ $sub -eq 10486 ] || [ $sub -eq 10541 ] || [ $sub -eq 10572 ] || [ $sub -eq 10584 ] || [ $sub -eq 10589 ] || [ $sub -eq 10691 ] || [ $sub -eq 10701 ] || [ $sub -eq 10690 ]; then
-	singularity run --cleanenv \
-	-B ${TEMPLATEFLOW_DIR}:/opt/templateflow \
-	-B $maindir:/base \
-	-B /ZPOOL/data/tools/licenses:/opts \
-	-B $scratchdir:/scratch \
-	/ZPOOL/data/tools/fmriprep-23.2.1.simg \
-	/base/bids /base/derivatives/fmriprep \
-	participant --participant_label $sub \
-	--stop-on-first-crash \
-	--me-output-echos \
-	--use-syn-sdc \
-	--output-spaces MNI152NLin6Asym \
-	--bids-filter-file /base/code/fmriprep_config.json \
-	--fs-no-reconall --fs-license-file /opts/fs_license.txt -w /scratch
-else
-	singularity run --cleanenv \
-	-B ${TEMPLATEFLOW_DIR}:/opt/templateflow \
-	-B $maindir:/base \
-	-B /ZPOOL/data/tools/licenses:/opts \
-	-B $scratchdir:/scratch \
-	/ZPOOL/data/tools/fmriprep-23.2.1.simg \
-	/base/bids /base/derivatives/fmriprep \
-	participant --participant_label $sub \
-	--stop-on-first-crash \
-	--me-output-echos \
-	--output-spaces MNI152NLin6Asym \
-	--bids-filter-file /base/code/fmriprep_config.json \
-	--fs-no-reconall --fs-license-file /opts/fs_license.txt -w /scratch
-fi
+apptainer run --cleanenv \
+-B ${TEMPLATEFLOW_DIR}:/opt/templateflow \
+-B $maindir:/base \
+-B /ZPOOL/data/tools/licenses:/opts \
+-B $scratchdir:/scratch \
+/ZPOOL/data/tools/fmriprep-24.1.1.simg \
+/base/bids /base/derivatives/fmriprep \
+participant --participant_label $sub \
+--session-label $ses \
+--stop-on-first-crash \
+--me-output-echos \
+--output-spaces MNI152NLin6Asym \
+--bids-filter-file /base/code/fmriprep_config.json \
+--fs-no-reconall --fs-license-file /opts/fs_license.txt -w /scratch
+
+
+## Assistance from ChatGPT:
+# Ensure your data follows BIDS format with ses-01, ses-02 directories.
+# Run fMRIPrep without specifying a session to process all at once.
+# Use --session-label ses-XX to process a single session at a time.
+# Use --longitudinal to prevent anatomical image averaging across sessions.
+# Expect separate preprocessing outputs for each session.

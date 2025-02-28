@@ -3,8 +3,8 @@
 # Example code for heudiconv and pydeface. This will get your data ready for analyses.
 # This code will convert DICOMS to BIDS (PART 1). Will also deface (PART 2) and run MRIQC (PART 3).
 
-# usage: bash prepdata.sh sub nruns
-# example: bash prepdata.sh 104 3
+# usage: bash prepdata.sh sub ses
+# example: bash prepdata.sh 104 01
 
 # Notes:
 # 1) containers live under /data/tools on local computer. should these relative paths and shared? YODA principles would suggest so.
@@ -27,7 +27,7 @@ if [ ! -d $dsroot/bids ]; then
 fi
 
 # overwrite existing
-rm -rf $dsroot/bids/sub-${sub}
+rm -rf $dsroot/bids/sub-${sub}/ses-${ses}
 
 
 # PART 1: running heudiconv and fixing fieldmaps
@@ -48,9 +48,9 @@ apptainer run --cleanenv \
 
 ## note that you may need to install pydeface via pip or conda
 bidsroot=$dsroot/bids
-echo "defacing subject $sub"
-pydeface ${bidsroot}/sub-${sub}/anat/sub-${sub}_T1w.nii.gz
-mv -f ${bidsroot}/sub-${sub}/anat/sub-${sub}_T1w_defaced.nii.gz ${bidsroot}/sub-${sub}/anat/sub-${sub}_T1w.nii.gz
+echo "defacing subject $sub $ses"
+pydeface ${bidsroot}/sub-${sub}/ses-${ses}/anat/sub-${sub}_ses-${ses}_T1w.nii.gz
+mv -f ${bidsroot}/sub-${sub}/ses-${ses}/anat/sub-${sub}_ses-${ses}_T1w_defaced.nii.gz ${bidsroot}/sub-${sub}/ses-${ses}/anat/sub-${sub}_ses-${ses}_T1w.nii.gz
 
 ## shift dates on scans to reduce likelihood of re-identification
-python $codedir/shiftdates.py $dsroot/bids/sub-${sub}/sub-${sub}_scans.tsv
+python $scriptdir/shiftdates.py $dsroot/bids/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_scans.tsv
