@@ -136,9 +136,7 @@ dmypy.json
 .heudiconv
 
 # imaging output
-*.nii.gz
-*.json
-#bids
+bids
 derivatives
 sub-*.html
 *.asv
@@ -147,8 +145,12 @@ sub-*.html
 .~*#
 *.out
 *.log
+.~*
+
 
 archive
 stimuli/Image_copies/.stranger_M.png.icloud
 stimuli/Stranger_Copies/.stranger_M.png.icloud
 *.icloud
+
+.DS_Store
