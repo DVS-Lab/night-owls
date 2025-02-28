@@ -39,7 +39,7 @@ apptainer run --cleanenv \
 -o /out/bids/ \
 -f /out/code/heuristics.py \
 -s $sub \
--ses $ses \
+-ss $ses \
 -c dcm2niix \
 -b --minmeta --overwrite
 
