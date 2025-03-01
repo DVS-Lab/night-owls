@@ -32,18 +32,17 @@ for f in cons:
 
 	# parse key-value pairs and build variables
 	sub=re.search('/func/(.*)_task', f).group(1)    
-	acq=re.search('_acq-(.*)_', f).group(1)
-	#run=re.search('_run-(.*)_desc',f).group(1)
+	ses=re.search('_ses-(.*)_', f).group(1)
+	run=re.search('_run-(.*)_desc',f).group(1)
 	task=re.search('_task-(.*)_',f).group(1)
 	derivatives_path=re.search('(.*)fmriprep/sub',f).group(1)
 
 	#read in confound file and build matrix
 	con_regs=pd.read_csv(f,sep='\t')
-	#other=['csf','white_matter'] # use aCompCor instead
+
 	aCompCor =['a_comp_cor_00','a_comp_cor_01','a_comp_cor_02','a_comp_cor_03','a_comp_cor_04','a_comp_cor_05'] # use aCompCor instead
 	cosine = [col for col in con_regs if col.startswith('cosine')]
 	NSS = [col for col in con_regs if col.startswith('non_steady_state')]
-	#aroma_motion=[col for col in con_regs if col.startswith('aroma_motion_')] # skipping aroma due to reproducibility issues
 	motion = ['trans_x','trans_y','trans_z','rot_x','rot_y','rot_z']
 	fd = ['framewise_displacement']
 	filter_col=np.concatenate([cosine,NSS,motion,aCompCor,fd])
@@ -54,8 +53,7 @@ for f in cons:
 	df_all.fillna(0, inplace=True)
 
 	# generate output files
-	#outfile="%s_task-%s_run-%s_desc-fslConfounds.tsv"%(sub,task,run)
-	outfile="%s_task-%s_acq-%s_desc-fslConfounds.tsv"%(sub,task,acq)	
+	outfile="%s_ses-%s_task-%s_run-%s_desc-fslConfounds.tsv"%(sub,ses,task,run)	
 	outdir=derivatives_path+"fsl/confounds/%s/" %(sub)
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
