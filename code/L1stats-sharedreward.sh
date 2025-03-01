@@ -34,7 +34,7 @@ if [ ! -e $CONFOUNDEVS ]; then
 	exit # exiting to ensure nothing gets run without confounds
 fi
 
-EVDIR=${maindir}/derivatives/fsl/EVFiles/sub-${sub}/ses-${ses}/${TASK}/run-${run}
+EVDIR=${maindir}/derivatives/fsl/EVFiles/sub-${sub}/ses-${ses}/${TASK}/run-${run}/
 if [ ! -e $EVDIR ]; then
 	echo ${sub} ${acq} "EVDIR missing"
 	echo "missing events files: $EVDIR " >> ${maindir}/re-runL1.log
