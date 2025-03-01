@@ -58,6 +58,5 @@ for f in cons:
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
 	output=outdir+outfile
-	print(sub,acq,task)	
-	#print(sub,run,task)
+	print(sub,ses,run,task)	
 	df_all.to_csv(output,index=False,sep='\t',header=False)
