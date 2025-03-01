@@ -31,10 +31,10 @@ for root, dirs, files in os.walk(fmriprep_path):
 for f in cons:
 
 	# parse key-value pairs and build variables
-	sub=re.search('/func/(.*)_task', f).group(1)    
-	ses=re.search('_ses-(.*)_', f).group(1)
-	run=re.search('_run-(.*)_desc',f).group(1)
-	task=re.search('_task-(.*)_',f).group(1)
+	sub=re.search('/func/(.*)_ses', f).group(1)    
+	ses=re.search('_ses-(.*)_task', f).group(1)
+	run=re.search('_run-(.*)_part',f).group(1)
+	task=re.search('_task-(.*)_run',f).group(1)
 	derivatives_path=re.search('(.*)fmriprep/sub',f).group(1)
 
 	#read in confound file and build matrix
