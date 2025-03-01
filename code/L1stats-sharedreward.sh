@@ -12,6 +12,7 @@ sm=4
 sub=$1
 ses=$2
 run=$3
+model=1 # everyone should just have one model
 
 # set inputs and general outputs (should not need to change across studies in Smith Lab)
 MAINOUTPUT=${maindir}/derivatives/fsl/sub-${sub}/ses-${ses}
