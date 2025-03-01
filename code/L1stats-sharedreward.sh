@@ -48,40 +48,15 @@ if [ -e $EV_MISSED_DEC ]; then
 else
 	SHAPE_MISSED_DEC=10
 fi
-
 EV_MISSED_OUTCOME=${EVDIR}/_miss_outcome.txt
 if [ -e $EV_MISSED_OUTCOME ]; then
 	SHAPE_MISSED_OUTCOME=3
 else
 	SHAPE_MISSED_OUTCOME=10
 fi
-LB_comp=${EVDIR}/_guess_leftButton_computer.txt
-if [ -e $LB_comp ]; then
-	SHAPE_LB_comp=3
-else
-	SHAPE_LB_comp=10
-fi
-RB_comp=${EVDIR}/_guess_rightButton_computer.txt
-if [ -e $RB_comp ]; then
-	SHAPE_RB_comp=3
-else
-	SHAPE_RB_comp=10
-fi
-LB_face=${EVDIR}/_guess_leftButton_face.txt
-if [ -e $LB_face ]; then
-	SHAPE_LB_face=3
-else
-	SHAPE_LB_face=10
-fi
-RB_face=${EVDIR}/_guess_rightButton_face.txt
-if [ -e $RB_face ]; then
-	SHAPE_RB_face=3
-else
-	SHAPE_RB_face=10
-fi
 
 
-# set output based in whether it is activation or ppi
+# set output based in whether it is activation
 TYPE=act
 OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_sm-${sm}
 # check for output and skip existing
@@ -95,7 +70,6 @@ fi
 # create template and run analyses
 ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}.fsf
 OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_sm-${sm}.fsf
-echo $OUTPUT
 sed -e 's@OUTPUT@'$OUTPUT'@g' \
 -e 's@DATA@'$DATA'@g' \
 -e 's@EVDIR@'$EVDIR'@g' \
