@@ -98,7 +98,7 @@ exit_screen = visual.TextStim(win, text='Thanks for playing! Please wait for ins
 
 #logging
 expdir = os.getcwd()
-subjdir = '%s/logs/sub-%s' % (expdir, subj_id)
+subjdir = '%s/sharedreward/logs/sub-%s' % (expdir, subj_id)
 if not os.path.exists(subjdir):
     os.makedirs(subjdir)
 log_file = os.path.join(f'sub-{subj_id}_task-sharedreward_ses-{ses}_run-{run}_raw.csv')
@@ -109,9 +109,9 @@ logging.setDefaultClock(globalClock)
 timer = core.Clock()
 
 #trial handler
-trial_data = [r for r in csv.DictReader(open('%s/event-related/params/sub-' % (os.getcwd()) + subj_id + '/sub-'
+trial_data = [r for r in csv.DictReader(open('%s/sharedreward/event-related/params/sub-' % (os.getcwd()) + subj_id + '/sub-'
     + subj_id + '_ses-' + ses + '_run-' + run + '_design.csv','rU'))]
-outfile = f"logs/sub-{subj_id}/sub-{subj_id}_task-sharedreward_ses-{ses}_run-{run}_raw.csv"
+outfile = f"sharedreward/logs/sub-{subj_id}/sub-{subj_id}_task-sharedreward_ses-{ses}_run-{run}_raw.csv"
 
 #trial_data = [r for r in csv.DictReader(open('SharedReward_design.csv','rU'))]
 #trials = data.TrialHandler(trial_data[:], 1, method="sequential") #change to [] for full run
@@ -189,7 +189,7 @@ def do_run(run, trials):
     for trial in trials:
         condition_label = stim_map[trial['Partner']]
         image_label = image_map[trial['Partner']]
-        imagepath = os.path.join(expdir,'Images')
+        imagepath = os.path.join(expdir,'sharedreward/Images')
         image = os.path.join(imagepath, "%s.png") % image_label
         nameStim.setText(condition_label)
         pictureStim.setImage(image)

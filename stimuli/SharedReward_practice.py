@@ -101,7 +101,7 @@ logging.setDefaultClock(globalClock)
 timer = core.Clock()
 
 #trial handler
-trial_data = [r for r in csv.DictReader(open('%s/event-related/params/sub-' % (os.getcwd()) + subj_id + '/sub-'
+trial_data = [r for r in csv.DictReader(open('%s/sharedreward/event-related/params/sub-' % (os.getcwd()) + subj_id + '/sub-'
     + subj_id + '_ses-' + ses + '_run-' + run + '_design.csv','rU'))]
 
 
@@ -179,7 +179,7 @@ def do_run(run, trials):
     for trial in trials:
         condition_label = stim_map[trial['Partner']]
         image_label = image_map[trial['Partner']]
-        imagepath = os.path.join(expdir,'Images')
+        imagepath = os.path.join(expdir,'sharedreward/Images')
         image = os.path.join(imagepath, "%s.png") % image_label
         nameStim.setText(condition_label)
         pictureStim.setImage(image)

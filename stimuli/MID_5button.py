@@ -254,7 +254,7 @@ circle_outline = visual.Circle(win, radius=fontH, edges=128, lineWidth=2, lineCo
 CircleClock = core.Clock()
 # Initialize components for Routine "instructions"
 instructPrompt = visual.TextStim(win=win, font='Arial', pos=(0, yScr/10), height=fontH, wrapWidth=wrapW, color=textCol);
-instructFinish = visual.TextStim(win, text="You have reached the end of the instructions.\n\nPlease remember to STAY STILL.\n\nWe will select 10 random trials to determine your bonus reward.",
+instructFinish = visual.TextStim(win, text="You have reached the end of the instructions.\n\nPlease remember to STAY STILL.\n\nWe will select 10 random trials to determine your bonus reward. \nClick one more time.",
                                      height=fontH, color=textCol, pos=[0, 0], wrapWidth=wrapW)    
 
 # Initialize components for task transitions
