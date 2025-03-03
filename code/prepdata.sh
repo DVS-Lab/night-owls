@@ -46,11 +46,11 @@ apptainer run --cleanenv \
 
 ## PART 2: Defacing anatomicals and date shifting to ensure compatibility with data sharing. (do we really need to shift the dates? ask IRB?)
 
-## note that you may need to install pydeface via pip or conda
-#bidsroot=$dsroot/bids
-#echo "defacing subject $sub $ses"
-#pydeface ${bidsroot}/sub-${sub}/ses-${ses}/anat/sub-${sub}_ses-${ses}_T1w.nii.gz
-#mv -f ${bidsroot}/sub-${sub}/ses-${ses}/anat/sub-${sub}_ses-${ses}_T1w_defaced.nii.gz ${bidsroot}/sub-${sub}/ses-${ses}/anat/sub-${sub}_ses-${ses}_T1w.nii.gz
+# note that you may need to install pydeface via pip or conda
+bidsroot=$dsroot/bids
+echo "defacing subject $sub $ses"
+pydeface ${bidsroot}/sub-${sub}/ses-${ses}/anat/sub-${sub}_ses-${ses}_T1w.nii.gz
+mv -f ${bidsroot}/sub-${sub}/ses-${ses}/anat/sub-${sub}_ses-${ses}_T1w_defaced.nii.gz ${bidsroot}/sub-${sub}/ses-${ses}/anat/sub-${sub}_ses-${ses}_T1w.nii.gz
 
-## shift dates on scans to reduce likelihood of re-identification
-#python $scriptdir/shiftdates.py $dsroot/bids/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_scans.tsv
+# shift dates on scans to reduce likelihood of re-identification
+python $scriptdir/shiftdates.py $dsroot/bids/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_scans.tsv
