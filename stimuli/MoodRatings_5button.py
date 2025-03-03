@@ -47,7 +47,7 @@ fontH = yScr/25
 wrapW = xScr/1.5
 
 # Folder structure
-folder_path = f"logs/sub-{subj_id}/ses-{ses}"
+folder_path = f"mood/logs/sub-{subj_id}/ses-{ses}"
 
 # Check if the folder exists, and create it if not
 if not os.path.exists(folder_path):

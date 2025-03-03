@@ -42,7 +42,7 @@ wrapW = xScr/1.5
 
     
 # Folder structure
-folder_path = f"logs/sub-{subj_id}/ses-{ses}"
+folder_path = f"mood/logs/sub-{subj_id}/ses-{ses}"
 
 # Check if the folder exists, and create it if not
 if not os.path.exists(folder_path):
@@ -230,7 +230,7 @@ def load_and_wrap_text(filename, max_width=60):
         content = file.read()
     wrapped_text = textwrap.fill(content, width=max_width)
     return wrapped_text
-filename = f"memories/sub-{subj_id}/sub-{subj_id}_ses-{ses}_memory.txt"  
+filename = f"mood/memories/sub-{subj_id}/sub-{subj_id}_ses-{ses}_memory.txt"  
 max_width = 60  # Adjust as needed for text wrapping
 text_content = load_and_wrap_text(filename, max_width)
 
@@ -245,7 +245,7 @@ text_stim = visual.TextStim(
 )
 
 # Load audio files
-audio_files = ["song1.wav", "song2.wav"]  
+audio_files = ["mood/song1.wav", "mood/song2.wav"]  
 #audio_files = ["test1.wav", "test2.wav"]  
 
 # Show the instruction page
