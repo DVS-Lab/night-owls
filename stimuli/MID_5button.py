@@ -42,8 +42,8 @@ import sys  # to get file system encoding
 
 expName = "MID"
 version = "1.0" #
-data_dir = "data" # location of outputs to be generated; includes data for participants as well as trial selection and trial presentation sequence
-inst_dir = "text" # location of instructions directory
+data_dir = "mid/data" # location of outputs to be generated; includes data for participants as well as trial selection and trial presentation sequence
+inst_dir = "mid/text" # location of instructions directory
 inst_file = ["instructions_MID.txt"] # name of instructions files (needs to be .txt)
 study_times = [0.75, 2.25, 0.50, 1, 0.75] # component duration (s): cue, delay, target, feedback, lastfixation
 initial_fix_dur = 8 # added time to make sure homogenicity of magnetic field is reached
@@ -176,7 +176,7 @@ os.chdir(_thisDir)
 
 # present initialization dialog
 [expInfo,expName,sn,ses,run] = initialization(expName,version) 
-trials_file = f"timing/ses-{ses}_run-{run}_MID_trials.csv"
+trials_file = f"mid/timing/ses-{ses}_run-{run}_MID_trials.csv"
 
 
 # Data file name creation; later add .psyexp, .csv, .log, etc
@@ -189,7 +189,7 @@ thisExp = data.ExperimentHandler(name=expName, version=version, extraInfo=expInf
 # save a log file for detail verbose info
 logFile = logging.LogFile(filename+'.log', level=logging.EXP)
 logging.console.setLevel(logging.WARNING)  # this outputs to the screen, not a file
-outfile = f"data/sub-{sn}/sub-{sn}_task-mid_ses-{ses}_run-{run}.csv"
+outfile = f"mid/data/sub-{sn}/sub-{sn}_task-mid_ses-{ses}_run-{run}.csv"
 
 
 endExpNow = False  # flag for 'escape' or other condition => quit the exp
