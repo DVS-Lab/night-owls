@@ -20,7 +20,7 @@ try
     out.nfiles = 0;
 
     % get relative path for source data. repos should be in same dir
-    logdir = fullfile(dsdir,'sharedreward','logs');
+    logdir = fullfile(dsdir,'stimuli','sharedreward','logs');
 
     for r = 1:2
         fname = fullfile(logdir,['sub-' num2str(subj)],sprintf('sub-%03d_task-sharedreward_ses-%d_run-%d_raw.csv',subj,ses,r));
