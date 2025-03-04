@@ -7,7 +7,7 @@ scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 maindir="$(dirname "$scriptdir")"
 
 # study-specific inputs
-TASK=sharedreward
+TASK=mid
 sm=4
 sub=$1
 ses=$2
@@ -41,19 +41,6 @@ if [ ! -e $EVDIR ]; then
 	exit # exiting to ensure nothing gets run without confounds
 fi
 
-# empty EVs (specific to this study)
-EV_MISSED_DEC=${EVDIR}/_miss_decision.txt
-if [ -e $EV_MISSED_DEC ]; then
-	SHAPE_MISSED_DEC=3
-else
-	SHAPE_MISSED_DEC=10
-fi
-EV_MISSED_OUTCOME=${EVDIR}/_miss_outcome.txt
-if [ -e $EV_MISSED_OUTCOME ]; then
-	SHAPE_MISSED_OUTCOME=3
-else
-	SHAPE_MISSED_OUTCOME=10
-fi
 
 
 # set output based in whether it is activation
@@ -76,8 +63,6 @@ sed -e 's@OUTPUT@'$OUTPUT'@g' \
 -e 's@SMOOTH@'$sm'@g' \
 -e 's@CONFOUNDEVS@'$CONFOUNDEVS'@g' \
 -e 's@NVOLUMES@'$NVOLUMES'@g' \
--e 's@SHAPE_MISSED_DEC@'$SHAPE_MISSED_DEC'@g' \
--e 's@SHAPE_MISSED_OUTCOME@'$SHAPE_MISSED_OUTCOME'@g' \
 <$ITEMPLATE> $OTEMPLATE
 feat $OTEMPLATE
 

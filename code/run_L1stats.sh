@@ -14,7 +14,7 @@ for subinfo in "101 01" "101 02" "101 03"; do
 	for run in 1 2; do
 
 		script=${scriptdir}/L1stats-sharedreward.sh
-		NCORES=10 # max should be 24 on Smith Lab Linux Box (for each of the two tasks)
+		NCORES=10 
 		while [ $(ps -ef | grep -v grep | grep $script | wc -l) -ge $NCORES ]; do
 			sleep 5s
 		done
@@ -22,13 +22,13 @@ for subinfo in "101 01" "101 02" "101 03"; do
 		sleep 5s
 
 
-		#script=${scriptdir}/L1stats-mid.sh
-		#NCORES=10 # max should be 24 on Smith Lab Linux Box (for each of the two tasks)
-		#while [ $(ps -ef | grep -v grep | grep $script | wc -l) -ge $NCORES ]; do
-		#	sleep 5s
-		#done
-		#bash $script $sub $ses $run &
-		#sleep 5s
+		script=${scriptdir}/L1stats-mid.sh
+		NCORES=10 
+		while [ $(ps -ef | grep -v grep | grep $script | wc -l) -ge $NCORES ]; do
+			sleep 5s
+		done
+		bash $script $sub $ses $run &
+		sleep 5s
 
 	done
 done
