@@ -10,7 +10,7 @@ events_gen <- function(sub,ses){
     
     
     #Generate folders, if don't exist
-    out.path <- paste0('C:/Users/mmatt/Desktop/Projects/NightOwls/night-owls/behavioral/sub-',
+    out.path <- paste0('C:/Users/mmatt/Desktop/Projects/NightOwls/night-owls/bids/sub-',
                        sub,'/ses-0',ses,'/func/')
     if (!dir.exists(out.path)) {
       dir.create(out.path, recursive = TRUE)
@@ -19,7 +19,7 @@ events_gen <- function(sub,ses){
     
     #MID
     
-    raw.mid <- read.csv(paste0('C:/Users/mmatt/Desktop/Projects/NightOwls/night-owls/mid/data/sub-',sub,'/sub-',sub,
+    raw.mid <- read.csv(paste0('C:/Users/mmatt/Desktop/Projects/NightOwls/night-owls/stimuli/mid/data/sub-',sub,'/sub-',sub,
                                '_task-mid_ses-',ses,'_run-',r,'.csv'))
     ##Trial Timing
     mid.cue <- cbind(raw.mid$cue_onset_time[-57],raw.mid$cue_duration[-57],rep(NA,56),'n/a')
@@ -66,63 +66,17 @@ events_gen <- function(sub,ses){
     mid.events <- mid.events[order(mid.events$onset),]
     
     ##Export
-    mid.out <- paste0('sub-',sub,'_ses-0',ses,'_task-mid_run-0',r,'_events.tsv')
-    write_delim(mid.events,paste0(out.path,mid.out))     
+    mid.out <- paste0('sub-',sub,'_ses-0',ses,'_task-mid_run-',r,'_events.tsv')
+    write_delim(mid.events,paste0(out.path,mid.out),na='n/a',delim = "\t")     
     
-    
-    
-    #Shared Reward
-
-    raw.sr <- read.csv(paste0('C:/Users/mmatt/Desktop/Projects/NightOwls/night-owls/sharedreward/logs/sub-',sub,'/sub-',sub,
-                               '_task-sharedreward_ses-',ses,'_run-',r,'_raw.csv'))
-    ##Trial Timing
-    sr.cue <- cbind(raw.sr$decision_onset,raw.sr$ISI_onset-raw.sr$decision_onset,rep(NA,54),'n/a')
-    sr.feedback <- cbind(raw.sr$outcome_onset,raw.sr$outcome_offset-raw.sr$outcome_onset,rep(NA,54),'n/a')
-    
-    ##Trial Types
-    for (t in 1:54){
-      if (raw.sr$resp[t] == 2 | raw.sr$resp == 3){
-        if (raw.sr$outcome_val[t] == 1){
-          sr.feedback[t,3] <- 'feedback_positive_reward'}
-        #Add all outcome options...
-        else {
-          sr.feedback[t,3] <- 'feedback_negative_reward'}
-      }
-      #If Missed
-      else {
-        sr.cue[t,3] <- 'cue_neutral'
-        sr.isi[t,3] <- 'isi_neutral'
-        if (raw.sr$.response[t] == 1){
-          sr.feedback[t,3] <- 'feedback_positive_neutral'}
-        else {
-          sr.feedback[t,3] <- 'feedback_negative_neutral'}
-      }
-    }
-    
-    ##Merge base events
-    sr.events <- rbind(sr.events,sr.cue,sr.isi,sr.target,sr.feedback)
-    
-    ##Create combined cue regressor
-    sr.antic <- sr.cue
-    sr.antic[,2] <- as.numeric(sr.cue[,2]) + as.numeric(sr.isi[,2])
-    sr.antic[,3][sr.antic[,3]=='cue_reward'] <- 'anticipation_reward'
-    sr.antic[,3][sr.antic[,3]=='cue_neutral'] <- 'anticipation_neutral'
-    
-    ##Merge, Round, Order
-    sr.events <- rbind(sr.events,sr.antic)
-    colnames(sr.events) <- c('onset','duration','trial_type','response_time')
-    sr.events$onset <- round(as.numeric(sr.events$onset),4)
-    sr.events$duration <- round(as.numeric(sr.events$duration),4)
-    sr.events <- sr.events[order(sr.events$onset),]
-    
-    ##Export
-    sr.out <- paste0('sub-',sub,'_ses-0',ses,'_task-sr_run-0',r,'_events.tsv')
-    write_delim(sr.events,paste0(out.path,sr.out))   
   } 
 }
 
 #Ses-01 COMPLETED
-#events_gen(101,1)
+events_gen(101,1)
 
 #Ses-02 Completed
-#events_gen(101,02)
+events_gen(101,02)
+
+#Ses-03 Completed
+events_gen(101,03)
