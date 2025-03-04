@@ -37,7 +37,7 @@ participant --participant_label $sub \
 --longitudinal \
 --stop-on-first-crash \
 --me-output-echos \
---output-spaces MNI152NLin6Asym \
+--output-spaces MNI152NLin6Asym:res-2 \
 --bids-filter-file /base/code/fmriprep_config.json \
 --fs-no-reconall --fs-license-file /opts/fs_license.txt -w /scratch
 
