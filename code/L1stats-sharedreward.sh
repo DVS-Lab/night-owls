@@ -89,7 +89,7 @@ ln -s $FSLDIR/etc/flirtsch/ident.mat ${OUTPUT}.feat/reg/standard2example_func.ma
 ln -s ${OUTPUT}.feat/mean_func.nii.gz ${OUTPUT}.feat/reg/standard.nii.gz
 
 # delete unused files
-rm -rf ${OUTPUT}.feat/stats/res4d.nii.gz
+#rm -rf ${OUTPUT}.feat/stats/res4d.nii.gz
 rm -rf ${OUTPUT}.feat/stats/corrections.nii.gz
 rm -rf ${OUTPUT}.feat/stats/threshac1.nii.gz
 rm -rf ${OUTPUT}.feat/filtered_func_data.nii.gz
