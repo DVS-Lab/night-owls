@@ -30,13 +30,13 @@ set fmri(featwatcher_yn) 0
 set fmri(sscleanup_yn) 0
 
 # Output directory
-set fmri(outputdir) "/ZPOOL/data/projects/night-owls/derivatives/fsl/sub-101/ses-03/L1_task-sharedreward_model-1_type-act_run-1_sm-5"
+set fmri(outputdir) "OUTPUT"
 
 # TR(s)
 set fmri(tr) 1.615
 
 # Total volumes
-set fmri(npts) 265
+set fmri(npts) NVOLUMES
 
 # Delete volumes
 set fmri(ndelete) 0
@@ -109,7 +109,7 @@ set fmri(st_file) ""
 set fmri(bet_yn) 1
 
 # Spatial smoothing FWHM (mm)
-set fmri(smooth) 5
+set fmri(smooth) SMOOTH
 
 # Intensity normalization
 set fmri(norm_yn) 0
@@ -276,13 +276,13 @@ set fmri(fnirt_config) "T1_2_MNI152_2mm"
 set fmri(ncopeinputs) 0
 
 # 4D AVW data or FEAT directory (1)
-set feat_files(1) "/ZPOOL/data/projects/night-owls/derivatives/fmriprep/sub-101/ses-03/func/sub-101_ses-03_task-sharedreward_run-1_part-mag_space-MNI152NLin6Asym_res-2_desc-preproc_bold"
+set feat_files(1) "DATA"
 
 # Add confound EVs text file
 set fmri(confoundevs) 1
 
 # Confound EVs text file for analysis 1
-set confoundev_files(1) "/ZPOOL/data/projects/night-owls/derivatives/fsl/confounds/sub-101/sub-101_ses-03_task-sharedreward_run-1_desc-fslConfounds.tsv"
+set confoundev_files(1) "CONFOUNDEVS"
 
 # EV 1 title
 set fmri(evtitle1) "miss_dec"
@@ -294,7 +294,7 @@ set fmri(evtitle1) "miss_dec"
 # 3 : Custom (3 column format)
 # 4 : Interaction
 # 10 : Empty (all zeros)
-set fmri(shape1) 3
+set fmri(shape1) SHAPE_MISSED_DEC
 
 # Convolution (EV 1)
 # 0 : None
@@ -317,7 +317,7 @@ set fmri(tempfilt_yn1) 0
 set fmri(deriv_yn1) 1
 
 # Custom EV file (EV 1)
-set fmri(custom1) "/ZPOOL/data/projects/night-owls/derivatives/fsl/EVFiles/sub-101/ses-03/sharedreward/run-1/_miss_decision.txt"
+set fmri(custom1) "EVDIR_miss_decision.txt"
 
 # Orthogonalise EV 1 wrt EV 0
 set fmri(ortho1.0) 0
@@ -362,7 +362,7 @@ set fmri(evtitle2) "miss_out"
 # 3 : Custom (3 column format)
 # 4 : Interaction
 # 10 : Empty (all zeros)
-set fmri(shape2) 3
+set fmri(shape2) SHAPE_MISSED_OUTCOME
 
 # Convolution (EV 2)
 # 0 : None
@@ -385,7 +385,7 @@ set fmri(tempfilt_yn2) 0
 set fmri(deriv_yn2) 1
 
 # Custom EV file (EV 2)
-set fmri(custom2) "/ZPOOL/data/projects/night-owls/derivatives/fsl/EVFiles/sub-101/ses-03/sharedreward/run-1/_miss_outcome.txt"
+set fmri(custom2) "EVDIR_miss_outcome.txt"
 
 # Orthogonalise EV 2 wrt EV 0
 set fmri(ortho2.0) 0
@@ -453,7 +453,7 @@ set fmri(tempfilt_yn3) 0
 set fmri(deriv_yn3) 1
 
 # Custom EV file (EV 3)
-set fmri(custom3) "/ZPOOL/data/projects/night-owls/derivatives/fsl/EVFiles/sub-101/ses-03/sharedreward/run-1/_guess_rightButton_computer.txt"
+set fmri(custom3) "EVDIR_guess_rightButton_computer.txt"
 
 # Orthogonalise EV 3 wrt EV 0
 set fmri(ortho3.0) 0
@@ -521,7 +521,7 @@ set fmri(tempfilt_yn4) 0
 set fmri(deriv_yn4) 1
 
 # Custom EV file (EV 4)
-set fmri(custom4) "/ZPOOL/data/projects/night-owls/derivatives/fsl/EVFiles/sub-101/ses-03/sharedreward/run-1/_guess_rightButton_face.txt"
+set fmri(custom4) "EVDIR_guess_rightButton_face.txt"
 
 # Orthogonalise EV 4 wrt EV 0
 set fmri(ortho4.0) 0
@@ -589,7 +589,7 @@ set fmri(tempfilt_yn5) 0
 set fmri(deriv_yn5) 1
 
 # Custom EV file (EV 5)
-set fmri(custom5) "/ZPOOL/data/projects/night-owls/derivatives/fsl/EVFiles/sub-101/ses-03/sharedreward/run-1/_outcome_computer_punish.txt"
+set fmri(custom5) "EVDIR_outcome_computer_punish.txt"
 
 # Orthogonalise EV 5 wrt EV 0
 set fmri(ortho5.0) 0
@@ -657,7 +657,7 @@ set fmri(tempfilt_yn6) 0
 set fmri(deriv_yn6) 1
 
 # Custom EV file (EV 6)
-set fmri(custom6) "/ZPOOL/data/projects/night-owls/derivatives/fsl/EVFiles/sub-101/ses-03/sharedreward/run-1/_outcome_computer_neutral.txt"
+set fmri(custom6) "EVDIR_outcome_computer_neutral.txt"
 
 # Orthogonalise EV 6 wrt EV 0
 set fmri(ortho6.0) 0
@@ -725,7 +725,7 @@ set fmri(tempfilt_yn7) 0
 set fmri(deriv_yn7) 1
 
 # Custom EV file (EV 7)
-set fmri(custom7) "/ZPOOL/data/projects/night-owls/derivatives/fsl/EVFiles/sub-101/ses-03/sharedreward/run-1/_outcome_computer_reward.txt"
+set fmri(custom7) "EVDIR_outcome_computer_reward.txt"
 
 # Orthogonalise EV 7 wrt EV 0
 set fmri(ortho7.0) 0
@@ -793,7 +793,7 @@ set fmri(tempfilt_yn8) 0
 set fmri(deriv_yn8) 1
 
 # Custom EV file (EV 8)
-set fmri(custom8) "/ZPOOL/data/projects/night-owls/derivatives/fsl/EVFiles/sub-101/ses-03/sharedreward/run-1/_outcome_stranger_punish.txt"
+set fmri(custom8) "EVDIR_outcome_stranger_punish.txt"
 
 # Orthogonalise EV 8 wrt EV 0
 set fmri(ortho8.0) 0
@@ -861,7 +861,7 @@ set fmri(tempfilt_yn9) 0
 set fmri(deriv_yn9) 1
 
 # Custom EV file (EV 9)
-set fmri(custom9) "/ZPOOL/data/projects/night-owls/derivatives/fsl/EVFiles/sub-101/ses-03/sharedreward/run-1/_outcome_stranger_neutral.txt"
+set fmri(custom9) "EVDIR_outcome_stranger_neutral.txt"
 
 # Orthogonalise EV 9 wrt EV 0
 set fmri(ortho9.0) 0
@@ -929,7 +929,7 @@ set fmri(tempfilt_yn10) 0
 set fmri(deriv_yn10) 1
 
 # Custom EV file (EV 10)
-set fmri(custom10) "/ZPOOL/data/projects/night-owls/derivatives/fsl/EVFiles/sub-101/ses-03/sharedreward/run-1/_outcome_stranger_reward.txt"
+set fmri(custom10) "EVDIR_outcome_stranger_reward.txt"
 
 # Orthogonalise EV 10 wrt EV 0
 set fmri(ortho10.0) 0
