@@ -12,6 +12,7 @@ sm=5
 sub=$1
 ses=$2
 run=$3
+td=$4 # 1 for on, 0 for off (temporal derivatives)
 model=1 # everyone should just have one model
 
 # set inputs and general outputs (should not need to change across studies in Smith Lab)
@@ -43,9 +44,21 @@ fi
 
 
 
-# set output based in whether it is activation
+# set output based in whether it is activation and/or temporal derivatives
 TYPE=act
-OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_sm-${sm}
+if [ $td -eq 1 ]; then
+	OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_sm-${sm}_td
+	ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}_td.fsf
+	OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_sm-${sm}_td.fsf
+elif [ $td -eq 0 ]; then
+	OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_sm-${sm}
+	ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}.fsf
+	OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_sm-${sm}.fsf
+else
+	echo "invalid parameter for temporal derivatives; it can only be 0 or 1."
+	exit
+fi
+
 # check for output and skip existing
 if [ -e ${OUTPUT}.feat/cluster_mask_zstat1.nii.gz ]; then
 	exit
@@ -55,8 +68,6 @@ else
 fi
    
 # create template and run analyses
-ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}.fsf
-OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_sm-${sm}.fsf
 sed -e 's@OUTPUT@'$OUTPUT'@g' \
 -e 's@DATA@'$DATA'@g' \
 -e 's@EVDIR@'$EVDIR'@g' \
