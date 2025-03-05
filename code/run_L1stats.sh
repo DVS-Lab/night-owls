@@ -4,6 +4,8 @@
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 basedir="$(dirname "$scriptdir")"
 
+td=1 # temporal derivatives -- 1 is on, 0 is off, everything else is invalid
+
 for subinfo in "101 01" "101 02" "101 03"; do
 
 	# split subinfo variable
@@ -18,7 +20,7 @@ for subinfo in "101 01" "101 02" "101 03"; do
 		while [ $(ps -ef | grep -v grep | grep $script | wc -l) -ge $NCORES ]; do
 			sleep 5s
 		done
-		bash $script $sub $ses $run &
+		bash $script $sub $ses $run $td &
 		sleep 5s
 
 
@@ -27,7 +29,7 @@ for subinfo in "101 01" "101 02" "101 03"; do
 		while [ $(ps -ef | grep -v grep | grep $script | wc -l) -ge $NCORES ]; do
 			sleep 5s
 		done
-		bash $script $sub $ses $run &
+		bash $script $sub $ses $run $td &
 		sleep 5s
 
 	done
