@@ -2,11 +2,10 @@
 
 # example code for FMRIPREP
 # runs FMRIPREP on input subject
-# usage: bash fmriprep.sh subject session
-# example: bash fmriprep.sh 102 01
+# usage: bash fmriprep.sh subject
+# example: bash fmriprep.sh 102
 
 sub=$1
-ses=$2 
 
 # ensure paths are correct irrespective from where user runs the script
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -38,17 +37,10 @@ participant --participant_label $sub \
 --longitudinal \
 --stop-on-first-crash \
 --me-output-echos \
---output-spaces MNI152NLin6Asym \
+--output-spaces MNI152NLin6Asym:res-2 \
 --bids-filter-file /base/code/fmriprep_config.json \
 --fs-no-reconall --fs-license-file /opts/fs_license.txt -w /scratch
 
 
-## Assistance from ChatGPT:
-# Ensure your data follows BIDS format with ses-01, ses-02 directories.
-# Run fMRIPrep without specifying a session to process all at once.
-# Use --session-label ses-XX to process a single session at a time.
-# Use --longitudinal to prevent anatomical image averaging across sessions.
-# Expect separate preprocessing outputs for each session.
 
-# --session-label $ses \
 
