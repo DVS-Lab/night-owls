@@ -26,6 +26,7 @@ else:
     core.quit()  # Gracefully exit if "Cancel" is pressed
     
     
+   
 def make_screen():
     """Generates screen variables"""
     platform = pyglet.canvas.get_display()
