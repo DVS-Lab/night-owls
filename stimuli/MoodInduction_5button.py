@@ -4,6 +4,7 @@ import textwrap
 from psychopy import visual, event, sound, core, gui, prefs, monitors
 import pyglet
 import sys
+import random
 useDualScreen=2
 
 
@@ -245,8 +246,8 @@ text_stim = visual.TextStim(
 )
 
 # Load audio files
-audio_files = ["mood/song1.wav", "mood/song2.wav"]  
-#audio_files = ["test1.wav", "test2.wav"]  
+song_numbers = random.sample(range(1, 11), 2)
+audio_files = [f"mood/song{num}.wav" for num in song_numbers]
 
 # Show the instruction page
 instruction_text.draw()
