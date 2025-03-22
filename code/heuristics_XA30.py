@@ -39,21 +39,21 @@ def infotodict(seqinfo):
             info[sharedreward_mag].append(s.series_id)
             idx = list_of_ids.index(s.series_id)
             info[sharedreward_sbref].append(list_of_ids[idx -2])
-        if (s.dim4 > 1000) and ('Shared' in s.protocol_name) and ('TR1615_Pha' in s.series_description)::
+        if (s.dim4 > 1000) and ('Shared' in s.protocol_name) and ('TR1615_Pha' in s.series_description):
             info[sharedreward_phase].append(s.series_id)
 
         if (s.dim4 > 1000) and ('MID' in s.protocol_name) and ('_Pha' not in s.series_description):
             info[mid_mag].append(s.series_id)
             idx = list_of_ids.index(s.series_id)
             info[mid_sbref].append(list_of_ids[idx -2])
-        if (s.dim4 > 1000) and ('MID' in s.protocol_name) and ('TR1615_Pha' in s.series_description)::
+        if (s.dim4 > 1000) and ('MID' in s.protocol_name) and ('TR1615_Pha' in s.series_description):
             info[mid_phase].append(s.series_id)
 
         if (s.dim4 > 1200) and ('resting-state' in s.protocol_name) ('_Pha' not in s.series_description):
             info[rest_mag].append(s.series_id)
             idx = list_of_ids.index(s.series_id)
             info[rest_sbref].append(list_of_ids[idx -2])
-        if (s.dim4 > 1200) and ('resting-state' in s.protocol_name) and ('TR1615_Pha' in s.series_description)::
+        if (s.dim4 > 1200) and ('resting-state' in s.protocol_name) and ('TR1615_Pha' in s.series_description):
             info[rest_phase].append(s.series_id)
 
 
