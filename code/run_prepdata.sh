@@ -5,7 +5,7 @@ scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 
 # these define the subject number (sub) and session id (ses)
-for subinfo in "101 01" "101 02"; do
+for subinfo in "101 06"; do
 
 	# split subinfo variable
 	set -- $subinfo

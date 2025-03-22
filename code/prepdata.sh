@@ -37,7 +37,7 @@ apptainer run --cleanenv \
 /ZPOOL/data/tools/heudiconv-1.3.2.sif \
 -d /sourcedata/Smith-NOSC-{subject}-SES{session}/*/scans/*/*/DICOM/files/*.dcm \
 -o /out/bids/ \
--f /out/code/heuristics.py \
+-f /out/code/heuristics_XA30.py \
 -s $sub \
 -ss $ses \
 -c dcm2niix \
