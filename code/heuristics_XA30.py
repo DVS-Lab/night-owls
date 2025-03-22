@@ -6,7 +6,7 @@ def create_key(template, outtype=('nii.gz',), annotation_classes=None):
         return template, outtype, annotation_classes
 
 def infotodict(seqinfo):
-    t1w = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_T1w_run-{item:d}')
+    t1w = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_T1w')
     nm = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-NM_MTon')
     sharedreward_mag = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-sharedreward_run-{item:d}_part-mag_bold')
     sharedreward_phase = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-sharedreward_run-{item:d}_part-phase_bold')
@@ -30,7 +30,7 @@ def infotodict(seqinfo):
 
         # anatomicals and neuromelanin
         if ('T1w-anat_mpg_07sag_iso' in s.protocol_name):
-            info[t1w].append(s.series_id)
+            info[t1w] = [s.series_id]
         if ('neuromelanin' in s.protocol_name) and (s.dim1 == 352):
             info[nm] = [s.series_id]
         
