@@ -72,6 +72,8 @@ events_gen <- function(sub,ses){
   } 
 }
 
+## SUB 101
+
 #Ses-01 COMPLETED
 events_gen(101,1)
 
@@ -80,3 +82,63 @@ events_gen(101,02)
 
 #Ses-03 Completed
 events_gen(101,03)
+
+#Ses-04 Completed
+events_gen(101,04)
+
+#Ses-05 Completed
+events_gen(101,05)
+
+#Ses-06 Completed
+events_gen(101,06)
+
+#Ses-07 Completed
+events_gen(101,07)
+
+#Ses-08 Completed
+events_gen(101,08)
+
+#Ses-09 Completed
+events_gen(101,09)
+
+
+
+
+
+## SUB 103
+
+#Ses-01 COMPLETED
+events_gen(103,1)
+
+#Ses-02 Completed
+events_gen(103,02)
+
+
+
+
+
+
+
+
+#Ses-03 Completed
+events_gen(101,03)
+
+#Ses-04 Completed
+events_gen(101,04)
+
+#Ses-05 Completed
+events_gen(101,05)
+
+#Ses-06 Completed
+events_gen(101,06)
+
+#Ses-07 Completed
+events_gen(101,07)
+
+#Ses-08 Completed
+events_gen(101,08)
+
+#Ses-09 Completed
+events_gen(101,09)
+
+
