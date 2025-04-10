@@ -3,8 +3,8 @@ import pandas as pd
 #MID
 total_earnings_across_sessions = 0
 
-# Iterate over 4 sessions
-for ses in range(1, 5):
+# Iterate over sessions
+for ses in range(5, 10):
     total_earnings_for_session = 0
     
     # Process MID runs
