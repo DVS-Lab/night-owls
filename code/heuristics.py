@@ -31,7 +31,7 @@ def infotodict(seqinfo):
         # anatomicals and neuromelanin
         if ('T1w-anat_mpg_07sag_iso' in s.protocol_name) and ('NORM' in s.image_type):
             info[t1w] = [s.series_id]
-        if ('neuromelanin' in s.protocol_name) and (s.dim1 == 352):
+        if ('neuromelanin' in s.protocol_name):
             info[nm] = [s.series_id]
         
         # functionals
