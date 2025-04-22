@@ -7,7 +7,7 @@ def create_key(template, outtype=('nii.gz',), annotation_classes=None):
 
 def infotodict(seqinfo):
     t1w = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_T1w')
-    nm = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-NM_MTS')
+    nm = create_key('sub-{subject}/{session}/anat/sub-{subject}_{session}_acq-NM_T2star')
     sharedreward_mag = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-sharedreward_run-{item:d}_part-mag_bold')
     sharedreward_phase = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-sharedreward_run-{item:d}_part-phase_bold')
     sharedreward_sbref = create_key('sub-{subject}/{session}/func/sub-{subject}_{session}_task-sharedreward_run-{item:d}_sbref')
