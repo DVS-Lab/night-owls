@@ -17,7 +17,7 @@ if [ ! -d $maindir/derivatives ]; then
 	mkdir -p $maindir/derivatives
 fi
 
-scratchdir=/ZPOOL/data/scratch/`whoami`
+scratchdir=/ZPOOL/data/scratch/nosc-fmriprep
 if [ ! -d $scratchdir ]; then
 	mkdir -p $scratchdir
 fi

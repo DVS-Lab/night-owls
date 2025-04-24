@@ -6,7 +6,7 @@ basedir="$(dirname "$scriptdir")"
 
 td=1 # temporal derivatives -- 1 is on, 0 is off, everything else is invalid
 
-for subinfo in "101 01" "101 02" "101 03"; do
+for subinfo in "101 01" "101 02" "101 03" "101 06"; do
 
 	# split subinfo variable
 	set -- $subinfo
