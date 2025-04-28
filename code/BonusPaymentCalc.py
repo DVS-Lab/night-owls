@@ -4,12 +4,12 @@ import pandas as pd
 total_earnings_across_sessions = 0
 
 # Iterate over sessions
-for ses in range(5, 10):
+for ses in range(1, 6):
     total_earnings_for_session = 0
     
     # Process MID runs
     for run in range(1, 3):
-        outfile = f'C:\\Users\\mmatt\\Desktop\\Projects\\NightOwls\\night-owls\\stimuli\\mid\\data\\sub-101\\sub-101_task-mid_ses-{ses}_run-{run}.csv'  # Correct file path for MID
+        outfile = f'C:\\Users\\mmatt\\Desktop\\Projects\\NightOwls\\night-owls\\stimuli\\mid\\data\\sub-103\\sub-103_task-mid_ses-{ses}_run-{run}.csv'  # Correct file path for MID
         df = pd.read_csv(outfile)
 
         # Randomly select 10 trials
@@ -36,7 +36,7 @@ for ses in range(5, 10):
 
     # Process Shared Reward runs
     for run in range(1, 3):
-        outfile = f'C:\\Users\\mmatt\\Desktop\\Projects\\NightOwls\\night-owls\\stimuli\\sharedreward\\logs\\sub-101\\sub-101_task-sharedreward_ses-{ses}_run-{run}_raw.csv'  # Correct file path for Shared Reward
+        outfile = f'C:\\Users\\mmatt\\Desktop\\Projects\\NightOwls\\night-owls\\stimuli\\sharedreward\\logs\\sub-103\\sub-103_task-sharedreward_ses-{ses}_run-{run}_raw.csv'  # Correct file path for Shared Reward
         df = pd.read_csv(outfile)
 
         # Randomly select 10 trials
@@ -85,3 +85,6 @@ for ses in range(5, 10):
 print(f'Total earnings across all sessions: {total_earnings_across_sessions}')  # Print total sum
 
 #Sub-101 ses 1-4: $167
+#Sub-101 ses 5-9: 
+
+#Sub-103 ses 1-5: 161.5
