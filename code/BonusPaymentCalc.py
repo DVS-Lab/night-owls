@@ -4,12 +4,13 @@ import pandas as pd
 total_earnings_across_sessions = 0
 
 # Iterate over sessions
-for ses in range(1, 6):
+for ses in range(1, 5):
     total_earnings_for_session = 0
     
     # Process MID runs
     for run in range(1, 3):
-        outfile = f'C:\\Users\\mmatt\\Desktop\\Projects\\NightOwls\\night-owls\\stimuli\\mid\\data\\sub-103\\sub-103_task-mid_ses-{ses}_run-{run}.csv'  # Correct file path for MID
+        #outfile = f'C:\\Users\\mmatt\\Desktop\\Projects\\NightOwls\\night-owls\\stimuli\\mid\\data\\sub-104\\sub-104_task-mid_ses-{ses}_run-{run}.csv'
+        outfile = f'C:\\Users\\Public\\LAB PROJECTS\\Smith-Lab\\GitHub\\night-owls\\stimuli\\mid\\data\\sub-104\\sub-104_task-mid_ses-{ses}_run-{run}.csv'
         df = pd.read_csv(outfile)
 
         # Randomly select 10 trials
@@ -36,7 +37,9 @@ for ses in range(1, 6):
 
     # Process Shared Reward runs
     for run in range(1, 3):
-        outfile = f'C:\\Users\\mmatt\\Desktop\\Projects\\NightOwls\\night-owls\\stimuli\\sharedreward\\logs\\sub-103\\sub-103_task-sharedreward_ses-{ses}_run-{run}_raw.csv'  # Correct file path for Shared Reward
+        #outfile = f'C:\\Users\\mmatt\\Desktop\\Projects\\NightOwls\\night-owls\\stimuli\\sharedreward\\logs\\sub-104\\sub-104_task-sharedreward_ses-{ses}_run-{run}_raw.csv'  # Correct file path for Shared Reward
+        outfile = f'C:\\Users\\Public\\LAB PROJECTS\\Smith-Lab\\GitHub\\night-owls\\stimuli\\sharedreward\\logs\\sub-104\\sub-104_task-sharedreward_ses-{ses}_run-{run}_raw.csv'  # Correct file path for Shared Reward
+
         df = pd.read_csv(outfile)
 
         # Randomly select 10 trials
@@ -88,3 +91,6 @@ print(f'Total earnings across all sessions: {total_earnings_across_sessions}')  
 #Sub-101 ses 5-9: 
 
 #Sub-103 ses 1-5: 161.5
+
+
+#Sub-104 ses- 1-4: $170.50
