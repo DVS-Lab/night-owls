@@ -50,7 +50,6 @@ for sub in ${subjects[@]}; do
 		/base/bids /base/derivatives/fmriprep \
 		participant --participant_label $sub \
 		--stop-on-first-crash \
-		--longitudinal \
 		--skip-bids-validation \
 		--nthreads 14 \
 		--me-output-echos \
