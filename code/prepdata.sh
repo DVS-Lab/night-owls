@@ -34,7 +34,7 @@ rm -rf $dsroot/bids/sub-${sub}/ses-${ses}
 apptainer run --cleanenv \
 -B $dsroot:/out \
 -B $sourcedata:/sourcedata \
-/ZPOOL/data/tools/heudiconv-1.3.2.sif \
+/ZPOOL/data/tools/heudiconv-1.3.3.sif \
 -d /sourcedata/Smith-NOSC-{subject}-SES{session}/*/scans/*/*/DICOM/files/*.dcm \
 -o /out/bids/ \
 -f /out/code/heuristics_XA30.py \
