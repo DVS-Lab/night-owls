@@ -48,7 +48,7 @@ func/sub-103_ses-02_task-mid_run-2_echo-3_part-mag_bold.nii.gz	1925-04-02T21:34:
 func/sub-103_ses-02_task-mid_run-2_echo-3_part-phase_bold.nii.gz	1925-04-02T21:34:39.835000	tubric	ba0d33bd
 func/sub-103_ses-02_task-mid_run-2_echo-4_part-mag_bold.nii.gz	1925-04-02T21:34:39.835000	tubric	676679da
 func/sub-103_ses-02_task-mid_run-2_echo-4_part-phase_bold.nii.gz	1925-04-02T21:34:39.835000	tubric	ba0d33bd
-anat/sub-103_ses-02_acq-NM_MTon.nii.gz	1925-04-02T21:46:28.427500	tubric	d5ebb0a0
+anat/sub-103_ses-02_acq-NM_T2star.nii.gz	1925-04-02T21:46:28.427500	tubric	d5ebb0a0
 func/sub-103_ses-02_task-mid_run-3_echo-1_sbref.nii.gz	1925-04-02T21:58:56.642500	tubric	ffdff3af
 func/sub-103_ses-02_task-mid_run-3_echo-2_sbref.nii.gz	1925-04-02T21:58:56.642500	tubric	ffdff3af
 func/sub-103_ses-02_task-mid_run-3_echo-3_sbref.nii.gz	1925-04-02T21:58:56.642500	tubric	ffdff3af
