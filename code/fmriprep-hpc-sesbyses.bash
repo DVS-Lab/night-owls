@@ -11,7 +11,7 @@ module load singularity
 cd $PBS_O_WORKDIR
 
 # ensure paths are correct
-projectname=night-owls #this should be the only line that has to change if the rest of the script is set up correctly
+projectname=night-owls 
 maindir=/gpfs/scratch/tug87422/smithlab-shared/$projectname
 scriptdir=$maindir/code
 bidsdir=$maindir/bids
@@ -31,7 +31,6 @@ rm -f $logdir/cmd_fmriprep_${PBS_JOBID}.txt
 touch $logdir/cmd_fmriprep_${PBS_JOBID}.txt
 
 # make derivatives folder if it doesn't exist.
-# let's keep this out of bids for now
 if [ ! -d $maindir/derivatives ]; then
 	mkdir -p $maindir/derivatives
 fi
@@ -39,8 +38,6 @@ fi
 if [ ! -d $maindir/derivatives/fmriprep ]; then
     mkdir -p $maindir/derivatives/fmriprep
 fi
-
-
 
 TEMPLATEFLOW_DIR=/gpfs/scratch/tug87422/smithlab-shared/tools/templateflow
 MPLCONFIGDIR_DIR=/gpfs/scratch/tug87422/smithlab-shared/tools/mplconfigdir
@@ -53,7 +50,7 @@ for sub in ${subjects[@]}; do
   
   for ses in "${sessions[@]}"; do
     sesid=${ses#ses-}
-
+		
     # Create session-specific BIDS filter file
     configfile=$maindir/code/fmriprep_config_${sub}_${ses}.json
     cat <<EOF > "$configfile"
@@ -64,7 +61,7 @@ for sub in ${subjects[@]}; do
 }
 EOF
 
-		echo singularity run --cleanenv \
+	echo "singularity run --cleanenv \
 		-B ${TEMPLATEFLOW_DIR}:/opt/templateflow \
 		-B ${MPLCONFIGDIR_DIR}:/opt/mplconfigdir \
 		-B $maindir:/base \
@@ -79,19 +76,14 @@ EOF
 		--me-output-echos \
 		--output-spaces MNI152NLin6Asym \
 		--bids-filter-file /base/code/fmriprep_config_${sub}_${ses}.json \
-		--fs-no-reconall --fs-license-file /opts/fs_license.txt -w /scratch >> $logdir/cmd_fmriprep_${PBS_JOBID}.txt
-		
-		 # check for a known output file
-    out_file=$maindir/derivatives/fmriprep/${sub}/${ses}/func/${sub}_${ses}_task-rest_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz
-
-
-    if [ -f "$out_file" ]; then
-      echo "${sub} ${ses} fmriprep successful" >> "$status_file"
-    else
-      echo "${sub} ${ses} fmriprep unsuccessful" >> "$status_file"
-      echo "ERROR: ${sub} ${ses} failed—see logs."
-      exit 1
-    fi
+		--fs-no-reconall --fs-license-file /opts/fs_license.txt \
+		-w /scratch && \
+	if ls $maindir/derivatives/fmriprep/$sub/$ses/func/${sub}_${ses}_task-*_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz 1> /dev/null 2>&1; then
+		echo \"$sub $ses fmriprep successful\" >> \"$status_file\"; \
+	else \
+		echo \"$sub $ses fmriprep unsuccessful\" >> \"$status_file\"; \
+		exit 1; \
+	fi" >> "$logdir/cmd_fmriprep_${PBS_JOBID}.txt"
 	
 	done
 done
