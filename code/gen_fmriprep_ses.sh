@@ -25,13 +25,21 @@ subjects=(sub-101)
 for sub in ${subjects[@]}; do
 	
     ## for sessions that have a functional image..
-	sessions=($(find "${bidsdir}/${sub}" -type f -path "*/func/*.nii.gz" | grep -o "ses-[^/]*" | sort -u))
-  
+    sessions=( $(
+        find "$bidsdir/$sub" \
+            -type f \
+            -path "*/ses-[0-9][0-9]/func/*.nii.gz" \
+            2>/dev/null \
+        | sed -n 's|.*/\(ses-[0-9][0-9]\)/.*|\1|p' \
+        | sort -u
+    ) )
+
+
   for ses in "${sessions[@]}"; do
     sesid=${ses#ses-}
 		
     ## Create subject/session-specific BIDS filter file
-    configfile=$maindir/code/fmriprep_config_${sub}_${ses}.json
+    configfile=$maindir/code/fmriprep/fmriprep_config_${sub}_${ses}.json
     cat <<EOF > "$configfile"
 {
   "t1w": {"datatype": "anat", "suffix": "T1w", "session": "$sesid"},
@@ -41,7 +49,7 @@ for sub in ${subjects[@]}; do
 EOF
 
     # Generate subject/session-specific PBS script
-    scriptfile=$maindir/code/fmriprep_${sub}_${ses}.sh
+    scriptfile=$maindir/code/fmriprep/fmriprep_${sub}_${ses}.sh
 
     cat <<EOF > "$scriptfile"
 #!/bin/bash
@@ -83,7 +91,7 @@ singularity run --cleanenv \\
 	--nthreads 14 \\
 	--me-output-echos \\
 	--output-spaces MNI152NLin6Asym \\
-	--bids-filter-file /base/code/fmriprep_config_${sub}_${ses}.json \\
+	--bids-filter-file /base/code/fmriprep/fmriprep_config_${sub}_${ses}.json \\
 	--fs-no-reconall --fs-license-file /opts/fs_license.txt \\
 	-w /scratch
 EOF
