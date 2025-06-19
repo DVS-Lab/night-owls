@@ -10,7 +10,7 @@ source_directory="/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/
 destination_server="@cla18994.tu.temple.edu:"
 destination_path="/ZPOOL/data/projects/night-owls/derivatives/fmriprep"
 
-for sub in `cat ${basedir}/code/sublist_new.txt`; do
+for sub in `cat ${basedir}/code/sublist.txt`; do
 	der_files="$source_directory/sub-$sub"
 	html_files="$source_directory/sub-$sub.html"
 	rsync -avh --no-compress --progress "$der_files" "$destination_user""$destination_server""$destination_path"
