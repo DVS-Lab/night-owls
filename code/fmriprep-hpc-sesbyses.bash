@@ -18,26 +18,21 @@ bidsdir=$maindir/bids
 logdir=$maindir/logs
 mkdir -p $logdir
 
+#Keep scratch and fmriprep dirs separate by sessions for now
+for ses in {01..12}; do
+  if [ ! -d "$maindir/scratch/ses-$ses" ]; then
+    mkdir -p "$maindir/scratch/ses-$ses"
+  fi
+   if [ ! -d "$maindir/fmriprep/ses-$ses" ]; then
+    mkdir -p "$maindir/fmriprep/ses-$ses"
+  fi
+done
 
-scratchdir=$maindir/scratch 
-#status file
-status_file=$scratchdir/status.txt
-echo "# sub ses status" > "$status_file"
-
-
-#subjects=("${!1}")
 
 rm -f $logdir/cmd_fmriprep_${PBS_JOBID}.txt
 touch $logdir/cmd_fmriprep_${PBS_JOBID}.txt
 
-# make derivatives folder if it doesn't exist.
-if [ ! -d $maindir/derivatives ]; then
-	mkdir -p $maindir/derivatives
-fi
-# make derivatives/fmriprep parent folder if it doesn't exist
-if [ ! -d $maindir/derivatives/fmriprep ]; then
-    mkdir -p $maindir/derivatives/fmriprep
-fi
+
 
 TEMPLATEFLOW_DIR=/gpfs/scratch/tug87422/smithlab-shared/tools/templateflow
 MPLCONFIGDIR_DIR=/gpfs/scratch/tug87422/smithlab-shared/tools/mplconfigdir
@@ -66,7 +61,7 @@ EOF
 		-B ${MPLCONFIGDIR_DIR}:/opt/mplconfigdir \
 		-B $maindir:/base \
 		-B /gpfs/scratch/tug87422/smithlab-shared/tools/licenses:/opts \
-		-B $scratchdir:/scratch \
+		-B $scratchdir:/scratch \ #update this
 		/gpfs/scratch/tug87422/smithlab-shared/tools/fmriprep-24.1.1.simg \
 		/base/bids /base/derivatives/fmriprep \
 		participant --participant_label $sub \
@@ -77,17 +72,7 @@ EOF
 		--output-spaces MNI152NLin6Asym \
 		--bids-filter-file /base/code/fmriprep_config_${sub}_${ses}.json \
 		--fs-no-reconall --fs-license-file /opts/fs_license.txt \
-		-w /scratch && \
-	if ls $maindir/derivatives/fmriprep/$sub/$ses/func/${sub}_${ses}_task-*_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz 1> /dev/null 2>&1; then
-		echo \"$sub $ses fmriprep successful\" >> \"$status_file\"; \
-	else \
-		echo \"$sub $ses fmriprep unsuccessful\" >> \"$status_file\"; \
-		exit 1; \
-	fi" >> "$logdir/cmd_fmriprep_${PBS_JOBID}.txt"
-	
+		-w /scratch \
+		>> "$logdir/cmd_fmriprep_${PBS_JOBID}.txt"
 	done
 done
-torque-launch -p $logdir/chk_fmriprep_${PBS_JOBID}.txt $logdir/cmd_fmriprep_${PBS_JOBID}.txt
-
-# --cifti-output 91k \
-# --output-spaces fsLR fsaverage MNI152NLin6Asym \
