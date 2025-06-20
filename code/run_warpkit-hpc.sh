@@ -5,7 +5,7 @@ maindir=/gpfs/scratch/tug87422/smithlab-shared/night-owls #this should be the on
 scriptdir=$maindir/code
 
 
-mapfile -t myArray < ${scriptdir}/sublist-fix.txt
+mapfile -t myArray < ${scriptdir}/sublist.txt
 
 
 # grab the first 10 elements
