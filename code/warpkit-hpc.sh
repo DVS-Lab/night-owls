@@ -94,7 +94,7 @@ for sub in ${subjects[@]}; do
 	
 	            # placeholders for json files. will need editing.
 	            cp $indir/sub-${sub}_ses-${sesformatted}_task-${task}_run-${run}_echo-1_part-mag_bold.json $maindir/bids/sub-${sub}/ses-${sesformatted}/fmap/sub-${sub}_ses-${sesformatted}_acq-${task}_run-${run}_magnitude.json
-	            cp $indir/sub-${sub}_ses-${sesformatted}_task-${task}_run-${run}_echo-1_part-phase_bold.json $maindir/bids/sub-${sub}/ses-${sesformatted}/fmap/sub-${sub}ses-${sesformatted}_acq-${task}_run-${run}_fieldmap.json
+	            cp $indir/sub-${sub}_ses-${sesformatted}_task-${task}_run-${run}_echo-1_part-phase_bold.json $maindir/bids/sub-${sub}/ses-${sesformatted}/fmap/sub-${sub}_ses-${sesformatted}_acq-${task}_run-${run}_fieldmap.json
 	
 	            # trash the rest
 	            rm -rf $outdir/sub-${sub}_ses-${sesformatted}_task-${task}_run-${run}_displacementmaps.nii
@@ -104,4 +104,3 @@ for sub in ${subjects[@]}; do
         done
     done
 done
-
