@@ -14,7 +14,6 @@ for subinfo in "101 01" "101 02" "101 03" "101 06"; do
 	ses=$2
 
 	for run in 1 2; do
-
 		script=${scriptdir}/L1stats-sharedreward.sh
 		NCORES=10 
 		while [ $(ps -ef | grep -v grep | grep $script | wc -l) -ge $NCORES ]; do
