@@ -23,8 +23,8 @@ for ses in {01..12}; do
   if [ ! -d "$maindir/scratch/ses-$ses" ]; then
     mkdir -p "$maindir/scratch/ses-$ses"
   fi
-   if [ ! -d "$maindir/fmriprep/ses-$ses" ]; then
-    mkdir -p "$maindir/fmriprep/ses-$ses"
+   if [ ! -d "$maindir/derivatives/ses-$ses" ]; then
+    mkdir -p "$maindir/derivatives/ses-$ses"
   fi
 done
 
@@ -61,9 +61,9 @@ EOF
 		-B ${MPLCONFIGDIR_DIR}:/opt/mplconfigdir \
 		-B $maindir:/base \
 		-B /gpfs/scratch/tug87422/smithlab-shared/tools/licenses:/opts \
-		-B $scratchdir:/scratch \ #update this
+		-B $maindir/scratch/$ses:/scratch \
 		/gpfs/scratch/tug87422/smithlab-shared/tools/fmriprep-24.1.1.simg \
-		/base/bids /base/derivatives/fmriprep \
+		/base/bids /base/derivatives/$ses \
 		participant --participant_label $sub \
 		--stop-on-first-crash \
 		--skip-bids-validation \
@@ -72,7 +72,7 @@ EOF
 		--output-spaces MNI152NLin6Asym \
 		--bids-filter-file /base/code/fmriprep_config_${sub}_${ses}.json \
 		--fs-no-reconall --fs-license-file /opts/fs_license.txt \
-		-w /scratch \
+		-w /scratch" \
 		>> "$logdir/cmd_fmriprep_${PBS_JOBID}.txt"
 	done
 done
