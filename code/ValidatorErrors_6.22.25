@@ -1,0 +1,60 @@
+"affects":["/dataset_description.json"],"severity":"error"},{"code":"README_FILE_SMALL","location":"/README.md","rule":"rules.checks.general.ReadmeFileSmall","severity":"warning"},{"code":"NOT_INCLUDED","location":"/NOSC_ScanManual.docx","severity":"error"},{"code":"NOT_INCLUDED","location":"/re-runL1.log","severity":"error"},{"code":"NOT_INCLUDED","location":"/bids/","severity":"error"},{"code":"MISSING_REQUIRED_ENTITY","location":"/bids/scans.json","issueMessage":"sub missing from rule rules.files.common.tables.scans","rule":"rules.files.common.tables.scans","severity":"error"},{"code":"NOT_INCLUDED","location":"/bids/dataset_description.json","severity":"error"},{"code":"MISSING_REQUIRED_ENTITY","location":"/bids/task-sharedreward_bold.json","issueMessage":"sub missing from rule rules.files.raw.func.func","rule":"rules.files.raw.func.func","severity":"error"},{"code":"MISSING_REQUIRED_ENTITY","location":"/bids/task-mid_bold.json","issueMessage":"sub missing from rule rules.files.raw.func.func","rule":"rules.files.raw.func.func","severity":"error"},{"code":"MISSING_REQUIRED_ENTITY","location":"/bids/task-rest_bold.json","issueMessage":"sub missing from rule rules.files.raw.func.func","rule":"rules.files.raw.func.func","severity":"error"},{"code":"NOT_INCLUDED","location":"/bids/CHANGES","severity":"error"},{"code":"INVALID_LOCATION","location":"/bids/sub-101/ses-07/sub-101_ses-07_scans.tsv","issueMessage":"Expected location: /sub-101/ses-07/","severity":"error"},{"code":"INVALID_LOCATION","location":"/bids/sub-101/ses-07/anat/sub-101_ses-07_T1w.json","issueMessage":"Expected location: /sub-101/ses-07/","severity":"error"},{"code":"INVALID_LOCATION","location":"/bids/sub-101/ses-07/anat/sub-101_ses-07_T1w.nii.gz","issueMessage":"Expected location: /sub-101/ses-07/","severity":"error"},{"code":"SIDECAR_KEY_RECOMMENDED","subCode":"GradientSetType","location":"/bids/sub-101/ses-07/anat/sub-101_ses-07_T1w.nii.gz","severity":"warning","rule":"rules.sidecars.mri.MRIHardware","issueMessage":"Field description: It should be possible to infer the gradient coil from the scanner model.\nIf not, for example because of a custom upgrade or use of a gradient\ninsert set, then the specifications of the actual gradient coil should be\nreported independently.\n"},{"code":"SIDECAR_KEY_RECOMMENDED","subCode":"MRTransmitCoilSequence","location":"/bids/sub-101/ses-07/anat/sub-101_ses-07_T1w.nii.gz","severity":"warning","rule":"rules.sidecars.mri.MRIHardware","issueMessage":"Field description: This is a relevant field if a non-standard transmit coil is used.\nCorresponds to DICOM Tag 0018, 9049 `MR Transmit Coil Sequence`.\n"},{"code":"SIDECAR_KEY_RECOMMENDED","subCode":"PulseSequenceType","location":"/bids/sub-101/ses-07/anat/sub-101_ses-07_T1w.nii.gz","severity":"warning","rule":"rules.sidecars.mri.MRISequenceSpecifics","issueMessage":"Field description: A general description of the pulse sequence used for the scan.\n"},{"code":"SIDECAR_KEY_RECOMMENDED","subCode":"SequenceName","location":"/bids/sub-101/ses-07/anat/sub-101_ses-07_T1w.nii.gz","severity":"warning","rule":"rules.sidecars.mri.MRISequenceSpecifics","issueMessage":"Field description: Manufacturer's designation of the sequence name.\nCorresponds to DICOM Tag 0018, 0024 `Sequence Name`.\n"},{"code":"SIDECAR_KEY_RECOMMENDED","subCode":"SpoilingState","location":"/bids/sub-101/ses-07/anat/sub-101_ses-07_T1w.nii.gz","severity":"warning","rule":"rules.sidecars.mri.MRISequenceSpecifics","issueMessage":"Field description: Boolean stating whether the pulse sequence uses any type of spoiling\nstrategy to suppress residual transverse magnetization.\n"},{"code":"SIDECAR_KEY_RECOMMENDED","subCode":"NumberShots","location":"/bids/sub-101/ses-07/anat/sub-101_ses-07_T1w.nii.gz","severity":"warning","rule":"rules.sidecars.mri.MRISpatialEncoding","issueMessage":"Field description: The number of RF excitations needed to reconstruct a slice or volume\n(may be referred to as partition).\nPlease mind that this is not the same as Echo Train Length which denotes the\nnumber of k-space lines collected after excitation in a multi-echo readout.\nThe data type array is applicable for specifying this parameter before and\nafter the k-space center is sampled.\nPlease see\n[`\"NumberShots\"` metadata field]\\\n(SPEC_ROOT/appendices/qmri.md
+
+error: MISSING_DATASET_DESCRIPTION
+A dataset_description.json file is required in the root of the dataset
+
+error: NOT_INCLUDED
+Files with such naming scheme are not part of BIDS specification. This error is most commonly caused by typos in file names that make them not BIDS compatible. Please consult the specification and make sure your files are named correctly. If this is not a file naming issue (for example when including files not yet covered by the BIDS specification) you should include a ".bidsignore" file in your dataset (see https://github.com/bids-standard/bids-validator#bidsignore for details). Please note that derived (processed) data should be placed in /derivatives folder and source data (such as DICOMS or behavioural logs in proprietary formats) should be placed in the /sourcedata folder.
+/NOSC_ScanManual.docx
+/re-runL1.log
+/bids/
+
+Missing required entity for files with this suffix.
+/bids/scans.json (sub missing from rule rules.files.common.tables.scans)
+/bids/task-sharedreward_bold.json (sub missing from rule rules.files.raw.func.func)
+/bids/task-mid_bold.json (sub missing from rule rules.files.raw.func.func)
+/bids/task-rest_bold.json (sub missing from rule rules.files.raw.func.func)
+
+error: INVALID_LOCATION
+The file has a valid name, but is located in an invalid directory.
+/bids/sub-101/ses-07/sub-101_ses-07_scans.tsv (Expected location: /sub-101/ses-07/)
+/bids/sub-101/ses-07/anat/sub-101_ses-07_T1w.json (Expected location: /sub-101/ses-07/)
+/bids/sub-101/ses-07/anat/sub-101_ses-07_T1w.nii.gz (Expected location: /sub-101/ses-07/)
+/bids/sub-101/ses-07/func/sub-101_ses-07_task-sharedreward_run-2_echo-3_part-mag_bold.json (Expected location: /sub-101/ses-07/)
+/bids/sub-101/ses-07/func/sub-101_ses-07_task-sharedreward_run-1_echo-3_part-phase_bold.json (Expected location: /sub-101/ses-07/)
+/bids/sub-101/ses-07/func/sub-101_ses-07_task-sharedreward_run-
+
+
+error: REPETITION_TIME_AND_ACQUISITION_DURATION_MUTUALLY_EXCLUSIVE
+The fields 'RepetitionTime' and 'AcquisitionDuration' for this file are mutually exclusive. To specify acquisition duration, use 'SliceTiming' or 'DelayTime' (RepetitionTime - AcquisitionDuration).
+/bids/sub-101/ses-07/func/sub-101_ses-07_task-rest_run-1_echo-2_part-mag_bold.nii.gz
+/bids/sub-101/ses-07/func/sub-101_ses-07_task-sharedreward_run-2_echo-4_part-mag_bold.nii.gz
+/bids/sub-101/ses-07/func/sub-101_ses-07_task-mid_run-2_echo-2_part-phase_bold.nii.gz
+/bids/sub-101/ses-07/func/sub-101_ses-07_task-sharedreward_run-1_echo-3_part-phase_bold.nii.gz
+/bids/sub-101/ses-07/func/sub-101_ses-07_task-mid_run-1_echo-4_part-
+
+
+A data file's JSON sidecar is missing a key listed as required.
+/bids/sub-101/ses-07/func/sub-101_ses-07_task-mid_run-2_echo-2_part-phase_bold.nii.gz (Field description: Measurement units for the associated variable. SI units in CMIXF formatting are RECOMMENDED (see [Units](SPEC_ROOT/common-principles.md#units)). )
+/bids/sub-101/ses-07/func/sub-101_ses-07_task-sharedreward_run-1_echo-3_part-phase_bold.nii.gz (Field description: Measurement units for the associated variable. SI units in CMIXF formatting are RECOMMENDED (see [Units](SPEC_ROOT/common-principles.md#units)). )
+/bids/sub-101/ses-07/func/sub-101_ses-07_task-sharedreward_run-1_echo-2_part-phase_bold.nii.gz (Field description: Measurement units for the associated variable. SI units in CMIXF formatting are RECOMMENDED
+
+
+Empty files not allowed.
+/bids/sub-101/ses-08/sub-101_ses-08_scans.tsv
+
+
+
+error: SCANS_FILENAME_NOT_MATCH_DATASET
+Filenames in scans.tsv file do not match what is present in the BIDS dataset.
+/bids/sub-101/ses-08/sub-101_ses-08_scans.tsv
+
+
+A required column is missing
+/bids/sub-101/ses-08/sub-101_ses-08_scans.tsv (Column 0 (starting from 0) not found.)
+/bids/sub-101/ses-08/sub-101_ses-08_scans.tsv
+
+
+
+A json sidecar file was found without a corresponding data file
+/bids/sub-101/ses-08/func/sub-101_ses-08_task-mid_run-2_part-mag_bold_heudiconv088_e3.json
