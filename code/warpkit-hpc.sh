@@ -37,9 +37,6 @@ for pair in "${pairs[@]}"; do
 	for task in "sharedreward" "mid" "rest"; do
 		for run in 1 2; do
 
-			rm -f $logdir/cmd_warpkit_sub-${sub}_ses-${ses}_${task}_${run}.txt
-			touch $logdir/cmd_warpkit_sub-${sub}_ses-${ses}_${task}_${run}.txt
-
 			outdir=$maindir/derivatives/warpkit/sub-${sub}/ses-${ses}
 			if [ ! -d $outdir ]; then
 				mkdir -p $outdir
