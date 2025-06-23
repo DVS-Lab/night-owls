@@ -31,7 +31,7 @@ for sub in ${subjects[@]}; do
 			for run in 1 2; do
 
 					rm -f $logdir/cmd_warpkit_sub-${sub}_ses-${ses}_${task}_${run}.txt
-					touch $logdir/chk_warpkit_sub-${sub}_ses-${ses}_${task}_${run}.txt
+					touch $logdir/cmd_warpkit_sub-${sub}_ses-${ses}_${task}_${run}.txt
 		
 					outdir=$maindir/derivatives/warpkit/sub-${sub}/ses-${ses}
 					if [ ! -d $outdir ]; then
@@ -78,7 +78,7 @@ for sub in ${subjects[@]}; do
 							/base/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-2_part-phase_bold.json \
 							/base/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-3_part-phase_bold.json \
 							/base/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-4_part-phase_bold.json \
-					--out_prefix /out/sub-${sub}_ses-${ses}_task-${task}_run-${run}" >> $logdir/cmd_warpkit_${task}_${run}_${PBS_JOBID}.txt
+					--out_prefix /out/sub-${sub}_ses-${ses}_task-${task}_run-${run}" >> $logdir/cmd_warpkit_sub-${sub}_ses-${ses}_${task}_${run}.txt
 		
 				torque-launch -p $logdir/chk_warpkit_sub-${sub}_ses-${ses}_${task}_${run}.txt $logdir/cmd_warpkit_sub-${sub}_ses-${ses}_${task}_${run}.txt
 		
@@ -94,7 +94,7 @@ for sub in ${subjects[@]}; do
 				rm -rf $outdir/sub-${sub}_ses-${ses}_task-${task}_run-${run}_displacementmaps.nii
 				rm -rf $outdir/sub-${sub}_ses-${ses}_task-${task}_run-${run}_fieldmaps_native.nii
 
-		done
 			done
 		done
+	done
 done
