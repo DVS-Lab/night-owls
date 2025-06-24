@@ -34,8 +34,11 @@ for pair in "${pairs[@]}"; do
 	IFS=':' read -r sub ses <<< "$pair"
   	echo "Processing sub-${sub}, ses-${ses}"
 
-	compiled_jobs="$logdir/cmd_warpkit_sub-${sub}_ses-${ses}_compiled.txt"
+	compiled_jobs="$logdir/cmd_warpkit_sub-${sub}_ses-${ses}_compiled.sh"
 	rm -f $compiled_jobs
+
+	echo "#!/bin/bash" > $compiled_jobs
+	echo "" >> $compiled_jobs
 
 	for task in "sharedreward" "mid" "rest"; do
 		for run in 1 2; do
@@ -91,7 +94,9 @@ $toolsdir/warpkit.sif \
 		done
 	done
 	
-	torque-launch -p $logdir/chk_warpkit_sub-${sub}_ses-${ses}.txt $logdir/cmd_warpkit_sub-${sub}_ses-${ses}_compiled.txt
+	chmod +x $compiled_jobs
+	
+	bash $logdir/cmd_warpkit_sub-${sub}_ses-${ses}_compiled.sh
 
 	# Post-processing for this subject (after all jobs complete)
 	for task in "sharedreward" "mid" "rest"; do
