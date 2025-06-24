@@ -9,6 +9,7 @@ source $FSLDIR/etc/fslconf/fsl.sh
 module load singularity
 cd $PBS_O_WORKDIR
 
+
 IFS=' ' read -r -a pairs <<< "$PAIRS"
 
 maindir=/gpfs/scratch/tug87422/smithlab-shared/night-owls
@@ -26,6 +27,8 @@ TEMPLATEFLOW_DIR=$toolsdir/templateflow
 MPLCONFIGDIR_DIR=$toolsdir/mplconfigdir
 export SINGULARITYENV_TEMPLATEFLOW_HOME=/opt/templateflow
 export SINGULARITYENV_MPLCONFIGDIR=/opt/mplconfigdir
+
+echo "Processing pairs: ${pairs[@]}"
 
 for pair in "${pairs[@]}"; do
 	IFS=':' read -r sub ses <<< "$pair"
