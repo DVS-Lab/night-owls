@@ -53,7 +53,7 @@ EOF
 
     cat <<EOF > "$scriptfile"
 #!/bin/bash
-#PBS -l walltime=8:00:00
+#PBS -l walltime=4:00:00
 #PBS -N fmriprep-${sub}-${ses}
 #PBS -q normal
 #PBS -l nodes=1:ppn=14
