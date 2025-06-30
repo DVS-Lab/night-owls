@@ -9,17 +9,30 @@
 # Notes:
 # 1) containers live under /data/tools on local computer. should these relative paths and shared? YODA principles would suggest so.
 # 2) aside from containers, only absolute path in whole workflow (transparent to folks who aren't allowed to access to raw data)
-sourcedata=/ZPOOL/data/sourcedata/sourcedata/NOSC
 
 sub=$1
 ses=$2
 
-
 # ensure paths are correct irrespective from where user runs the script
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 dsroot="$(dirname "$scriptdir")"
+sourcedata=/ZPOOL/data/sourcedata/sourcedata/NOSC
+subdir=$sourcedata/Smith-NOSC-$sub-SES$ses/Smith-NOSC-$sub-SES$ses
+scandir=$subdir/scans
+locdir=$sourcedata/localizers/Smith-NOSC-$sub
 
 echo ${dsroot}
+
+# Move localizers to avoid slice indicies error
+if [ ! -d $locdir ]; then
+        mkdir -p $locdir
+fi
+
+for localizers in $scandir/*-localizer; do
+        [ -d $localizers ] || continue
+        echo "Moving $localizers to $locdir"
+        mv $localizers $locdir/
+done
 
 # make bids folder if it doesn't exist
 if [ ! -d $dsroot/bids ]; then
