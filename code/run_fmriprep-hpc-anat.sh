@@ -15,5 +15,5 @@ while [ $counter -lt ${#myArray[@]} ]; do
 	subjects=${myArray[@]:$counter:$ntasks}
 	echo $subjects
 	let counter=$counter+$ntasks
-	qsub -v subjects="${subjects[@]}" fmriprep-hpc.sh
+	qsub -v subjects="${subjects[@]}" fmriprep-hpc-anat.sh
 done

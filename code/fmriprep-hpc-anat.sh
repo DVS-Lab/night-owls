@@ -26,10 +26,10 @@ touch $logdir/cmd_fmriprep_${PBS_JOBID}.txt
 # make derivatives folder if it doesn't exist.
 # let's keep this out of bids for now
 if [ ! -d $maindir/derivatives/anat-only ]; then
-	mkdir -p $maindir/derivatives
+	mkdir -p $maindir/derivatives/anat-only
 fi
 
-scratchdir=~/scratch/$projectname/fmriprep
+scratchdir=~/scratch/$projectname/fmriprep-anat
 if [ ! -d $scratchdir ]; then
 	mkdir -p $scratchdir
 fi
@@ -47,7 +47,7 @@ for sub in ${subjects[@]}; do
 		-B /gpfs/scratch/tug87422/smithlab-shared/tools/licenses:/opts \
 		-B $scratchdir:/scratch \
 		/gpfs/scratch/tug87422/smithlab-shared/tools/fmriprep-24.1.1.simg \
-		/base/bids /base/derivatives/fmriprep \
+		/base/bids /base/derivatives/anat-only \
 		participant --participant_label $sub \
 		--stop-on-first-crash \
 		--skip-bids-validation \
