@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# ensure paths are correct
+# ensure paths are correct.
 maindir=/gpfs/scratch/tug87422/smithlab-shared/night-owls #this should be the only line that has to change if the rest of the script is set up correctly
 scriptdir=$maindir/code
 
