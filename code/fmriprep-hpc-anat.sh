@@ -11,7 +11,7 @@ module load singularity
 cd $PBS_O_WORKDIR
 
 # ensure paths are correct
-projectname=night-owls #this should be the only line that has to change if the rest of the script is set up correctly
+projectname=night-owls
 maindir=/gpfs/scratch/tug87422/smithlab-shared/$projectname
 scriptdir=$maindir/code
 bidsdir=$maindir/bids
