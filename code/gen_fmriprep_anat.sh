@@ -10,11 +10,11 @@ mkdir -p $logdir
 
 #Keep scratch and derivatives dirs separate by sessions
 for ses in {01..12}; do
-  if [ ! -d "$maindir/scratch/ses-$ses" ]; then
-    mkdir -p "$maindir/scratch/ses-$ses"
+  if [ ! -d "$maindir/scratch/anat-ses-$ses" ]; then
+    mkdir -p "$maindir/scratch/anat-ses-$ses"
   fi
-   if [ ! -d "$maindir/derivatives/ses-$ses" ]; then
-    mkdir -p "$maindir/derivatives/ses-$ses"
+   if [ ! -d "$maindir/derivatives/anat-only/ses-$ses" ]; then
+    mkdir -p "$maindir/derivatives/anat-only/ses-$ses"
   fi
    if [ ! -d "$maindir/code/fmriprep-anat" ]; then
     mkdir -p "$maindir/code/fmriprep-anat"
@@ -46,7 +46,7 @@ for sub in ${subjects[@]}; do
     cat <<EOF > "$configfile"
 {
   "sbref": {"datatype": "func", "suffix": "sbref", "part": [null, "mag"], "session": ["$sesid"]},
-  "bold": {"datatype": "func", "suffix": "bold", "part": [null, "mag"], "session": []"$sesid"]}
+  "bold": {"datatype": "func", "suffix": "bold", "part": [null, "mag"], "session": ["$sesid"]}
 }
 EOF
  # "t1w": {"datatype": "anat", "suffix": "T1w", "session": ["$sesid"]},
@@ -85,9 +85,9 @@ singularity run --cleanenv \\
 	-B \${MPLCONFIGDIR_DIR}:/opt/mplconfigdir \\
 	-B \$maindir:/base \\
 	-B /gpfs/scratch/tug87422/smithlab-shared/tools/licenses:/opts \\
-	-B \$maindir/scratch/$ses:/scratch \\
+	-B \$maindir/scratch/anat-$ses:/scratch \\
 	/gpfs/scratch/tug87422/smithlab-shared/tools/fmriprep-24.1.1.simg \\
-	/base/bids /base/derivatives/$ses \\
+	/base/bids /base/derivatives/anat-only/$ses \\
 	participant --participant_label $sub \\
 	--stop-on-first-crash \\
 	--skip-bids-validation \\
