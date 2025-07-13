@@ -42,7 +42,7 @@ for sub in ${subjects[@]}; do
     sesid=${ses#ses-}
 		
     ## Create subject/session-specific BIDS filter file
-    configfile=$maindir/code/fmriprep/fmriprep_config_${sub}_${ses}.json
+    configfile=$maindir/code/fmriprep-anat/fmriprep_config_${sub}_${ses}.json
     cat <<EOF > "$configfile"
 {
   "sbref": {"datatype": "func", "suffix": "sbref", "part": [null, "mag"], "session": ["$sesid"]},
@@ -95,7 +95,7 @@ singularity run --cleanenv \\
 	--me-output-echos \\
 	--output-spaces anat MNI152NLin6Asym \\
     --derivatives $maindir/derivatives/anat-only \\
-	--bids-filter-file /base/code/fmriprep/fmriprep_config_${sub}_${ses}.json \\
+	--bids-filter-file /base/code/fmriprep-anat/fmriprep_config_${sub}_${ses}.json \\
 	--fs-no-reconall --fs-license-file /opts/fs_license.txt \\
 	-w /scratch
 EOF
