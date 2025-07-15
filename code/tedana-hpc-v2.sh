@@ -8,7 +8,7 @@
 cd $PBS_O_WORKDIR
 
 # ensure paths are correct irrespective from where user runs the script
-projectname=nightowls
+projectname=night-owls
 maindir=/gpfs/scratch/tug87422/smithlab-shared/$projectname
 scriptdir=$maindir/code
 logdir=$maindir/logs
