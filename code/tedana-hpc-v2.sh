@@ -21,7 +21,7 @@ touch $logdir/cmd_tedana_${PBS_JOBID}.txt
 for sub in ${subjects[@]}; do
 	for ses in {01..12}; do
 
-        prepdir=$maindir/derivatives/anat-only/ses-${ses}/func
+        prepdir=$maindir/derivatives/anat-only/ses-${ses}/sub-${sub}/ses-${ses}/func
         [[ ! -d "$prepdir" ]] && continue
 
         for task in mid sharedreward rest; do
