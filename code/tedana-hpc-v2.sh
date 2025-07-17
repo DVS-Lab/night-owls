@@ -8,21 +8,25 @@
 cd $PBS_O_WORKDIR
 
 # ensure paths are correct irrespective from where user runs the script
-projectname=nightowls
+projectname=night-owls
 maindir=/gpfs/scratch/tug87422/smithlab-shared/$projectname
 scriptdir=$maindir/code
 logdir=$maindir/logs
 
 mkdir -p $logdir
 
-rm -f $logdir/cmd_tedana_${PBS_JOBID}.txt
-touch $logdir/cmd_tedana_${PBS_JOBID}.txt
+all_cmds=()
 
 for sub in ${subjects[@]}; do
-	for ses in ${01..12}; do
+	for ses in {01..12}; do
 
-        prepdir=$maindir/derivatives/ses-${ses}
+        prepdir=$maindir/derivatives/fmriprep/sub-${sub}/ses-${ses}/func
         [[ ! -d "$prepdir" ]] && continue
+
+        cmdfile=$logdir/cmd_tedana_sub-${sub}_ses-${ses}.txt
+        rm -f $cmdfile
+        touch $cmdfile
+        all_cmds+=($cmdfile)
 
         for task in mid sharedreward rest; do
             for run in {1..2}; do
@@ -38,7 +42,7 @@ for sub in ${subjects[@]}; do
                 # Check for the presence of all echo files
                 if [ ! -e $echo1 ] || [ ! -e $echo2 ] || [ ! -e $echo3 ] || [ ! -e $echo4 ]; then
                     echo "Missing one or more files for sub-${sub}, ses-${ses}, task-${task}, run-${run}" >> $scriptdir/missing-tedanaInput.log
-                    echo "Skipping sub-${sub}, ses-${ses}, task-${task}, run-${run}" >> $logdir/cmd_tedana_${PBS_JOBID}.txt
+                    echo "#Skipping sub-${sub}, ses-${ses}, task-${task}, run-${run}" >> $cmdfile
                     continue
                 fi
 
@@ -65,10 +69,10 @@ for sub in ${subjects[@]}; do
                 echo "tedana -d $echo1 $echo2 $echo3 $echo4 \
                 -e $echotime1 $echotime2 $echotime3 $echotime4 \
                 --out-dir $outdir \
-                --prefix sub-${sub}_task-${task}_run-${run} \
+                --prefix sub-${sub}_ses-${ses}_task-${task}_run-${run} \
                 --convention bids \
                 --fittype curvefit \
-                --overwrite"  >> $logdir/cmd_tedana_${PBS_JOBID}.txt
+                --overwrite"  >> $cmdfile
 
                             # clean up and save space
                    # rm -rf ${outdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_*.nii.gz
@@ -78,4 +82,8 @@ for sub in ${subjects[@]}; do
 	done
 done
 
-torque-launch -p $logdir/chk_tedana_${PBS_JOBID}.txt $logdir/cmd_tedana_${PBS_JOBID}.txt
+# Submit all session-level command files
+for cmdfile in "${all_cmds[@]}"; do
+    seschkfile="${cmdfile/cmd_tedana/chk_tedana}"
+    torque-launch -p "$seschkfile" "$cmdfile"
+done

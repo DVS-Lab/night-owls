@@ -3,6 +3,7 @@ library(readr)
 events_gen <- function(sub,ses){
   sub <- as.character(sub)
   ses <- as.character(ses)
+    
   for (r in 1:2){
     
     #Reset dataframes
@@ -114,11 +115,40 @@ events_gen(101,11)
 ## SUB 103
 
 #Ses-01 COMPLETED
-events_gen(103,1)
+events_gen(103,01)
 
 #Ses-02 Completed
 events_gen(103,02)
 
+#Ses-03 Completed
+events_gen(103,03)
+
+#Ses-04 Completed
+events_gen(103,04)
+
+#Ses-05 Completed
+events_gen(103,05)
+
+#Ses-06 Completed
+events_gen(103,06)
+
+#Ses-07 Completed
+events_gen(103,07)
+
+#Ses-08 Completed
+events_gen(103,08)
+
+#Ses-09 Completed
+events_gen(103,09)
+
+#Ses-10 Completed
+events_gen(103,10)
+
+#Ses-11 Completed
+events_gen(103,11)
+
+#Ses-12 Completed
+events_gen(103,12)
 
 
 
