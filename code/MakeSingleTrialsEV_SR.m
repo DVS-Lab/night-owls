@@ -20,38 +20,38 @@ for s = 1:length(sub)
             rundir = fullfile(evdir,['sub-' num2str(sub(s))],['ses-0' num2str(ses)],'sharedreward',['run-' num2str(r)]);
 
             if ~exist(rundir, 'dir')
-                subchar=num2str(s)
-                seschar=num2str(ses)
+                subchar=num2str(s);
+                seschar=num2str(ses);
                 log{end+1}=sprintf('sub %s ses %s run %s does not exist.',num2str(s),num2str(ses),num2str(r));
                 continue;
             end
 
             % load evs and concatenate
-            misspath = fullfile(rundir,"_miss_outcome.txt")
+            misspath = fullfile(rundir,"_miss_outcome.txt");
 
-        if exist(misspath, file)==2
-            ev1=load(fullfile(rundir,'_outcome_computer_neutral.txt'))
-            ev2=load(fullfile(rundir,'_outcome_computer_punish.txt'))
-            ev3=load(fullfile(rundir,'_outcome_computer_reward.txt'))
-            ev4=load(fullfile(rundir,'_outcome_stranger_neutral.txt'))
-            ev5=load(fullfile(rundir,'_outcome_stranger_punish.txt'))
-            ev6=load(fullfile(rundir,'_outcome_stranger_reward.txt'))
-            ev7=load(fullfile(rundir,'_miss_outcome.txt'))
+        if exist(misspath, 'file')==2
+            ev1=load(fullfile(rundir,'_outcome_computer_neutral.txt'));
+            ev2=load(fullfile(rundir,'_outcome_computer_punish.txt'));
+            ev3=load(fullfile(rundir,'_outcome_computer_reward.txt'));
+            ev4=load(fullfile(rundir,'_outcome_stranger_neutral.txt'));
+            ev5=load(fullfile(rundir,'_outcome_stranger_punish.txt'));
+            ev6=load(fullfile(rundir,'_outcome_stranger_reward.txt'));
+            ev7=load(fullfile(rundir,'_miss_outcome.txt'));
 
             all_evs = [ev1; ev2; ev3; ev4; ev5; ev6;ev7];
             all_evs = sortrows(all_evs,1,'ascend');
  
             [~, miss_idx] = ismember(ev7, all_evs, 'rows');
-            fprintf('sub %s ses %s run %s missed trial number: %s\n', num2str(sub(s)), num2str(ses), num2str(r), mat2str(miss_idx(miss_idx > 0)));
+            fprintf('sub %s ses %s run %s missed trial number: %s\n', num2str(sub(s)), num2str(ses), num2str(r), mat2str(miss_idx(miss_idx > 0)))
 
         else
         
-            ev1=load(fullfile(rundir,'_outcome_computer_neutral.txt'))
-            ev2=load(fullfile(rundir,'_outcome_computer_punish.txt'))
-            ev3=load(fullfile(rundir,'_outcome_computer_reward.txt'))
-            ev4=load(fullfile(rundir,'_outcome_stranger_neutral.txt'))
-            ev5=load(fullfile(rundir,'_outcome_stranger_punish.txt'))
-            ev6=load(fullfile(rundir,'_outcome_stranger_reward.txt'))
+            ev1=load(fullfile(rundir,'_outcome_computer_neutral.txt'));
+            ev2=load(fullfile(rundir,'_outcome_computer_punish.txt'));
+            ev3=load(fullfile(rundir,'_outcome_computer_reward.txt'));
+            ev4=load(fullfile(rundir,'_outcome_stranger_neutral.txt'));
+            ev5=load(fullfile(rundir,'_outcome_stranger_punish.txt'));
+            ev6=load(fullfile(rundir,'_outcome_stranger_reward.txt'));
 
 
             all_evs = [ev1; ev2; ev3; ev4; ev5; ev6];

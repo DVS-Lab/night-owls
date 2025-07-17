@@ -9,7 +9,7 @@ evdir = fullfile(maindir,'derivatives','fsl','EVFiles');
 
 % load sub/run list
 sub = [101 103 104];
-session=[9 12 10];
+session=[9 12 12];
 runs=2;
 log={}
 
@@ -19,15 +19,15 @@ for s = 1:length(sub)
          rundir = fullfile(evdir,['sub-' num2str(sub(s))],['ses-0' num2str(ses)],'mid',['run-' num2str(r)]);
         
          if ~exist(rundir, 'dir')
-            subchar=num2str(s)
-            seschar=num2str(ses)
+            subchar=num2str(s);
+            seschar=num2str(ses);
             log{end+1}=sprintf('sub %s ses %s run %s does not exist.',num2str(s),num2str(ses),num2str(r));
             continue;
          end
 
             % load evs and concatenate
-            ev1=load(fullfile(rundir,'_anticipation_neutral.txt'))
-            ev2=load(fullfile(rundir,'_anticipation_reward.txt'))
+            ev1=load(fullfile(rundir,'_anticipation_neutral.txt'));
+            ev2=load(fullfile(rundir,'_anticipation_reward.txt'));
             all_evs = [ev1; ev2];
             all_evs = sortrows(all_evs,1,'ascend');
 
