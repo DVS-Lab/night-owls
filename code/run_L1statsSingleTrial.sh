@@ -14,7 +14,7 @@ mapfile -t myArray < "${scriptdir}/sublist-ses.txt" # ???? what should be in thi
 #1 task here need to be conditional on task, sub-ses-run-trial; 5 trial as one job - how? 
 
 # grab the first 5 elements
-ntasks=5
+ntasks=12
 counter=0
 
 #for task in 'sharedreward'; do

@@ -161,7 +161,7 @@ end
 # fix registration as per NeuroStars post:
 # https://neurostars.org/t/performing-full-glm-analysis-with-fsl-on-the-bold-images-prepro>
 #mkdir -p ${OUTPUT}.feat/reg
-cp $FSLDIR/etc/flirtsch/ident.mat ${OUTPUT}.feat/reg/example_func2standard.mat
+cp  $FSLDIR/etc/flirtsch/ident.mat ${OUTPUT}.feat/reg/example_func2standard.mat
 cp  $FSLDIR/etc/flirtsch/ident.mat ${OUTPUT}.feat/reg/standard2example_func.mat
 cp  ${OUTPUT}.feat/mean_func.nii.gz ${OUTPUT}.feat/reg/standard.nii.gz
 
