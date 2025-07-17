@@ -10,7 +10,7 @@ from natsort import natsorted
 BASE      = "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives"
 TEDANA    = os.path.join(BASE, "tedana")
 FMRIPREP  = os.path.join(BASE, "fmriprep")
-FSL_OUT   = os.path.join(BASE, "fsl", "confounds_tedana")
+FSL_OUT   = os.path.join(BASE, "fsl", "confounds_tedana") #This needs to account for /sub/ses
 
 # find all tedana_metrics files under sub-XX/ses-YY
 metric_files = natsorted(
@@ -48,8 +48,11 @@ for mfile in metric_files:
 
     # load data
     fprep_df   = pd.read_csv(fprep_file, sep="\t")
-    mixing_df  = pd.read_csv(os.path.join(root, "ICA_mixing.tsv"), sep="\t")
-    metrics_df = pd.read_csv(os.path.join(root, "tedana_metrics.tsv"), sep="\t")
+    mixing_file = os.path.join(
+    root,
+    f"{sub}_{ses}_task-{task}_run-{run}_desc-ICA_mixing.tsv"
+    )
+    mixing_df = pd.read_csv(mixing_file, sep="\t")    metrics_df = pd.read_csv(os.path.join(root, "tedana_metrics.tsv"), sep="\t")
 
     # pick out the rejected components
     bad_idxs       = metrics_df.loc[metrics_df["classification"] == "rejected", "Component"]
