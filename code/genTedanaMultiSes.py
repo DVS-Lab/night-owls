@@ -48,11 +48,21 @@ for mfile in metric_files:
 
     # load data
     fprep_df   = pd.read_csv(fprep_file, sep="\t")
+
+    # build and load ICA mixing
     mixing_file = os.path.join(
-    root,
-    f"{sub}_{ses}_task-{task}_run-{run}_desc-ICA_mixing.tsv"
+        root,
+        f"{sub}_{ses}_task-{task}_run-{run}_desc-ICA_mixing.tsv"
     )
-    mixing_df = pd.read_csv(mixing_file, sep="\t")    metrics_df = pd.read_csv(os.path.join(root, "tedana_metrics.tsv"), sep="\t")
+    mixing_df = pd.read_csv(mixing_file, sep="\t")
+
+    # build and load tedana metrics
+    metrics_file = os.path.join(
+        root,
+        f"{sub}_{ses}_task-{task}_run-{run}_desc-tedana_metrics.tsv"
+    )
+    metrics_df = pd.read_csv(metrics_file, sep="\t")
+
 
     # pick out the rejected components
     bad_idxs       = metrics_df.loc[metrics_df["classification"] == "rejected", "Component"]
