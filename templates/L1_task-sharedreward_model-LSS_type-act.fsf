@@ -24,7 +24,7 @@ set fmri(relative_yn) 0
 set fmri(help_yn) 1
 
 # Run Featwatcher
-set fmri(featwatcher_yn) 0
+set fmri(featwatcher_yn) 0f
 
 # Cleanup first-level standard-space images
 set fmri(sscleanup_yn) 0
@@ -33,10 +33,10 @@ set fmri(sscleanup_yn) 0
 set fmri(outputdir) "OUTPUT"
 
 # TR(s)
-set fmri(tr) 1.615
+set fmri(tr) 1.615000 
 
 # Total volumes
-set fmri(npts) 265
+set fmri(npts) NVOLUMES
 
 # Delete volumes
 set fmri(ndelete) 0
@@ -276,13 +276,13 @@ set fmri(fnirt_config) "T1_2_MNI152_2mm"
 set fmri(ncopeinputs) 0
 
 # 4D AVW data or FEAT directory (1)
-set feat_files(1) "/ZPOOL/data/projects/night-owls/derivatives/fmriprep/sub-101/ses-01/func/sub-101_ses-01_task-sharedreward_run-1_part-mag_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz"
+set feat_files(1) "DATA"
 
 # Add confound EVs text file
 set fmri(confoundevs) 1
 
 # Confound EVs text file for analysis 1
-set confoundev_files(1) "/ZPOOL/data/projects/night-owls/derivatives/fsl/confounds/sub-101/sub-101_ses-01_task-sharedreward_run-1_desc-fslConfounds.tsv"
+set confoundev_files(1) "CONFOUNDEVS"
 
 # EV 1 title
 set fmri(evtitle1) "miss_dec"
@@ -294,7 +294,7 @@ set fmri(evtitle1) "miss_dec"
 # 3 : Custom (3 column format)
 # 4 : Interaction
 # 10 : Empty (all zeros)
-set fmri(shape1) 10
+set fmri(shape1) SHAPE_MISSED_DEC
 
 # Convolution (EV 1)
 # 0 : None
@@ -305,7 +305,7 @@ set fmri(shape1) 10
 # 5 : Sine basis functions
 # 6 : FIR basis functions
 # 8 : Alternate Double-Gamma
-set fmri(convolve1) 0
+set fmri(convolve1) 3
 
 # Convolve phase (EV 1)
 set fmri(convolve_phase1) 0
@@ -315,6 +315,9 @@ set fmri(tempfilt_yn1) 0
 
 # Add temporal derivative (EV 1)
 set fmri(deriv_yn1) 0
+
+# Custom EV file (EV 1)
+set fmri(custom1) "EVDIR_miss_decision.txt"
 
 # Orthogonalise EV 1 wrt EV 0
 set fmri(ortho1.0) 0
@@ -347,7 +350,7 @@ set fmri(evtitle2) "miss_out"
 # 3 : Custom (3 column format)
 # 4 : Interaction
 # 10 : Empty (all zeros)
-set fmri(shape2) 10
+set fmri(shape2) SHAPE_MISSED_OUTCOME
 
 # Convolution (EV 2)
 # 0 : None
@@ -358,7 +361,7 @@ set fmri(shape2) 10
 # 5 : Sine basis functions
 # 6 : FIR basis functions
 # 8 : Alternate Double-Gamma
-set fmri(convolve2) 0
+set fmri(convolve2) 3
 
 # Convolve phase (EV 2)
 set fmri(convolve_phase2) 0
@@ -368,6 +371,9 @@ set fmri(tempfilt_yn2) 0
 
 # Add temporal derivative (EV 2)
 set fmri(deriv_yn2) 0
+
+# Custom EV file (EV 2)
+set fmri(custom2) "EVDIR_miss_outcome.txt"
 
 # Orthogonalise EV 2 wrt EV 0
 set fmri(ortho2.0) 0
@@ -423,7 +429,7 @@ set fmri(tempfilt_yn3) 0
 set fmri(deriv_yn3) 0
 
 # Custom EV file (EV 3)
-set fmri(custom3) "/ZPOOL/data/projects/night-owls/derivatives/fsl/EVFiles/sub-101/ses-01/sharedreward/run-1/_guess_rightButton_computer.txt"
+set fmri(custom3) "EVDIR_guess_rightButton_computer.txt"
 
 # Orthogonalise EV 3 wrt EV 0
 set fmri(ortho3.0) 0
@@ -479,7 +485,7 @@ set fmri(tempfilt_yn4) 0
 set fmri(deriv_yn4) 0
 
 # Custom EV file (EV 4)
-set fmri(custom4) "/ZPOOL/data/projects/night-owls/derivatives/fsl/EVFiles/sub-101/ses-01/sharedreward/run-1/_guess_rightButton_face.txt"
+set fmri(custom4) "EVDIR_guess_rightButton_face.txt"
 
 # Orthogonalise EV 4 wrt EV 0
 set fmri(ortho4.0) 0
@@ -535,7 +541,7 @@ set fmri(tempfilt_yn5) 0
 set fmri(deriv_yn5) 0
 
 # Custom EV file (EV 5)
-set fmri(custom5) "/ZPOOL/data/projects/night-owls/derivatives/fsl/EVFiles/sub-101/singletrial/ses-01/sharedreward/run-1/run-01_SingleTrial01.txt"
+set fmri(custom5) "SINGLETRIAL"
 
 # Orthogonalise EV 5 wrt EV 0
 set fmri(ortho5.0) 0
@@ -591,7 +597,7 @@ set fmri(tempfilt_yn6) 0
 set fmri(deriv_yn6) 0
 
 # Custom EV file (EV 6)
-set fmri(custom6) "/ZPOOL/data/projects/night-owls/derivatives/fsl/EVFiles/sub-101/singletrial/ses-01/sharedreward/run-1/run-01_OtherTrials01.txt"
+set fmri(custom6) "OTHERTRIAL"
 
 # Orthogonalise EV 6 wrt EV 0
 set fmri(ortho6.0) 0
@@ -639,7 +645,7 @@ set fmri(con_real1.3) 0.0
 set fmri(con_real1.4) 0
 
 # Real contrast_real vector 1 element 5
-set fmri(con_real1.5) 1
+set fmri(con_real1.5) 1.0
 
 # Real contrast_real vector 1 element 6
 set fmri(con_real1.6) 0
@@ -663,7 +669,7 @@ set fmri(con_orig1.3) 0.0
 set fmri(con_orig1.4) 0
 
 # Real contrast_orig vector 1 element 5
-set fmri(con_orig1.5) 1
+set fmri(con_orig1.5) 1.0
 
 # Real contrast_orig vector 1 element 6
 set fmri(con_orig1.6) 0
