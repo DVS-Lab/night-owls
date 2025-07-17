@@ -43,7 +43,8 @@ for s = 1:length(sub)
  
             [~, miss_idx] = ismember(ev7, all_evs, 'rows');
             fprintf('sub %s ses %s run %s missed trial number: %s\n', num2str(sub(s)), num2str(ses), num2str(r), mat2str(miss_idx(miss_idx > 0)))
-
+%%%%%%take note of which trial has missing outcome event and add into run
+%%%%%%script as the trial that gets skipped(continued)
         else
         
             ev1=load(fullfile(rundir,'_outcome_computer_neutral.txt'));

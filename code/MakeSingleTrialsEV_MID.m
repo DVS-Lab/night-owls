@@ -33,7 +33,7 @@ for s = 1:length(sub)
 
     
 
-            % check length of trials. everyone should have 64
+            % check length of trials. everyone should have 56
             if length(all_evs) ~= 56
                 disp(sprintf('sub %s ses %s run %s missing trials...', num2str(sub(s)), num2str(ses), num2str(r)));
                 keyboard
