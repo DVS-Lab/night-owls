@@ -21,7 +21,7 @@ touch $logdir/cmd_tedana_${PBS_JOBID}.txt
 for sub in ${subjects[@]}; do
 	for ses in {01..12}; do
 
-        prepdir=$maindir/derivatives/anat-only/ses-${ses}/sub-${sub}/ses-${ses}/func
+        prepdir=$maindir/derivatives/fmriprep/sub-${sub}/ses-${ses}/func
         [[ ! -d "$prepdir" ]] && continue
 
         for task in mid sharedreward rest; do
@@ -33,7 +33,7 @@ for sub in ${subjects[@]}; do
                 echo3=${prepdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-3_part-mag_desc-preproc_bold.nii.gz
                 echo4=${prepdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-4_part-mag_desc-preproc_bold.nii.gz
                 
-                outdir=${maindir}/derivatives/anat-only/tedana/sub-${sub}/ses-${ses}
+                outdir=${maindir}/derivatives/tedana/sub-${sub}/ses-${ses}
 
                 # Check for the presence of all echo files
                 if [ ! -e $echo1 ] || [ ! -e $echo2 ] || [ ! -e $echo3 ] || [ ! -e $echo4 ]; then
