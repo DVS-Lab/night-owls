@@ -55,9 +55,9 @@ for sub in ${subjects[@]}; do
 				continue # exiting/continuing to ensure nothing gets run without confounds
 			fi
 			
-			EVDIR=${projectdir}/derivatives/fsl/EVfiles/sub-${sub}/ses-${ses}/${TASK}/run-${run} # don't zeropad here since only 2 runs at most
-			if [ ! -d "${projectdir}/derivatives/fsl/EVfiles/sub-${sub}/ses-${ses}/${TASK}/run-${run}" ]; then
-				echo "missing EVfiles: $EVDIR " >> $logdir/re-runL1.log
+			EVDIR=${projectdir}/derivatives/fsl/EVFiles/sub-${sub}/ses-${ses}/${TASK}/run-${run} # don't zeropad here since only 2 runs at most
+			if [ ! -d "${projectdir}/derivatives/fsl/EVFiles/sub-${sub}/ses-${ses}/${TASK}/run-${run}" ]; then
+				echo "missing EVFiles: $EVDIR " >> $logdir/re-runL1.log
 				continue # skip these since some won't exist yet
 			fi
 
