@@ -165,6 +165,7 @@ for sub in ${subjects[@]}; do
 							-e 's@EV_SHAPE@'$EV_SHAPE'@g' \
 							-e 's@SMOOTH@'$sm'@g' \
 							-e 's@CONFOUNDEVS@'$CONFOUNDEVS'@g' \
+							-e 's@NVOLUMES@'$NVOLUMES'@g' \
 							<$ITEMPLATE >$OTEMPLATE
 					else
 						PHYS=${MAINOUTPUT}/ts_task-${TASK}_mask-${ppi}_run-${run}.txt
