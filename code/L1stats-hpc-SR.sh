@@ -39,11 +39,11 @@ for sub in ${subjects[@]}; do
 			# set inputs and general outputs 
 			MAINOUTPUT=${projectdir}/derivatives/fsl/level-run/space-MNI/sub-${sub}/ses-${ses}
 			mkdir -p $MAINOUTPUT
-			DATA=${projectdir}/$maindir/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-$(ses)_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz
+			DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz
 		
 			#Check for input data, skip if missing
 			if [ ! -e $DATA ]; then
-				echo "MISSING FMRIPREP INPUT ${sub}, run ${run}: $DATA" >> $projectdir/re-runL1.log
+				echo "MISSING FMRIPREP INPUT ${sub}, run ${run}: $DATA" >> $logdir/re-runL1.log
 				continue
 			fi
 			
@@ -51,13 +51,13 @@ for sub in ${subjects[@]}; do
 			NVOLUMES=$(fslnvols $DATA)
 			CONFOUNDEVS=${projectdir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-TedanaPlusConfounds.tsv
 			if [ ! -e $CONFOUNDEVS ]; then
-				echo "missing: $CONFOUNDEVS " >>${projectdir}/re-runL1.log
+				echo "missing: $CONFOUNDEVS " >> $logdir/re-runL1.log
 				continue # exiting/continuing to ensure nothing gets run without confounds
 			fi
 			
 			EVDIR=${projectdir}/derivatives/fsl/EVfiles/sub-${sub}/ses-${ses}/${TASK}/run-${run} # don't zeropad here since only 2 runs at most
-			if [ ! -d ${projectdir}/derivatives/fsl/EVfiles/sub-${sub}/ses-$ses/${TASK} ]; then
-				echo "missing EVfiles: $EVDIR " >>${projectdir}/re-runL1.log
+			if [ ! -d "${projectdir}/derivatives/fsl/EVfiles/sub-${sub}/ses-${ses}/${TASK}" ]; then
+				echo "missing EVfiles: $EVDIR " >> $logdir/re-runL1.log
 				continue # skip these since some won't exist yet
 			fi
 
@@ -84,7 +84,7 @@ for sub in ${subjects[@]}; do
 				if [ -e ${OUTPUT}.feat/cluster_mask_zstat1.nii.gz ]; then
 					continue
 				else
-					echo "missing: $OUTPUT " >>${projectdir}/re-runL1.log
+					echo "missing: $OUTPUT " >> $logdir/re-runL1.log
 					rm -rf ${OUTPUT}.feat
 				fi
 
@@ -149,7 +149,7 @@ for sub in ${subjects[@]}; do
 				if [ -e ${OUTPUT}.feat/cluster_mask_zstat1.nii.gz ]; then
 					continue
 				else
-					echo "missing: $OUTPUT " >>${projectdir}/re-runL1.log
+					echo "missing: $OUTPUT " >> $logdir/re-runL1.log
 					rm -rf ${OUTPUT}.feat
 				fi
 
@@ -218,4 +218,4 @@ for sub in ${subjects[@]}; do
 	done
 done
 
-torque-launch -p $logdir/chk_feat_${PBS_JOBID}.txt $logdir/cmd_feat_${PBS_JOBID}.txt
+torque-launch -p "$logdir/chk_feat_${PBS_JOBID}.txt" "$logdir/cmd_feat_${PBS_JOBID}.txt"
