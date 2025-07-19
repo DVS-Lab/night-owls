@@ -21,12 +21,12 @@ tasks=("SR")
 		
 while [ $counter -lt ${#myArray[@]} ]; do
 	subjects=${myArray[@]:$counter:$ntasks}
-	echo $subjects
 	let counter=$counter+$ntasks
 
 		# Loop over each task script and submit with the same subject chunk
 	for task in "${tasks[@]}"; do
 		script="L1stats-hpc-${task}.sh"
 		qsub -v subjects="${subjects[@]}" "$script"
+        echo $subjects $script
 	done
 done
