@@ -31,6 +31,7 @@ TASK=sharedreward
 ppi=0
 sm=5 #trust & sr
 
+rm $logdir/re-runL1.log
 
 for sub in ${subjects[@]}; do
 	for ses in {01..12}; do
