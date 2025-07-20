@@ -28,7 +28,7 @@ rm -f L1stats-SR.e*
 
 
 TASK=sharedreward
-ppi=0 # dmn #dmn #VS  #dmn #0
+ppi=0
 sm=5 #trust & sr
 
 
@@ -55,8 +55,8 @@ for sub in ${subjects[@]}; do
 				continue # exiting/continuing to ensure nothing gets run without confounds
 			fi
 			
-			EVDIR=${projectdir}/derivatives/fsl/EVFiles/sub-${sub}/ses-${ses}/${TASK}/run-${run} # don't zeropad here since only 2 runs at most
-			if [ ! -d "${projectdir}/derivatives/fsl/EVFiles/sub-${sub}/ses-${ses}/${TASK}/run-${run}" ]; then
+			EVDIR=${projectdir}/derivatives/fsl/EVFiles/sub-${sub}/ses-${ses}/${TASK}/run-${run}/ # don't zeropad here since only 2 runs at most
+			if [ ! -d "${projectdir}/derivatives/fsl/EVFiles/sub-${sub}/ses-${ses}/${TASK}/run-${run}/" ]; then
 				echo "missing EVFiles: $EVDIR " >> $logdir/re-runL1.log
 				continue # skip these since some won't exist yet
 			fi
