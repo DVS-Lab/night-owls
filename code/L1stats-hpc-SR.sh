@@ -39,7 +39,7 @@ for sub in ${subjects[@]}; do
 		for run in 1 2; do
 
 			# set inputs and general outputs 
-			MAINOUTPUT=${projectdir}/derivatives/fsl/space-MNI/sub-${sub}/ses-${ses}/
+			MAINOUTPUT=${projectdir}/derivatives/fsl/space-MNI/sub-${sub}/ses-${ses}
 			mkdir -p $MAINOUTPUT
 			DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz
 		
