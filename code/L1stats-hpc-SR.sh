@@ -31,7 +31,6 @@ TASK=sharedreward
 sm=5 #mid & sr
 TYPE=act
 ppi=0
-sm=5 #trust & sr
 
 rm $logdir/re-runL1.log
 
