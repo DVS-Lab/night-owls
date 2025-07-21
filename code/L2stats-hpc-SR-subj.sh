@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -l walltime=12:00:00
-#PBS -N L2stats-SR
+#PBS -N L2stats-SR-subj
 #PBS -q normal
 #PBS -m ae
 #PBS -M matt.mattoni@temple.edu

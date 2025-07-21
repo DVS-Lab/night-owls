@@ -42,6 +42,7 @@ for sub in `ls -1d ${maindir}/derivatives/fsl/space-MNI/sub-*`; do
 				
 				# fix registration as per NeuroStars post:
 				# https://neurostars.org/t/performing-full-glm-analysis-with-fsl-on-the-bold-images-preprocessed-by-fmriprep-without-re-registering-the-data-to-the-mni-space/784/3
+				rm -rf ${OUTPUT}/reg_standard
 				mkdir -p ${OUTPUT}.feat/reg
 				ln -s $FSLDIR/etc/flirtsch/ident.mat ${OUTPUT}.feat/reg/example_func2standard.mat
 				ln -s $FSLDIR/etc/flirtsch/ident.mat ${OUTPUT}.feat/reg/standard2example_func.mat
