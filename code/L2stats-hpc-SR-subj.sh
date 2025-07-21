@@ -4,7 +4,7 @@
 #PBS -q normal
 #PBS -m ae
 #PBS -M matt.mattoni@temple.edu
-#PBS -l nodes=1:ppn=28
+#PBS -l nodes=1:ppn=14
 
 # load modules and go to workdir
 module load fsl/6.0.2
@@ -108,6 +108,7 @@ for sub in ${subjects[@]}; do
         feat_index=$((i + 1))
         echo "set feat_files(${feat_index}) \"${all_inputs[i]}\"" >> ${OTEMPLATE}
         echo "set fmri(evg${feat_index}.1) 1.0" >> ${OTEMPLATE}
+        echo "set fmri(groupmem.${feat_index}) 1" >> ${OTEMPLATE}
     done
     
     # Log what we're processing
