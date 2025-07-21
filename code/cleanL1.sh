@@ -21,7 +21,7 @@ for sub in `ls -1d ${maindir}/derivatives/fsl/space-MNI/sub-*`; do
 		for run in 1 2; do
 
 			# set inputs and general outputs (should not need to chage across studies in Smith Lab)
-			MAINOUTPUT=${maindir}/derivatives/fsl/sub-${sub}/ses-${ses}
+			MAINOUTPUT=${maindir}/derivatives/fsl/space-MNI/sub-${sub}/ses-${ses}
 
 			# if network (ecn or dmn), do nppi; otherwise, do activation or seed-based ppi
 			if [ "$ppi" == "ecn" -o  "$ppi" == "dmn" ]; then
