@@ -7,7 +7,7 @@ source $FSLDIR/etc/fslconf/fsl.sh
 # ensure paths are correct
 maindir=/gpfs/scratch/tug87422/smithlab-shared/night-owls
 
-TASK=shared-reward
+TASK=sharedreward
 ppi=0
 sm=5
 
