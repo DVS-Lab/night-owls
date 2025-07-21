@@ -22,21 +22,16 @@ mkdir -p $logdir
 
 rm -f $logdir/cmd_L2_${PBS_JOBID}.txt
 touch $logdir/cmd_L2_${PBS_JOBID}.txt
-rm -f $logdir/cmd_L2subj_${PBS_JOBID}.txt
-touch $logdir/cmd_L2subj_${PBS_JOBID}.txt
 
 rm -f L2stats-SR.o*
 rm -f L2stats-SR.e*
 
 rm $logdir/re-runL2.log
 
-
 type="act"               # "act" or "ppi" (or "nppi-dmn")
 task=sharedreward       # edit if necessary
 sm=5                    # smoothing kernel label
 model=1                 # first-level model number
-NCOPES=34               # base number of copes for act
-
 
 for sub in ${subjects[@]}; do
 
@@ -94,12 +89,13 @@ done
 torque-launch -p "$logdir/chk_L2_${PBS_JOBID}.txt" "$logdir/cmd_L2_${PBS_JOBID}.txt"
 
 # delete unused files
-#for sub in ${subjects[@]}; do
-#    for cope in $(seq 1 ${NCOPES}); do
-#        rm -f ${OUTPUT}.gfeat/cope${cope}.feat/stats/res4d.nii.gz \
-#        ${OUTPUT}.gfeat/cope${cope}.feat/stats/corrections.nii.gz \
-#        ${OUTPUT}.gfeat/cope${cope}.feat/stats/threshac1.nii.gz \
-#        ${OUTPUT}.gfeat/cope${cope}.feat/filtered_func_data.nii.gz \
-#        ${OUTPUT}.gfeat/cope${cope}.feat/var_filtered_func_data.nii.gz
-#    done
-#done
+for sub in ${subjects[@]}; do
+    for ses in {01..12}; do
+        OUTPUT=${projectdir}/derivatives/fsl/space-MNI/sub-${sub}/ses-${ses}/L2_task-${task}_model-${model}_type-${type}_ses-${ses}_sm-${sm}
+        rm -f ${OUTPUT}.gfeat/cope*.feat/stats/res4d.nii.gz
+        rm -f ${OUTPUT}.gfeat/cope*.feat/stats/corrections.nii.gz
+        rm -f ${OUTPUT}.gfeat/cope*.feat/stats/threshac1.nii.gz
+        rm -f ${OUTPUT}.gfeat/cope*.feat/filtered_func_data.nii.gz
+        rm -f ${OUTPUT}.gfeat/cope*.feat/var_filtered_func_data.nii.gz
+    done
+done
