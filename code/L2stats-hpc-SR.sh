@@ -11,6 +11,7 @@
 module load fsl/6.0.2
 source $FSLDIR/etc/fslconf/fsl.sh
 cd $PBS_O_WORKDIR
+umask 0000
 
 # ensure paths are correct
 shareddir=/gpfs/scratch/tug87422/smithlab-shared
