@@ -9,7 +9,7 @@
 
 # load modules and go to workdir
 # module load fsl/6.0.2  # we shouldn't use the default version of fsl because it is old and has a bug
-FSLDIR=/gpfs/tug87422/scratch/smithlab-shared/tools/fsl  # should be accessible to anyone and should be pointed to 6.0.7.15
+FSLDIR=/gpfs/scratch/tug87422/smithlab-shared/tools/fsl  # should be accessible to anyone and should be pointed to 6.0.7.15
 source $FSLDIR/etc/fslconf/fsl.sh
 cd $PBS_O_WORKDIR
 umask 0000
