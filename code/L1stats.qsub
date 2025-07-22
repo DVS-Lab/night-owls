@@ -7,11 +7,13 @@
 
 # load modules and go to workdir
 # module load fsl/6.0.2  # we shouldn't use the default version of fsl because it is old and has a bug
-# FSL Setup
-FSLDIR=/gpfs/scratch/tug87422/smithlab-shared/tools/fsl  # should be pointed to 6.0.7.15
-PATH=${FSLDIR}/bin:${PATH}
-export FSLDIR PATH
-. ${FSLDIR}/etc/fslconf/fsl.sh
+# instead, install fsl to your work directory and then ensure your ~/.bash_profile is set up with the correct paths. example below:
+# # FSL Setup
+# FSLDIR=~/work/tools/fsl_6.0.7
+# . ${FSLDIR}/etc/fslconf/fsl.sh
+# PATH=${FSLDIR}/bin:${PATH}
+# export FSLDIR PATH
+
 
 cd $PBS_O_WORKDIR
 umask 0000
