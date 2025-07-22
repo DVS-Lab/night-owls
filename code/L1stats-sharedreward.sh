@@ -2,6 +2,14 @@
 
 # This script will perform Level 1 statistics in FSL.
 
+# FSL Setup
+FSLDIR=/gpfs/scratch/tug87422/smithlab-shared/tools/fsl  # should be pointed to 6.0.7.15
+PATH=${FSLDIR}/bin:${PATH}
+export FSLDIR PATH
+. ${FSLDIR}/etc/fslconf/fsl.sh
+
+
+
 # ensure paths are correct irrespective from where user runs the script
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 maindir="$(dirname "$scriptdir")"
@@ -27,7 +35,7 @@ fi
 # check in template
 NVOLUMES=`fslnvols $DATA`
 #CONFOUNDEVS=${maindir}/derivatives/fsl/confounds/sub-${sub}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-fslConfounds.tsv
-CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-TedanaPlusConfounds.tsv  # switch to this later
+CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-TedanaPlusConfounds.tsv  # switch to this later
 
 if [ ! -e $CONFOUNDEVS ]; then
 	echo "missing confounds: sub-${sub}_ses-${ses}_run-${run}"
