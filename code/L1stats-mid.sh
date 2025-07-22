@@ -2,11 +2,13 @@
 
 # This script will perform Level 1 statistics in FSL.
 
-# FSL Setup
-FSLDIR=/gpfs/scratch/tug87422/smithlab-shared/tools/fsl  # should be pointed to 6.0.7.15
-PATH=${FSLDIR}/bin:${PATH}
-export FSLDIR PATH
-. ${FSLDIR}/etc/fslconf/fsl.sh
+module load fsl/6.0.2  # we shouldn't use the default version of fsl because it is old and has a bug
+
+# # FSL Setup
+# FSLDIR=/gpfs/scratch/tug87422/smithlab-shared/tools/fsl  # should be pointed to 6.0.7.15
+# PATH=${FSLDIR}/bin:${PATH}
+# export FSLDIR PATH
+# . ${FSLDIR}/etc/fslconf/fsl.sh
 
 
 
