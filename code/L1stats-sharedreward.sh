@@ -26,8 +26,8 @@ fi
 
 # check in template
 NVOLUMES=`fslnvols $DATA`
-CONFOUNDEVS=${maindir}/derivatives/fsl/confounds/sub-${sub}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-fslConfounds.tsv
-#CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/sub-${sub}_task-${TASK}_acq-${acq}_desc-TedanaPlusConfounds.tsv # switch to this later
+#CONFOUNDEVS=${maindir}/derivatives/fsl/confounds/sub-${sub}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-fslConfounds.tsv
+CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-TedanaPlusConfounds.tsv  # switch to this later
 
 if [ ! -e $CONFOUNDEVS ]; then
 	echo "missing confounds: sub-${sub}_ses-${ses}_run-${run}"
