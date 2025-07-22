@@ -1,0 +1,50 @@
+#!/bin/bash
+#PBS -l walltime=1:00:00
+#PBS -N L1stats
+#PBS -q normal
+#PBS -m ae
+#PBS -M david.v.smith@temple.edu
+#PBS -l nodes=2:ppn=28
+
+
+# load modules and go to workdir
+# module load fsl/6.0.2  # we shouldn't use the default version of fsl because it is old and has a bug
+FSLDIR=/gpfs/tug87422/scratch/smithlab-shared/tools/fsl  # should be accessible to anyone and should be pointed to 6.0.7.15
+source $FSLDIR/etc/fslconf/fsl.sh
+cd $PBS_O_WORKDIR
+umask 0000
+
+# ensure paths are correct
+shareddir=/gpfs/scratch/tug87422/smithlab-shared
+projectdir=$shareddir/night-owls
+scriptdir=$projectdir/code
+bidsdir=$projectdir/bids
+logdir=$projectdir/logs
+mkdir -p $logdir
+
+rm -f $logdir/cmd_L1stats_${PBS_JOBID}.txt
+touch $logdir/cmd_L1stats_${PBS_JOBID}.txt
+
+rm -f L1stats.o*
+rm -f L1stats.e*
+
+
+for sub in ${subjects[@]}; do
+	for ses in {01..12}; do
+		for task in mid sharedreward; do
+			scriptname=${scriptdir}/L1stats-${task}.sh
+			for run in 1 2; do
+
+				DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz
+				if [ -e $DATA ]; then  # don't run unless the data exists
+					echo "bash ${scriptname} ${sub} ${ses} ${run}" >> $logdir/cmd_L1stats_${PBS_JOBID}.txt
+				else
+					echo "missing: ${DATA}"
+				fi
+
+			done
+		done
+	done
+done
+
+torque-launch -p "$logdir/chk_L1stats_${PBS_JOBID}.txt" "$logdir/cmd_L1stats_${PBS_JOBID}.txt"
