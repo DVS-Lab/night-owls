@@ -2,8 +2,6 @@
 #PBS -l walltime=1:00:00
 #PBS -N L1stats
 #PBS -q normal
-#PBS -m ae
-#PBS -M david.v.smith@temple.edu
 #PBS -l nodes=2:ppn=28
 
 
