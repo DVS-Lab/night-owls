@@ -9,21 +9,21 @@
 # load modules and go to workdir
 # module load fsl/6.0.2
 # source $FSLDIR/etc/fslconf/fsl.sh
-cd $PBS_O_WORKDIR
+#cd $PBS_O_WORKDIR
 
 # ensure paths are correct
-shareddir=/gpfs/scratch/tug87422/smithlab-shared
-maindir=$shareddir/night-owls #this should be the only line that has to change if the rest of the script is set up correctly
-scriptdir=$maindir/code
-bidsdir=$maindir/bids
-logdir=$maindir/logsf
-mkdir -p $logdir
+#shareddir=/gpfs/scratch/tug87422/smithlab-shared
+#maindir=$shareddir/night-owls #this should be the only line that has to change if the rest of the script is set up correctly
+#scriptdir=$maindir/code
+#bidsdir=$maindir/bids
+#logdir=$maindir/logsf
+#mkdir -p $logdir
 
-rm -f $logdir/cmd_feat_${PBS_JOBID}.txt
-touch $logdir/cmd_feat_${PBS_JOBID}.txt
+#rm -f $logdir/cmd_feat_${PBS_JOBID}.txt
+#touch $logdir/cmd_feat_${PBS_JOBID}.txt
 
-rm -f L1stats-SR-LSS.o*
-rm -f L1stats-SR-LSS.e*
+#rm -f L1stats-SR-LSS.o*
+#rm -f L1stats-SR-LSS.e*
 
 ###########up here all hpc ##############
 
@@ -44,7 +44,6 @@ rm -f L1stats-SR-LSS.e*
 # ensure paths are correct irrespective from where user runs the script
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 maindir="$(dirname "$scriptdir")"
-logs=$maindir/logs
 
 
 
@@ -59,11 +58,12 @@ TYPE=act
 #td=$5 # 1 for on, 0 for off (temporal derivatives)
 MODEL=LSS # everyone should just have one model
 
-for sub in ${subjects[@]}; do 
-for ses in ${ses[@]}; do
-for trial in ${trial[@]}; do
-for run in 1 2; do
+#for sub in ${subjects[@]}; do 
+#for ses in ${ses[@]}; do
+#for trial in ${trial[@]}; do
+#for run in 1 2; do
 # set inputs and general outputs (should not need to chage across studies in Smith Lab)
+
 MAINOUTPUT=${maindir}/derivatives/fsl/sub-${sub}
 mkdir -p $MAINOUTPUT
 DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz
@@ -81,7 +81,7 @@ CONFOUNDEVS=${maindir}/derivatives/fsl/confounds/sub-${sub}/sub-${sub}_ses-${ses
 
 if [ ! -e $CONFOUNDEVS ]; then
         echo "missing confounds: sub-${sub}_ses-${ses}_run-${run}"
-        echo "missing confounds: sub-${sub}_ses-${ses}_run-${run}" >> ${maindir}/re-runL1.log
+        echo "missing confounds: sub-${sub}_ses-${ses}_run-${run}" >> ${maindir}/re-runL1_srLLS.log
         exit # exiting to ensure nothing gets run without confounds
 fi
 
@@ -147,12 +147,12 @@ OTEMPLATE=${MAINOUTPUT}/L1_sub-${sub}_task-${TASK}_model-${MODEL}_type-${TYPE}_s
     # add feat cmd to submission script
       echo feat $OTEMPLATE >>$logdir/cmd_feat_${PBS_JOBID}.txt
 
-        done
-done
+ #       done
+#done
 
-torque-launch -p $logdir/chk_feat_${PBS_JOBID}.txt $logdir/cmd_feat_${PBS_JOBID}.txt
+#torque-launch -p $logdir/chk_feat_${PBS_JOBID}.txt $logdir/cmd_feat_${PBS_JOBID}.txt
 
-end
+#end
 
 
 
