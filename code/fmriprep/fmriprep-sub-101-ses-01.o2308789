@@ -1,0 +1,28 @@
+----------------------------------------
+Begin Batch Job Prologue Wed Jun 18 13:40:23 EDT 2025
+Job ID:           2308789
+Username:         tun47039
+Group:            libarts
+Job Name:         fmriprep-sub-101-ses-01
+Resources List:   walltime=08:00:00,nodes=1:ppn=14,neednodes=1:ppn=14
+Queue:            normal
+Account:          
+Nodes:            b102 
+----------------------------------------
+End Batch Job Prologue Wed Jun 18 13:40:23 EDT 2025
+----------------------------------------
+----------------------------------------
+Begin Batch Job Epilogue Wed Jun 18 13:40:54 EDT 2025
+Job ID:           2308789
+Username:         tun47039
+Group:            libarts
+Job Name:         fmriprep-sub-101-ses-01
+Session:          27163
+Limits:           walltime=08:00:00,nodes=1:ppn=14,neednodes=1:ppn=14
+Resources:        cput=00:00:12,vmem=1684848kb,walltime=00:00:32,mem=146392kb,energy_used=0
+Queue:            normal
+Account:          
+Deleting /dev/shm/*...
+----------------------------------------
+End Batch Job Epilogue Wed Jun 18 13:41:15 EDT 2025
+----------------------------------------

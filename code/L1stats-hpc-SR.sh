@@ -28,8 +28,15 @@ rm -f L1stats-SR.e*
 
 
 TASK=sharedreward
+<<<<<<< HEAD
 sm=5 #mid & sr
 TYPE=act
+=======
+ppi=0
+sm=5 #trust & sr
+
+rm $logdir/re-runL1.log
+>>>>>>> 101eb427ccc58214caac50faeecd4632bbbd343b
 
 for sub in ${subjects[@]}; do
 	for ses in {01..12}; do
@@ -87,9 +94,59 @@ for sub in ${subjects[@]}; do
 				rm -rf ${OUTPUT}.feat
 			fi
 
+<<<<<<< HEAD
 			# create template and run analyses
 			ITEMPLATE=${projectdir}/templates/L1_task-${TASK}_model-1_type-${TYPE}.fsf
 			OTEMPLATE=${MAINOUTPUT}/L1_sub-${sub}_ses-${ses}_task-${TASK}_model-1_type-${TYPE}_run-${run}.fsf
+=======
+			# check for empty EVs (extendable to other studies)
+			MISSED_TRIAL=${EVDIR}_${EVTITLE}.txt
+			if [ -e $MISSED_TRIAL ]; then
+				EV_SHAPE=3
+			else
+				EV_SHAPE=10
+			fi
+
+			# if network (ecn or dmn), do nppi; otherwise, do activation or seed-based ppi
+			if [ "$ppi" == "ecn" -o "$ppi" == "dmn" ]; then
+
+				# check for output and skip existing
+				OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-1_type-nppi-${ppi}_run-${run}_sm-${sm}
+				if [ -e ${OUTPUT}.feat/cluster_mask_zstat1.nii.gz ]; then
+					continue
+				else
+					echo "missing: $OUTPUT " >> $logdir/re-runL1.log
+					rm -rf ${OUTPUT}.feat
+				fi
+
+				# network extraction. need to ensure you have run Level 1 activation
+				MASK=${MAINOUTPUT}/L1_task-${TASK}_model-1_type-act_run-${run}_sm-${sm}.feat/mask
+				if [ ! -e ${MASK}.nii.gz ]; then
+					echo "cannot run nPPI because you're missing $MASK"
+					continue
+				fi
+				for net in $(seq 0 9); do
+					NET=${projectdir}/masks/networkmasks/seed-net${net}.nii.gz # this need to be changed to my project dir's naming of network masks
+					TSFILE=${MAINOUTPUT}/ts_task-${TASK}_melodic-114_net${net}_nppi-${ppi}_run-${run}.txt
+					fsl_glm -i $DATA -d $NET -o $TSFILE --demean -m $MASK
+					eval INPUT${net}=$TSFILE
+				done
+
+				# set names for network ppi (we generally only care about ECN and DMN)
+				DMN=$INPUT3
+				ECN=$INPUT7
+				if [ "$ppi" == "dmn" ]; then
+					MAINNET=$DMN
+					OTHERNET=$ECN
+				else
+					MAINNET=$ECN
+					OTHERNET=$DMN
+				fi
+
+				# create template and run analyses
+				ITEMPLATE=${projectdir}/templates/L1_task-${TASK}_model-1_type-nppi.fsf
+				OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-1_seed-${ppi}_run-${run}.fsf
+>>>>>>> 101eb427ccc58214caac50faeecd4632bbbd343b
 				sed -e 's@OUTPUT@'$OUTPUT'@g' \
 					-e 's@DATA@'$DATA'@g' \
 					-e 's@EVDIR@'$EVDIR'@g' \
@@ -101,6 +158,86 @@ for sub in ${subjects[@]}; do
 					-e 's@NVOLUMES@'$NVOLUMES'@g' \
 					<$ITEMPLATE >$OTEMPLATE					
 
+<<<<<<< HEAD
+=======
+			else # otherwise, do activation and seed-based ppi
+
+				# set output based in whether it is activation or ppi
+				if [ "$ppi" == "0" ]; then
+					TYPE=act
+					OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-1_type-${TYPE}_run-${run}_sm-${sm}
+				else
+					TYPE=ppi
+					OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-1_type-${TYPE}_seed-${ppi}_run-${run}_sm-${sm}
+				fi
+
+				# check for output and skip existing
+				if [ -e ${OUTPUT}.feat/cluster_mask_zstat1.nii.gz ]; then
+					continue
+				else
+					echo "missing: $OUTPUT " >> $logdir/re-runL1.log
+					rm -rf ${OUTPUT}.feat
+				fi
+
+				# create template and run analyses
+				ITEMPLATE=${projectdir}/templates/L1_task-${TASK}_model-1_type-${TYPE}.fsf
+				if [ "$TASK" == "sharedreward" ]; then
+					OTEMPLATE=${MAINOUTPUT}/L1_sub-${sub}_ses-${ses}_task-${TASK}_model-1_type-${TYPE}_run-${run}.fsf
+					if [ "$ppi" == "0" ]; then
+						sed -e 's@OUTPUT@'$OUTPUT'@g' \
+							-e 's@DATA@'$DATA'@g' \
+							-e 's@EVDIR@'$EVDIR'@g' \
+							-e 's@MISSED_TRIAL@'$MISSED_TRIAL'@g' \
+							-e 's@EV_SHAPE@'$EV_SHAPE'@g' \
+							-e 's@SMOOTH@'$sm'@g' \
+							-e 's@CONFOUNDEVS@'$CONFOUNDEVS'@g' \
+							-e 's@NVOLUMES@'$NVOLUMES'@g' \
+							<$ITEMPLATE >$OTEMPLATE
+					else
+						PHYS=${MAINOUTPUT}/ts_task-${TASK}_mask-${ppi}_run-${run}.txt
+						MASK=${projectdir}/masks/seed-${ppi}.nii.gz
+						fslmeants -i $DATA -o $PHYS -m $MASK --eig
+						sed -e 's@OUTPUT@'$OUTPUT'@g' \
+							-e 's@DATA@'$DATA'@g' \
+							-e 's@EVDIR@'$EVDIR'@g' \
+							-e 's@MISSED_TRIAL@'$MISSED_TRIAL'@g' \
+							-e 's@EV_SHAPE@'$EV_SHAPE'@g' \
+							-e 's@PHYS@'$PHYS'@g' \
+							-e 's@SMOOTH@'$sm'@g' \
+							-e 's@CONFOUNDEVS@'$CONFOUNDEVS'@g' \
+							<$ITEMPLATE >$OTEMPLATE
+					fi
+				else
+					OTEMPLATE=${MAINOUTPUT}/L1_sub-${sub}_ses-${ses}_task-${TASK}_model-1_seed-${ppi}_run-${run}.fsf
+					if [ "$ppi" == "0" ]; then
+						sed -e 's@OUTPUT@'$OUTPUT'@g' \
+							-e 's@DATA@'$DATA'@g' \
+							-e 's@EVDIR@'$EVDIR'@g' \
+							-e 's@MISSED_TRIAL@'$MISSED_TRIAL'@g' \
+							-e 's@EV_SHAPE@'$EV_SHAPE'@g' \
+							-e 's@SMOOTH@'$sm'@g' \
+							-e 's@CONFOUNDEVS@'$CONFOUNDEVS'@g' \
+							<$ITEMPLATE >$OTEMPLATE
+							#NVOLUMES hard coded in trust template
+					else
+						PHYS=${MAINOUTPUT}/ts_task-${TASK}_mask-${ppi}_run-${run}.txt
+						MASK=${projectdir}/masks/seed-${ppi}.nii.gz
+						fslmeants -i $DATA -o $PHYS -m $MASK
+						sed -e 's@OUTPUT@'$OUTPUT'@g' \
+							-e 's@DATA@'$DATA'@g' \
+							-e 's@EVDIR@'$EVDIR'@g' \
+							-e 's@MISSED_TRIAL@'$MISSED_TRIAL'@g' \
+							-e 's@EV_SHAPE@'$EV_SHAPE'@g' \
+							-e 's@PHYS@'$PHYS'@g' \
+							-e 's@SMOOTH@'$sm'@g' \
+							-e 's@CONFOUNDEVS@'$CONFOUNDEVS'@g' \
+							<$ITEMPLATE >$OTEMPLATE
+
+					fi
+				fi
+
+			fi
+>>>>>>> 101eb427ccc58214caac50faeecd4632bbbd343b
 
 			# add feat cmd to submission script
 			echo feat $OTEMPLATE >>$logdir/cmd_feat_${PBS_JOBID}.txt
