@@ -11,6 +11,7 @@ sub=$1
 ses=$2
 run=$3
 me=$4  # 1 on, 0 off
+sm=5  # 5mm smoothing
 
 # zeropad the session number
 ses=`zeropad ${ses} 2`
