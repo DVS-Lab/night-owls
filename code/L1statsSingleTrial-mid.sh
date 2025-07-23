@@ -9,21 +9,21 @@
 # load modules and go to workdir
 # module load fsl/6.0.2
 # source $FSLDIR/etc/fslconf/fsl.sh
-cd $PBS_O_WORKDIR
+#cd $PBS_O_WORKDIR
 
 # ensure paths are correct
-shareddir=/gpfs/scratch/tug87422/smithlab-shared
-maindir=$shareddir/night-owls #this should be the only line that has to change if the rest of the script is set up correctly
-scriptdir=$maindir/code
-bidsdir=$maindir/bids
-logdir=$maindir/logsf
-mkdir -p $logdir
+#shareddir=/gpfs/scratch/tug87422/smithlab-shared
+#maindir=$shareddir/night-owls #this should be the only line that has to change if the rest of the script is set up correctly
+#scriptdir=$maindir/code
+#bidsdir=$maindir/bids
+#logdir=$maindir/logsf
+#mkdir -p $logdir
 
-rm -f $logdir/cmd_feat_${PBS_JOBID}.txt
-touch $logdir/cmd_feat_${PBS_JOBID}.txt
+#rm -f $logdir/cmd_feat_${PBS_JOBID}.txt
+#touch $logdir/cmd_feat_${PBS_JOBID}.txt
 
-rm -f L1stats-mid-LSS.o*
-rm -f L1stats-mid-LSS.e*
+#rm -f L1stats-mid-LSS.o*
+#rm -f L1stats-mid-LSS.e*
 
 
 #1.need to think of way to loop through sessions (which is different for each subject)
@@ -43,7 +43,7 @@ rm -f L1stats-mid-LSS.e*
 # ensure paths are correct irrespective from where user runs the script
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 maindir="$(dirname "$scriptdir")"
-logs=$maindir/logs
+
 
 
 # study-specific inputs
@@ -51,16 +51,16 @@ sm=5 # this is already hard coded into all fsf files
 sub=$1
 ses=$2
 TASK=mid
-run=$4
-trial=`zeropad $5 2`
+run=$3
+trial=`zeropad $4 2`
 MODEL=LSS # everyone should just have one model
 TYPE=act
 
 
-for sub in ${subjects[@]}; do 
-	for ses in ${ses[@]}; do
-		for run in ${run[@]}; do
-			for trial in ${trial[@]}; do
+#for sub in ${subjects[@]}; do 
+	#for ses in ${ses[@]}; do
+		#for run in ${run[@]}; do
+			#for trial in ${trial[@]}; do
 			
 # set inputs and general outputs (should not need to chage across studies in Smith Lab)
 MAINOUTPUT=${maindir}/derivatives/fsl/sub-${sub}
@@ -70,12 +70,13 @@ NVOLUMES=`fslnvols ${DATA}`
 CONFOUNDEVS=${maindir}/derivatives/fsl/confounds/sub-${sub}/sub-${sub}_task-${TASK}_run-${run}_desc-fslConfounds.tsv
 
 if [ ! -e $CONFOUNDEVS ]; then
-	echo "missing: $CONFOUNDEVS " >> $logfile
+	echo "missing confounds: sub-${sub}_ses-${ses}_run-${run}"
+	echo "missing: $CONFOUNDEVS " >> ${maindir}/re-runL1_midLSS.log
 	exit # exiting to ensure nothing gets run without confounds
 fi
 
 # EV files
-EVDIR=${maindir}/derivatives/fsl/EVfiles/sub-${sub}/singletrial/ses-${ses}/mid/run-${run}
+EVDIR=${maindir}/derivatives/fsl/EVfiles/sub-${sub}/singletrial/ses-${ses}/${TASK}/run-${run}
 SINGLETRIAL=${EVDIR}/run-0${run}_SingleTrial${trial}.txt
 OTHERTRIAL=${EVDIR}/run-0${run}_OtherTrials${trial}.txt
 
@@ -110,16 +111,12 @@ OTEMPLATE=${MAINOUTPUT}/L1_sub-${sub}_task-${TASK}_model-${MODEL}_type-${TYPE}_s
 		-e 's@NVOLUMES@'$NVOLUMES'@g' \
 		<$ITEMPLATE> $OTEMPLATE
 		
-		echo feat $OTEMPLATE >>$logdir/cmd_feat_${PBS_JOBID}.txt
+	 	feat $OTEMPLATE 
 
-				done 
-        done
-	done
-done
 
-torque-launch -p $logdir/chk_feat_${PBS_JOBID}.txt $logdir/cmd_feat_${PBS_JOBID}.txt
+#torque-launch -p $logdir/chk_feat_${PBS_JOBID}.txt $logdir/cmd_feat_${PBS_JOBID}.txt
 
-end
+
 
 
 # fix registration as per NeuroStars post:
