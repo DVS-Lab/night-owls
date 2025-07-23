@@ -15,13 +15,14 @@ log={}
 
 for s = 1:length(sub)
     for ses=1:session(s)
+        sesname=sprintf('ses-%02d', ses);
         for r = 1:runs
-         rundir = fullfile(evdir,['sub-' num2str(sub(s))],['ses-0' num2str(ses)],'mid',['run-' num2str(r)]);
+         rundir = fullfile(evdir,['sub-' num2str(sub(s))],sesname,'mid',['run-' num2str(r)]);
         
          if ~exist(rundir, 'dir')
             subchar=num2str(s);
-            seschar=num2str(ses);
-            log{end+1}=sprintf('sub %s ses %s run %s does not exist.',num2str(s),num2str(ses),num2str(r));
+            seschar=num2str(sesname);
+            log{end+1}=sprintf('sub %s %s run %s does not exist.',num2str(sub(s)),sesname,num2str(r));
             continue;
          end
 
@@ -35,12 +36,12 @@ for s = 1:length(sub)
 
             % check length of trials. everyone should have 56
             if length(all_evs) ~= 56
-                disp(sprintf('sub %s ses %s run %s missing trials...', num2str(sub(s)), num2str(ses), num2str(r)));
+                disp(sprintf('sub %s %s run %s missing trials...', num2str(sub(s)), num2str(sesname), num2str(r)));
                 keyboard
             end
 
             % extract trials and write evs
-            outdir = fullfile(evdir,['sub-' num2str(sub(s))],'singletrial',['ses-0' num2str(ses)],'mid',['run-' num2str(r)]);
+            outdir = fullfile(evdir,['sub-' num2str(sub(s))],'singletrial',sesname,'mid',['run-' num2str(r)]);
             if ~exist(outdir,'dir')
                 mkdir(outdir);
             end
@@ -50,11 +51,11 @@ for s = 1:length(sub)
                 othertrials(t,:) = []; % delete trial
 
                 % write out single trial
-                fname = sprintf('ses-0%drun-%d_SingleTrial%02d.txt',ses,r,t);
+                fname = sprintf('run-%d_SingleTrial%02d.txt',r,t);
                 dlmwrite(fullfile(outdir,fname),singletrial,'delimiter','\t','precision','%.6f')
 
                 % write out other trials
-                fname = sprintf('ses-0%drun-%d_OtherTrials%02d.txt',ses,r,t);
+                fname = sprintf('run-%d_OtherTrials%02d.txt',r,t);
                 dlmwrite(fullfile(outdir,fname),othertrials,'delimiter','\t','precision','%.6f')
             end
         end

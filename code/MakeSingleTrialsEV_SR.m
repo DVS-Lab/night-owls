@@ -16,13 +16,14 @@ log={}
 
 for s = 1:length(sub)
     for ses=1:session(s)
+        sesname=sprintf('ses-%02d', ses);
         for r = 1:runs
-            rundir = fullfile(evdir,['sub-' num2str(sub(s))],['ses-0' num2str(ses)],'sharedreward',['run-' num2str(r)]);
+            rundir = fullfile(evdir,['sub-' num2str(sub(s))],sesname,'sharedreward',['run-' num2str(r)]);
 
             if ~exist(rundir, 'dir')
                 subchar=num2str(s);
                 seschar=num2str(ses);
-                log{end+1}=sprintf('sub %s ses %s run %s does not exist.',num2str(s),num2str(ses),num2str(r));
+                log{end+1}=sprintf('sub %s %s run %s does not exist.',num2str(sub(s)),sesname,num2str(r));
                 continue;
             end
 
@@ -42,7 +43,7 @@ for s = 1:length(sub)
             all_evs = sortrows(all_evs,1,'ascend');
  
             [~, miss_idx] = ismember(ev7, all_evs, 'rows');
-            fprintf('sub %s ses %s run %s missed trial number: %s\n', num2str(sub(s)), num2str(ses), num2str(r), mat2str(miss_idx(miss_idx > 0)))
+            fprintf('sub %s %s run %s missed trial number: %s\n', num2str(sub(s)), sesname, num2str(r), mat2str(miss_idx(miss_idx > 0)))
 %%%%%%take note of which trial has missing outcome event and add into run
 %%%%%%script as the trial that gets skipped(continued)
         else
@@ -60,12 +61,12 @@ for s = 1:length(sub)
         end
             % check length of trials. everyone should have 64
             if length(all_evs) ~= 54
-                disp(sprintf('CHECK: sub %s ses %s run %s missing trials even after missed outcomes counted', num2str(sub(s)), num2str(ses), num2str(r)));
+                disp(sprintf('CHECK: sub %s %s run %s missing trials even after missed outcomes counted', num2str(sub(s)), sesname, num2str(r)))
                 keyboard
             end
 
             % extract trials and write evs
-            outdir = fullfile(evdir,['sub-' num2str(sub(s))],'singletrial',['ses-0' num2str(ses)],'sharedreward',['run-' num2str(r)]);
+            outdir = fullfile(evdir,['sub-' num2str(sub(s))],'singletrial',sesname,'sharedreward',['run-' num2str(r)]);
 
             if ~exist(outdir,'dir')
                 mkdir(outdir);
