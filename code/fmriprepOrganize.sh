@@ -10,7 +10,7 @@ SUBJ="$1"
 
 for ses in $(seq -w 1 12); do
   SRC="/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only/ses-${ses}/sub-${SUBJ}"
-  DST="/gpfs/scratch/tug87422/smithlab-shared/night-owls/fmriprep/sub-${SUBJ}/ses-${ses}"
+  DST="/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/fmriprep/sub-${SUBJ}/ses-${ses}"
 
   # Skip entire session if the main source folder is missing
   if [ ! -d "${SRC}" ]; then
