@@ -1,45 +1,3 @@
-#!/bin/bash
-#PBS -l walltime=03:00:00
-#PBS -N L1stats-SR-LSS
-#PBS -q normal
-#PBS -m ae
-#PBS -M shenghan.wang@temple.edu
-#PBS -l nodes=1:ppn=28
-
-# load modules and go to workdir
-# module load fsl/6.0.2
-# source $FSLDIR/etc/fslconf/fsl.sh
-#cd $PBS_O_WORKDIR
-
-# ensure paths are correct
-#shareddir=/gpfs/scratch/tug87422/smithlab-shared
-#maindir=$shareddir/night-owls #this should be the only line that has to change if the rest of the script is set up correctly
-#scriptdir=$maindir/code
-#bidsdir=$maindir/bids
-#logdir=$maindir/logsf
-#mkdir -p $logdir
-
-#rm -f $logdir/cmd_feat_${PBS_JOBID}.txt
-#touch $logdir/cmd_feat_${PBS_JOBID}.txt
-
-#rm -f L1stats-SR-LSS.o*
-#rm -f L1stats-SR-LSS.e*
-
-###########up here all hpc ##############
-
-#1.need to think of  way to loop through sessions (which is different for each subject)
-#2. loop the run
-
-#!/usr/bin/env bash
-
-# This script will perform Level 1 statistics in FSL.
-# Rather than having multiple scripts, we are merging three analyses
-# into this one script:
-#		1) activation
-#		2) seed-based ppi
-#		3) network-based ppi
-# Note that activation analysis must be performed first.
-# Seed-based PPI and Network PPI should follow activation analyses.
 
 # ensure paths are correct irrespective from where user runs the script
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
@@ -49,11 +7,11 @@ maindir="$(dirname "$scriptdir")"
 
 # study-specific inputs
 sm=5 # this is already hard coded into all fsf files
-subject=$1
-ses=$2
+sub=$1
+ses=`zeropad $2 2`
 TASK=sharedreward
-run=$4
-trial=`zeropad $5 2`
+run=$3
+trial=`zeropad $4 2`
 TYPE=act
 #td=$5 # 1 for on, 0 for off (temporal derivatives)
 MODEL=LSS # everyone should just have one model
@@ -66,7 +24,8 @@ MODEL=LSS # everyone should just have one model
 
 MAINOUTPUT=${maindir}/derivatives/fsl/sub-${sub}
 mkdir -p $MAINOUTPUT
-DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz
+DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz
+
 
 if [ ! -e $DATA ]; then
         echo " Exiting -- missing data: ${DATA}"
@@ -87,7 +46,7 @@ fi
 
 
 # EV files
-EVDIR=${maindir}/derivatives/fsl/EVfiles/sub-${sub}/singletrial/ses-${ses}/${TASK}/run-${run}
+EVDIR=${maindir}/derivatives/fsl/EVFiles/sub-${sub}/singletrial/ses-${ses}/${TASK}/run-${run}/
 if [ ! -e $EVDIR ]; then
         echo ${sub} ${acq} "EVDIR missing"
         echo "missing events files: $EVDIR " >> ${maindir}/re-runL1.log
@@ -109,16 +68,18 @@ else
 	SHAPE_MISSED_OUTCOME=10
 fi
 
+EVDIR=${maindir}/derivatives/fsl/EVFiles/sub-${sub}/ses-${ses}/${TASK}/run-${run}/
+SSLEVDIR=${maindir}/derivatives/fsl/EVFiles/sub-${sub}/singletrial/ses-${ses}/${TASK}/run-${run}/
 
-SINGLETRIAL=${EVDIR}/ses-0${ses}run-${run}_SingleTrial${trial}.txt
-OTHERTRIAL=${EVDIR}/run-0${run}_OtherTrials${trial}.txt
+%need to remove the zero after I fix the matlab script's inconsistent zero padding
+SINGLETRIAL=${SSLEVDIR}run-0${run}_SingleTrial${trial}.txt
+OTHERTRIAL=${SSLEVDIR}run-0${run}_OtherTrials${trial}.txt
 
 
-	OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_ses-${ses}_run-${run}_sm-${sm}_trial-${trial}
-
+OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${MODEL}-type-${TYPE}_sub-${sub}_ses-${ses}_run-${run}_sm-${sm}_trial-${trial}
 
 	# create common directory for zstat outputs
-	zoutdir=${MAINOUTPUT}/LSS_task-${TASK}_model-_run-${run}_sm-${sm}
+	zoutdir=${MAINOUTPUT}/LSS_task-${TASK}_sub-${sub}_ses-${ses}_run-${run}_sm-${sm}
 	if [ ! -d $zoutdir ]; then
 	mkdir -p $zoutdir
 	fi
@@ -127,7 +88,7 @@ OTHERTRIAL=${EVDIR}/run-0${run}_OtherTrials${trial}.txt
 	if [ -e ${zoutdir}/zstat_trial-${trial}.nii.gz ]; then
 		exit
 	else
-		echo "running: $OUTPUT " >> $logfile
+		echo "running: $OUTPUT " >> ${maindir}/re-runL1_sharedreward-LSS.log
 		rm -rf ${OUTPUT}.feat
 	fi
 
@@ -145,7 +106,7 @@ OTEMPLATE=${MAINOUTPUT}/L1_sub-${sub}_task-${TASK}_model-${MODEL}_type-${TYPE}_s
 		-e 's@SHAPE_MISSED_OUTCOME@'$SHAPE_MISSED_OUTCOME'@g'\
 		<$ITEMPLATE> $OTEMPLATE
     # add feat cmd to submission script
-      echo feat $OTEMPLATE >>$logdir/cmd_feat_${PBS_JOBID}.txt
+      feat $OTEMPLATE
 
  #       done
 #done
@@ -176,6 +137,6 @@ rm -rf ${OUTPUT}.feat/filtered_func_data.nii.gz
 
 # copy zstat image to common output folder and delete feat output
 cp ${OUTPUT}.feat/stats/zstat1.nii.gz ${zoutdir}/zstat_trial-${trial}.nii.gz
-rm -rf ${OUTPUT}.feat
+#rm -rf ${OUTPUT}.feat
 
 
