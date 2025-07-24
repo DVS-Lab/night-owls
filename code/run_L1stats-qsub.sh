@@ -7,7 +7,7 @@ maindir="$(dirname "$scriptdir")"
 mapfile -t myArray < "${scriptdir}/sublist.txt" 
 
 # grab the first n elements
-ntasks=2
+ntasks=1
 counter=0
 		
 while [ $counter -lt ${#myArray[@]} ]; do
