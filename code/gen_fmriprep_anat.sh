@@ -23,7 +23,7 @@ done
 
 # Generate configs and PBS scripts
 
-subjects=(sub-101) 
+subjects=(sub-103) 
 
 for sub in ${subjects[@]}; do
 	
