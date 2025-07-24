@@ -16,7 +16,7 @@ td=0 # 1 for on, 0 for off (temporal derivatives)
 model=1 # everyone should just have one model
 
 # set inputs and general outputs (should not need to change across studies in Smith Lab)
-MAINOUTPUT=${maindir}/derivatives/fsl-testing/sub-${sub}/ses-${ses}
+MAINOUTPUT=${maindir}/derivatives/fsl/space-mni/sub-${sub}/ses-${ses}
 mkdir -p $MAINOUTPUT
 DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz
 if [ ! -e $DATA ]; then
