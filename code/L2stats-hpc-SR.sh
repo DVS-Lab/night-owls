@@ -47,18 +47,11 @@ for sub in ${subjects[@]}; do
             continue
         fi
 
-        # set template & cope count
-        if [ "${type}" == "act" ]; then
-            ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}_2-runs.fsf
-            NCOPES=30
-        else
-            ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}_type-nppi-dmn.fsf
-            NCOPES=$((34 + 1))
-        fi
-
+        ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}_2-runs.fsf
         INPUT1=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-1_sm-${sm}.feat
         INPUT2=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-2_sm-${sm}.feat
-        OUTPUT=${MAINOUTPUT}/L2_task-${task}_model-${model}_type-${type}_ses-${ses}_sm-${sm}
+        OUTPUT=${SESDIR}/L2_task-${task}_model-${model}_type-${type}_ses-${ses}_sm-${sm}
+        NCOPES=30
 
         # skip if either run folder is missing
         missing=()
@@ -76,7 +69,7 @@ for sub in ${subjects[@]}; do
         fi
 
         # build and run session FSF
-        OTEMPLATE=${MAINOUTPUT}/L2_task-${task}_model-${model}_type-${type}.fsf
+        OTEMPLATE=${OUTPUT}/L2_task-${task}_model-${model}_type-${type}.fsf
         sed -e 's@OUTPUT@'$OUTPUT'@g' \
         -e 's@INPUT1@'$INPUT1'@g' \
         -e 's@INPUT2@'$INPUT2'@g' \
