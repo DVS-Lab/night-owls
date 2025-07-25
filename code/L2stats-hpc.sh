@@ -1,7 +1,7 @@
 
 #!/bin/bash
 #PBS -l walltime=12:00:00
-#PBS -N L2stats-mid
+#PBS -N L2stats
 #PBS -q normal
 #PBS -m ae
 #PBS -M matt.mattoni@temple.edu
@@ -24,13 +24,7 @@ mkdir -p $logdir
 rm -f $logdir/cmd_L2_${PBS_JOBID}.txt
 touch $logdir/cmd_L2_${PBS_JOBID}.txt
 
-rm -f L2stats-mid.o*
-rm -f L2stats-mid.e*
-
-rm $logdir/re-runL2.log
-
 type="act"               # "act" or "ppi" (or "nppi-dmn")
-task=mid       # edit if necessary
 sm=5                    # smoothing kernel label
 model=1                 # first-level model number
 tasks=("SR" "mid")
@@ -38,14 +32,20 @@ tasks=("SR" "mid")
 for sub in ${subjects[@]}; do
 
     MAINOUTPUT=${projectdir}/derivatives/fsl/space-mni/sub-${sub}
+    rm -f L2stats_sub-${sub}.o*
+    rm -f L2stats_sub-${sub}.e*
+
+    rm $logdir/re-runL2_sub-${sub}.log
 
     for ses in {01..12}; do
+
         SESDIR=${MAINOUTPUT}/ses-${ses}
+
         for task in "${tasks[@]}"; do
 
             # skip if the session folder itself doesn’t exist
             if [ ! -d "${SESDIR}" ]; then
-                echo "SKIP sub-${sub} ses-${ses} ${task}: session directory not found" >> $logdir/re-runL2.log
+                echo "SKIP sub-${sub} ses-${ses} ${task}: session directory not found" >> $logdir/re-runL2_sub-${sub}.log
                 continue
             fi
 
@@ -60,13 +60,13 @@ for sub in ${subjects[@]}; do
                 [ ! -d "${INPUT1}" ] && missing+=(run-1)
                 [ ! -d "${INPUT2}" ] && missing+=(run-2)
             if [ ${#missing[@]} -gt 0 ]; then
-                echo "SKIP sub-${sub} ses-${ses} ${task}: missing ${missing[*]}" >> $logdir/re-runL2.log
+                echo "SKIP sub-${sub} ses-${ses} ${task}: missing ${missing[*]}" >> $logdir/re-runL2_sub-${sub}.log
                 continue
             fi
 
             # skip if output already exists
             if [ -e ${OUTPUT}.gfeat/cope${NCOPES}.feat/cluster_mask_zstat1.nii.gz ]; then
-                echo "SKIP sub-${sub} ses-${ses} ${task}: L2 already done" >> $logdir/re-runL2.log
+                echo "SKIP sub-${sub} ses-${ses} ${task}: L2 already done" >> $logdir/re-runL2_sub-${sub}.log
                 continue
             fi
 
