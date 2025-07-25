@@ -69,7 +69,7 @@ for sub in ${subjects[@]}; do
         fi
 
         # build and run session FSF
-        OTEMPLATE=${OUTPUT}/L2_task-${task}_model-${model}_type-${type}.fsf
+        OTEMPLATE=${SESDIR}/L2_task-${task}_model-${model}_type-${type}.fsf
         sed -e 's@OUTPUT@'$OUTPUT'@g' \
         -e 's@INPUT1@'$INPUT1'@g' \
         -e 's@INPUT2@'$INPUT2'@g' \
