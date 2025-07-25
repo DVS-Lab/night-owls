@@ -13,11 +13,7 @@ mapfile -t myArray < "${scriptdir}/sublist.txt"
 ntasks=1
 counter=0
 
-#tasks=("SR" "MID")
-tasks=("SR")
-
-#for task in 'sharedreward'; do
-#for task in  'trust' ; do
+tasks=("SR" "mid")
 		
 while [ $counter -lt ${#myArray[@]} ]; do
 	subjects=${myArray[@]:$counter:$ntasks}
