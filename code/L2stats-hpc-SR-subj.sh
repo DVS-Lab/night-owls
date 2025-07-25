@@ -22,8 +22,6 @@ mkdir -p $logdir
 
 rm -f $logdir/cmd_L2_${PBS_JOBID}.txt
 touch $logdir/cmd_L2_${PBS_JOBID}.txt
-rm -f $logdir/cmd_L2subj_${PBS_JOBID}.txt
-touch $logdir/cmd_L2subj_${PBS_JOBID}.txt
 
 rm -f L2stats-SR.o*
 rm -f L2stats-SR.e*
@@ -35,12 +33,12 @@ type="act"               # "act" or "ppi" (or "nppi-dmn")
 task=sharedreward       # edit if necessary
 sm=5                    # smoothing kernel label
 model=1                 # first-level model number
-NCOPES=34               # base number of copes for act
+NCOPES=30               # base number of copes for act
 
 
 for sub in ${subjects[@]}; do
 
-    MAINOUTPUT=${projectdir}/derivatives/fsl/space-MNI/sub-${sub}
+    MAINOUTPUT=${projectdir}/derivatives/fsl/space-mni/sub-${sub}
     
     # Initialize arrays to store all available inputs for this subject
     all_inputs=()
