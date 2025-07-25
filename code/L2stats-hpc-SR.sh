@@ -36,7 +36,7 @@ model=1                 # first-level model number
 
 for sub in ${subjects[@]}; do
 
-    MAINOUTPUT=${projectdir}/derivatives/fsl/space-MNI/sub-${sub}
+    MAINOUTPUT=${projectdir}/derivatives/fsl/space-mni/sub-${sub}
 
     for ses in {01..12}; do
         SESDIR=${MAINOUTPUT}/ses-${ses}
