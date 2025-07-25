@@ -49,8 +49,8 @@ for sub in ${subjects[@]}; do
 
         # set template & cope count
         if [ "${type}" == "act" ]; then
-            ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}_2runs.fsf
-            NCOPES=34
+            ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}-1_2-runs.fsf
+            NCOPES=30
         else
             ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}_type-nppi-dmn.fsf
             NCOPES=$((34 + 1))
