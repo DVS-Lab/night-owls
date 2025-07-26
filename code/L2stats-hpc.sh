@@ -27,7 +27,7 @@ touch $logdir/cmd_L2_${PBS_JOBID}.txt
 type="act"               # "act" or "ppi" (or "nppi-dmn")
 sm=5                    # smoothing kernel label
 model=1                 # first-level model number
-tasks=("SR" "mid")
+tasks=("sharedreward" "mid")
 
 for sub in ${subjects[@]}; do
 
@@ -65,10 +65,10 @@ for sub in ${subjects[@]}; do
             fi
 
             # skip if output already exists
-            if [ -e ${OUTPUT}.gfeat/cope${NCOPES}.feat/cluster_mask_zstat1.nii.gz ]; then
-                echo "SKIP sub-${sub} ses-${ses} ${task}: L2 already done" >> $logdir/re-runL2_sub-${sub}.log
-                continue
-            fi
+            #if [ -e ${OUTPUT}.gfeat/cope${NCOPES}.feat/cluster_mask_zstat1.nii.gz ]; then
+            #    echo "SKIP sub-${sub} ses-${ses} ${task}: L2 already done" >> $logdir/re-runL2_sub-${sub}.log
+            #    continue
+            #fi
 
             # build and run session FSF
             OTEMPLATE=${SESDIR}/L2_task-${task}_model-${model}_type-${type}.fsf

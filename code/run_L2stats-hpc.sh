@@ -5,7 +5,6 @@
 projectdir=/gpfs/scratch/tug87422/smithlab-shared/night-owls
 scriptdir=$projectdir/code
 basedir="$(dirname "$scriptdir")"
-nruns=2 
 
 mapfile -t myArray < "${scriptdir}/sublist.txt" 
 
@@ -21,7 +20,7 @@ while [ $counter -lt ${#myArray[@]} ]; do
     qsub -v subjects="${subjects[@]}" "$script"
     echo $subjects $script
 
-    #script_subj="L2stats-hpc-${task}-subj.sh"
-    #qsub -v subjects="${subjects[@]}" "$script_subj"
-    #echo $subjects $script_subj
+    script_subj="L2stats-hpc-subj.sh"
+    qsub -v subjects="${subjects[@]}" "$script_subj"
+    echo $subjects $script_subj
 done
