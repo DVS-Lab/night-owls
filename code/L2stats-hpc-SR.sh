@@ -36,7 +36,7 @@ model=1                 # first-level model number
 
 for sub in ${subjects[@]}; do
 
-    MAINOUTPUT=${projectdir}/derivatives/fsl/space-MNI/sub-${sub}
+    MAINOUTPUT=${projectdir}/derivatives/fsl/space-mni/sub-${sub}
 
     for ses in {01..12}; do
         SESDIR=${MAINOUTPUT}/ses-${ses}
@@ -47,18 +47,11 @@ for sub in ${subjects[@]}; do
             continue
         fi
 
-        # set template & cope count
-        if [ "${type}" == "act" ]; then
-            ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}_type-act.fsf
-            NCOPES=34
-        else
-            ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}_type-nppi-dmn.fsf
-            NCOPES=$((34 + 1))
-        fi
-
+        ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}_2-runs.fsf
         INPUT1=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-1_sm-${sm}.feat
         INPUT2=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-2_sm-${sm}.feat
         OUTPUT=${SESDIR}/L2_task-${task}_model-${model}_type-${type}_ses-${ses}_sm-${sm}
+        NCOPES=30
 
         # skip if either run folder is missing
         missing=()
@@ -90,13 +83,13 @@ done
 torque-launch -p "$logdir/chk_L2_${PBS_JOBID}.txt" "$logdir/cmd_L2_${PBS_JOBID}.txt"
 
 # delete unused files
-for sub in ${subjects[@]}; do
-    for ses in {01..12}; do
-        OUTPUT=${projectdir}/derivatives/fsl/space-MNI/sub-${sub}/ses-${ses}/L2_task-${task}_model-${model}_type-${type}_ses-${ses}_sm-${sm}
-        rm -f ${OUTPUT}.gfeat/cope*.feat/stats/res4d.nii.gz
-        rm -f ${OUTPUT}.gfeat/cope*.feat/stats/corrections.nii.gz
-        rm -f ${OUTPUT}.gfeat/cope*.feat/stats/threshac1.nii.gz
-        rm -f ${OUTPUT}.gfeat/cope*.feat/filtered_func_data.nii.gz
-        rm -f ${OUTPUT}.gfeat/cope*.feat/var_filtered_func_data.nii.gz
-    done
-done
+#for sub in ${subjects[@]}; do
+#    for ses in {01..12}; do
+#        OUTPUT=${projectdir}/derivatives/fsl/space-MNI/sub-${sub}/L2_task-${task}_model-${model}_type-${type}_ses-${ses}_sm-${sm}
+#        rm -f ${OUTPUT}.gfeat/cope*.feat/stats/res4d.nii.gz
+#        rm -f ${OUTPUT}.gfeat/cope*.feat/stats/corrections.nii.gz
+#        rm -f ${OUTPUT}.gfeat/cope*.feat/stats/threshac1.nii.gz
+#        rm -f ${OUTPUT}.gfeat/cope*.feat/filtered_func_data.nii.gz
+#        rm -f ${OUTPUT}.gfeat/cope*.feat/var_filtered_func_data.nii.gz
+#    done
+#done
