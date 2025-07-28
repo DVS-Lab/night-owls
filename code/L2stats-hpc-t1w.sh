@@ -76,7 +76,7 @@ for sub in ${subjects[@]}; do
             -e 's@INPUT1@'$INPUT1'@g' \
             -e 's@INPUT2@'$INPUT2'@g' \
             <$ITEMPLATE >$OTEMPLATE
-            echo feat $OTEMPLATE >>$logdir/cmd_L2_${PBS_JOBID}.txt
+            echo feat $OTEMPLATE >>$logdir/cmd_L2-t1w_${PBS_JOBID}.txt
 
         done
     done
