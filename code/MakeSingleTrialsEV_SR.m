@@ -78,11 +78,11 @@ for s = 1:length(sub)
                 othertrials(t,:) = []; % delete trial
 
                 % write out single trial
-                fname = sprintf('run-0%d_SingleTrial%02d.txt',r,t);
+                fname = sprintf('run-%d_SingleTrial%02d.txt',r,t);
                 dlmwrite(fullfile(outdir,fname),singletrial,'delimiter','\t','precision','%.6f')
 
                 % write out other trials
-                fname = sprintf('run-0%d_OtherTrials%02d.txt',r,t);
+                fname = sprintf('run-%d_OtherTrials%02d.txt',r,t);
                 dlmwrite(fullfile(outdir,fname),othertrials,'delimiter','\t','precision','%.6f')
             end
         end
