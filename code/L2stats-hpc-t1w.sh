@@ -35,7 +35,7 @@ for sub in ${subjects[@]}; do
     rm -f L2stats-t1w_sub-${sub}.o*
     rm -f L2stats-t1w_sub-${sub}.e*
 
-    rm $logdir/re-runL2_sub-${sub}-t1w.log
+    rm -f $logdir/re-runL2_sub-${sub}-t1w.log
 
     for ses in {01..12}; do
 
