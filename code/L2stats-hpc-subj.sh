@@ -38,7 +38,7 @@ for task in "${tasks[@]}"; do
 
     for sub in ${subjects[@]}; do
 
-        rm $logdir/re-runL2subj_sub-${sub}.log
+        rm -f $logdir/re-runL2subj_sub-${sub}.log
         MAINOUTPUT=${projectdir}/derivatives/fsl/space-mni/sub-${sub}
         
         # Initialize arrays to store all available inputs for this subject
