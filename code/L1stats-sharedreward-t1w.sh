@@ -7,7 +7,7 @@ scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 maindir="$(dirname "$scriptdir")"
 
 # study-specific inputs
-TASK=mid
+TASK=sharedreward
 sm=5 # still needs to be done with afni (DVS needs to do this)
 sub=$1
 ses=$2
@@ -16,9 +16,9 @@ td=0 # 1 for on, 0 for off (temporal derivatives)
 model=1 # everyone should just have one model
 
 # set inputs and general outputs (should not need to change across studies in Smith Lab)
-MAINOUTPUT=${maindir}/derivatives/fsl/space-mni/sub-${sub}/ses-${ses}
+MAINOUTPUT=${maindir}/derivatives/fsl/space-t1w/sub-${sub}/ses-${ses}
 mkdir -p $MAINOUTPUT
-DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz
+DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-T1w_desc-preproc_bold.nii.gz
 if [ ! -e $DATA ]; then
 	echo " Exiting -- missing data: ${DATA}"
 	exit
@@ -42,6 +42,19 @@ if [ ! -e $EVDIR ]; then
 	exit # exiting to ensure nothing gets run without confounds
 fi
 
+# empty EVs (specific to this study)
+EV_MISSED_DEC=${EVDIR}/_miss_decision.txt
+if [ -e $EV_MISSED_DEC ]; then
+	SHAPE_MISSED_DEC=3
+else
+	SHAPE_MISSED_DEC=10
+fi
+EV_MISSED_OUTCOME=${EVDIR}/_miss_outcome.txt
+if [ -e $EV_MISSED_OUTCOME ]; then
+	SHAPE_MISSED_OUTCOME=3
+else
+	SHAPE_MISSED_OUTCOME=10
+fi
 
 
 # set output based in whether it is activation and/or temporal derivatives
@@ -74,6 +87,8 @@ sed -e 's@OUTPUT@'$OUTPUT'@g' \
 -e 's@SMOOTH@'$sm'@g' \
 -e 's@CONFOUNDEVS@'$CONFOUNDEVS'@g' \
 -e 's@NVOLUMES@'$NVOLUMES'@g' \
+-e 's@SHAPE_MISSED_DEC@'$SHAPE_MISSED_DEC'@g' \
+-e 's@SHAPE_MISSED_OUTCOME@'$SHAPE_MISSED_OUTCOME'@g' \
 <$ITEMPLATE> $OTEMPLATE
 feat $OTEMPLATE
 

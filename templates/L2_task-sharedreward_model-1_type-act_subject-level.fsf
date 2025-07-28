@@ -263,10 +263,13 @@ set fmri(regstandard_nonlinear_yn) 0
 set fmri(regstandard_nonlinear_warpres) 10
 
 # High pass filter cutoff
-set fmri(paradigm_hp) 100
+set fmri(paradigm_hp) 
+
+set fmri(fnirt_config) "T1_2_MNI152_2mm"
+
 
 # Number of lower-level copes feeding into higher-level analysis
-set fmri(ncopeinputs) 34
+set fmri(ncopeinputs) 15
 
 # Use lower-level cope 1 for higher-level analysis
 set fmri(copeinput.1) 1
@@ -312,63 +315,6 @@ set fmri(copeinput.14) 1
 
 # Use lower-level cope 15 for higher-level analysis
 set fmri(copeinput.15) 1
-
-# Use lower-level cope 16 for higher-level analysis
-set fmri(copeinput.16) 1
-
-# Use lower-level cope 17 for higher-level analysis
-set fmri(copeinput.17) 1
-
-# Use lower-level cope 18 for higher-level analysis
-set fmri(copeinput.18) 1
-
-# Use lower-level cope 19 for higher-level analysis
-set fmri(copeinput.19) 1
-
-# Use lower-level cope 20 for higher-level analysis
-set fmri(copeinput.20) 1
-
-# Use lower-level cope 21 for higher-level analysis
-set fmri(copeinput.21) 1
-
-# Use lower-level cope 22 for higher-level analysis
-set fmri(copeinput.22) 1
-
-# Use lower-level cope 23 for higher-level analysis
-set fmri(copeinput.23) 1
-
-# Use lower-level cope 24 for higher-level analysis
-set fmri(copeinput.24) 1
-
-# Use lower-level cope 25 for higher-level analysis
-set fmri(copeinput.25) 1
-
-# Use lower-level cope 26 for higher-level analysis
-set fmri(copeinput.26) 1
-
-# Use lower-level cope 27 for higher-level analysis
-set fmri(copeinput.27) 1
-
-# Use lower-level cope 28 for higher-level analysis
-set fmri(copeinput.28) 1
-
-# Use lower-level cope 29 for higher-level analysis
-set fmri(copeinput.29) 1
-
-# Use lower-level cope 30 for higher-level analysis
-set fmri(copeinput.30) 1
-
-# Use lower-level cope 31 for higher-level analysis
-set fmri(copeinput.31) 1
-
-# Use lower-level cope 32 for higher-level analysis
-set fmri(copeinput.32) 1
-
-# Use lower-level cope 33 for higher-level analysis
-set fmri(copeinput.33) 1
-
-# Use lower-level cope 34 for higher-level analysis
-set fmri(copeinput.34) 1
 
 # Add confound EVs text file
 set fmri(confoundevs) 0

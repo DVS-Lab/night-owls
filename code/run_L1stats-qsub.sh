@@ -7,7 +7,7 @@ maindir="$(dirname "$scriptdir")"
 mapfile -t myArray < "${scriptdir}/sublist.txt" 
 
 # grab the first n elements
-ntasks=2
+ntasks=1
 counter=0
 		
 while [ $counter -lt ${#myArray[@]} ]; do
@@ -15,5 +15,6 @@ while [ $counter -lt ${#myArray[@]} ]; do
 	let counter=$counter+$ntasks
 
 	# Loop over each task script and submit with the same subject chunk
-	qsub -v subjects="${subjects[@]}" L1stats.qsub
+	#qsub -v subjects="${subjects[@]}" L1stats.qsub
+	qsub -v subjects="${subjects[@]}" L1stats-t1w.qsub
 done
