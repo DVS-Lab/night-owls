@@ -8,7 +8,7 @@ func_dir = "func"
 # Mapping from acq-* in fieldmap files to task-* in functional files
 acq_to_task = {
     "rest": "rest",
-    "sharedreward": "reward",
+    "sharedreward": "sharedreward",
     "mid": "mid"
 }
 
