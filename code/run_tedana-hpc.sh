@@ -14,5 +14,5 @@ while [ $counter -lt ${#myArray[@]} ]; do
 	subjects=${myArray[@]:$counter:$ntasks}
 	echo $subjects
 	let counter=$counter+$ntasks
-	qsub -v subjects="${subjects[@]}" tedana-hpc-v2.sh
+	qsub -v subjects="${subjects[@]}" tedana-hpc.sh
 done
