@@ -8,7 +8,7 @@ maindir="$(dirname "$scriptdir")"
 
 # study-specific inputs
 TASK=mid
-sm=5 # still needs to be done with afni (DVS needs to do this)
+sm=0 # still needs to be done with afni (DVS needs to do this)
 sub=$1
 ses=$2
 run=$3
