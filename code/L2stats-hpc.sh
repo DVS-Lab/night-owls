@@ -85,13 +85,29 @@ done
 torque-launch -p "$logdir/chk_L2_${PBS_JOBID}.txt" "$logdir/cmd_L2_${PBS_JOBID}.txt"
 
 # delete unused files
-#for sub in ${subjects[@]}; do
-#    for ses in {01..12}; do
-#        OUTPUT=${projectdir}/derivatives/fsl/space-MNI/sub-${sub}/L2_task-${task}_model-${model}_type-${type}_ses-${ses}_sm-${sm}
-#        rm -f ${OUTPUT}.gfeat/cope*.feat/stats/res4d.nii.gz
-#        rm -f ${OUTPUT}.gfeat/cope*.feat/stats/corrections.nii.gz
-#        rm -f ${OUTPUT}.gfeat/cope*.feat/stats/threshac1.nii.gz
-#        rm -f ${OUTPUT}.gfeat/cope*.feat/filtered_func_data.nii.gz
-#        rm -f ${OUTPUT}.gfeat/cope*.feat/var_filtered_func_data.nii.gz
-#    done
-#done
+for task in "${tasks[@]}"; do
+    for sub in ${subjects[@]}; do
+        for ses in {01..12}; do
+            #OUTPUT=${projectdir}/derivatives/fsl/space-mni/sub-${sub}/L2_task-${task}_model-${model}_type-${type}_ses-${ses}_sm-${sm} # Fix this path
+            
+            # Loop through cope numbers based on task
+            if [[ "$task" == "sharedreward" ]]; then
+                for cope_num in {1..15}; do
+                    rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/stats/res4d.nii.gz
+                    rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/stats/corrections.nii.gz
+                    rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/stats/threshac1.nii.gz
+                    rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/filtered_func_data.nii.gz
+                    rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/var_filtered_func_data.nii.gz
+                done
+            elif [[ "$task" == "mid" ]]; then
+                for cope_num in {1..10}; do
+                    rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/stats/res4d.nii.gz
+                    rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/stats/corrections.nii.gz
+                    rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/stats/threshac1.nii.gz
+                    rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/filtered_func_data.nii.gz
+                    rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/var_filtered_func_data.nii.gz
+                done
+            fi
+        done
+    done
+done
