@@ -53,7 +53,7 @@ for subj in subs:
                 # Construct intended file paths for 4 echoes
                 for echo in range(1, 5):
                     intended_for.append(
-                        f"{subj}/{ses}/{func_dir}/{subj}_{ses}_task-{task}_run-{run}_echo-{echo}_part-mag_bold.nii.gz"
+                        f"{func_dir}/{subj}_{ses}_task-{task}_run-{run}_echo-{echo}_part-mag_bold.nii.gz"
                     )
 
                 data["IntendedFor"] = intended_for
