@@ -25,7 +25,7 @@ done
 
 mapfile -t subjects < "$scriptdir/sublist.txt"
 
-for sub in ${subjects[@]}; do
+for sub in "${subjects[@]}"; do
 	
     ## for sessions that have a functional image..
     sessions=( $(
