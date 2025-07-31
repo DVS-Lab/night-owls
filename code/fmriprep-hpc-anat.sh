@@ -5,8 +5,7 @@
 #PBS -l nodes=1:ppn=14
 
 # load modules and go to workdir.
-module load fsl/6.0.2
-source $FSLDIR/etc/fslconf/fsl.sh
+umask 0000
 module load singularity
 cd $PBS_O_WORKDIR
 
@@ -53,7 +52,7 @@ for sub in ${subjects[@]}; do
 		--skip-bids-validation \
 		--nthreads 14 \
 		--me-output-echos \
-		--output-spaces anat MNI152NLin6Asym \
+		--output-spaces anat:res-2 MNI152NLin6Asym:res-2 \
         --anat-only \
         --longitudinal \
 		--fs-no-reconall --fs-license-file /opts/fs_license.txt -w /scratch >> $logdir/cmd_fmriprep_${PBS_JOBID}.txt
