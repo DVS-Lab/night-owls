@@ -26,7 +26,7 @@ done
 mapfile -t subjects < "sublist.txt"
 
 for sub in "${subjects[@]}"; do
-	
+  sub="sub-$sub"
     ## for sessions that have a functional image..
     sessions=( $(
         find "$bidsdir/$sub" \
