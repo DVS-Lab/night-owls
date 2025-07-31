@@ -23,7 +23,7 @@ done
 
 # Generate configs and PBS scripts
 
-subjects=(sub-103) 
+mapfile -t subjects < "$scriptdir/subjects.txt"
 
 for sub in ${subjects[@]}; do
 	
