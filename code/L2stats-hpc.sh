@@ -9,7 +9,7 @@
 
 # load modules and go to workdir
 # module load fsl/6.0.2
-source $FSLDIR/etc/fslconf/fsl.sh
+# source $FSLDIR/etc/fslconf/fsl.sh
 cd $PBS_O_WORKDIR
 umask 0000
 
