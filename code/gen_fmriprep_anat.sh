@@ -23,7 +23,7 @@ done
 
 # Generate configs and PBS scripts
 
-mapfile -t subjects < "$scriptdir/subjects.txt"
+mapfile -t subjects < "$scriptdir/sublist.txt"
 
 for sub in ${subjects[@]}; do
 	
