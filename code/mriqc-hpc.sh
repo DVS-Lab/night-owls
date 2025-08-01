@@ -66,7 +66,7 @@ for sub in ${subjects[@]}; do
         -B $job_scratch:/workdir \
         /gpfs/scratch/tug87422/smithlab-shared/tools/mriqc-24.0.2.simg \
         /data /out participant \
-	 --participant_label $sub \
+	--participant_label $sub \
 	--no-datalad-get \
 	--no-sub \
 	--modalities bold \
