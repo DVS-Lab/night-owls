@@ -3,22 +3,18 @@
 # ensure paths are correct irrespective from where user runs the script
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-
-# these define the subject number (sub) and session id (ses)
-for subinfo in "103 12"; do
-
-	# split subinfo variable
-	set -- $subinfo
-	sub=$1
-	ses=$2
-
-
+# Read subject-session pairs from text file
+# Replace "subjects_sessions.txt" with your actual filename
+while read -r sub ses; do
+	# Skip empty lines
+	[[ -z "$sub" || -z "$ses" ]] && continue
 	script=${scriptdir}/prepdata.sh
 	NCORES=20
 	while [ $(ps -ef | grep -v grep | grep $script | wc -l) -ge $NCORES ]; do
 		sleep 5s
 	done
-   	bash $script $sub $ses &
+
+	bash $script $sub $ses &
 	sleep 5s
-	
-done
+
+done < "${scriptdir}/sublist-ses.txt"

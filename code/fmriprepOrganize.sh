@@ -31,5 +31,5 @@ for ses in $(seq -w 1 12); do
   fi
 done
 
-rm -rf /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only/
-rm -rf /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/ses-*
+#rm -rf /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only/
+#rm -rf /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/ses-*
