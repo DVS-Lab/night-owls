@@ -6,11 +6,12 @@ scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 maindir="$(dirname "$scriptdir")"
 
 # study-specific inputs
-TASK=sharedreward
 sub=$1
 ses=$2
-run=$3
-me=$4  # 1 on, 0 off
+TASK=$3
+run=$4
+me=$5  # 1 on, 0 off
+space=$6
 sm=5  # 5mm smoothing
 
 # zeropad the session number
@@ -18,9 +19,9 @@ ses=`zeropad ${ses} 2`
 
 # use the optimally-combined data or the the second echo
 if [ $me -eq 1 ]; then 
-	INDATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz
-	OUTDATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_${sm}mm.nii.gz
-	MASK=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-brain_mask.nii.gz
+	INDATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-${space}_desc-preproc_bold.nii.gz
+	OUTDATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-${space}_desc-preproc_bold_${sm}mm.nii.gz
+	MASK=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-${space}_desc-brain_mask.nii.gz
 elif [ $me -eq 0 ]; then 
 	# sub-101_ses-01_task-sharedreward_run-2_echo-2_part-mag_desc-preproc_bold.nii.gz
 	# will need to move these to space-MNI152NLin6Asym (or whatever we want to use)
