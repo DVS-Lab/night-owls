@@ -25,7 +25,7 @@ rm -f $logdir/cmd_L2_${PBS_JOBID}.txt
 touch $logdir/cmd_L2_${PBS_JOBID}.txt
 
 type="act"               # "act" or "ppi" (or "nppi-dmn")
-sm=5                    # smoothing kernel label
+#sm=5                    # smoothing kernel label
 model=1                 # first-level model number
 tasks=("sharedreward" "mid")
 
@@ -50,9 +50,9 @@ for sub in ${subjects[@]}; do
             fi
 
             ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}_2-runs.fsf
-            INPUT1=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-1_sm-${sm}.feat
-            INPUT2=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-2_sm-${sm}.feat
-            OUTPUT=${SESDIR}/L2_task-${task}_model-${model}_type-${type}_ses-${ses}_sm-${sm}
+            INPUT1=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-1.feat
+            INPUT2=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-2.feat
+            OUTPUT=${SESDIR}/L2_task-${task}_model-${model}_type-${type}_ses-${ses}
             #NCOPES=30
 
             # skip if either run folder is missing

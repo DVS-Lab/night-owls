@@ -29,7 +29,7 @@ rm -f L2stats-sub.e*
 
 
 type="act"               # "act" or "ppi" (or "nppi-dmn")
-sm=5                    # smoothing kernel label
+#sm=5                    # smoothing kernel label
 model=1                 # first-level model number
 #tasks=("sharedreward" "mid")
 tasks=("sharedreward")
@@ -57,7 +57,7 @@ for task in "${tasks[@]}"; do
             
             # Check each run for this session
             for run in 1 2; do
-                INPUT=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-${run}_sm-${sm}.feat
+                INPUT=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-${run}.feat
                 
                 if [ -d "${INPUT}" ]; then
                     all_inputs+=(${INPUT})
@@ -78,7 +78,7 @@ for task in "${tasks[@]}"; do
         NSES=${#all_inputs[@]}
 
         # Set output path for subject-level analysis
-        OUTPUT=${MAINOUTPUT}/subject-level/L2_task-${task}_model-${model}_type-${type}_subj-${sub}_sm-${sm}
+        OUTPUT=${MAINOUTPUT}/subject-level/L2_task-${task}_model-${model}_type-${type}_subj-${sub}
         
         # skip if output already exists
         #if [ -e ${OUTPUT}.gfeat/cope${NCOPES}.feat/cluster_mask_zstat1.nii.gz ]; then
