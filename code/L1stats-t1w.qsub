@@ -39,7 +39,7 @@ for sub in ${subjects[@]}; do
 			scriptname=${scriptdir}/L1stats-${task}-t1w.sh
 			for run in 1 2; do
 
-				DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-T1w_desc-preproc_bold.nii.gz
+				DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-T1w_desc-preproc_bold_5mm.nii.gz
 				if [ -e $DATA ]; then  # don't run unless the data exists
 					echo "bash ${scriptname} ${sub} ${ses} ${run}" >> $logdir/cmd_L1stats-t1w_${PBS_JOBID}.txt
 				else
