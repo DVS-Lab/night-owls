@@ -56,7 +56,7 @@ for subinfo in "101 01";do #test
 					#let counter=$counter+$ntasks
 
 							# Loop over each task script and submit with the same subject chunk
-							qsub -v scriptname=${scriptname},sub=${sub},ses=${ses},run=${run},trial=${trial}  L1stats_LSS.qsub
+							qsub -v scriptname=${scriptname},task=${task},sub=${sub},ses=${ses},run=${run},trial=${trial}  L1stats_LSS.qsub
 				done
 
 			done
