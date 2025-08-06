@@ -7,8 +7,8 @@
 #PBS -l nodes=1:ppn=14
 
 # load modules and go to workdir
-module load fsl/6.0.2
-source $FSLDIR/etc/fslconf/fsl.sh
+# module load fsl/6.0.2
+# source $FSLDIR/etc/fslconf/fsl.sh
 cd $PBS_O_WORKDIR
 umask 0000
 
@@ -26,11 +26,10 @@ touch $logdir/cmd_L2_${PBS_JOBID}.txt
 rm -f L2stats-sub.o*
 rm -f L2stats-sub.e*
 
-rm $logdir/re-runL2subj.log
 
 
 type="act"               # "act" or "ppi" (or "nppi-dmn")
-sm=5                    # smoothing kernel label
+#sm=5                    # smoothing kernel label
 model=1                 # first-level model number
 #tasks=("sharedreward" "mid")
 tasks=("sharedreward")
@@ -39,6 +38,7 @@ for task in "${tasks[@]}"; do
 
     for sub in ${subjects[@]}; do
 
+        rm -f $logdir/re-runL2subj_sub-${sub}.log
         MAINOUTPUT=${projectdir}/derivatives/fsl/space-mni/sub-${sub}
         
         # Initialize arrays to store all available inputs for this subject
@@ -51,26 +51,26 @@ for task in "${tasks[@]}"; do
             
             # skip if the session folder itself doesn't exist
             if [ ! -d "${SESDIR}" ]; then
-                echo "SKIP sub-${sub} ses-${ses} ${task}: session directory not found" >> $logdir/re-runL2subj.log
+                echo "SKIP sub-${sub} ses-${ses} ${task}: session directory not found" >> $logdir/re-runL2subj_sub-${sub}.log
                 continue
             fi
             
             # Check each run for this session
             for run in 1 2; do
-                INPUT=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-${run}_sm-${sm}.feat
+                INPUT=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-${run}.feat
                 
                 if [ -d "${INPUT}" ]; then
                     all_inputs+=(${INPUT})
                     input_labels+=("ses-${ses}_run-${run}")
                 else
-                    echo "MISSING sub-${sub} ses-${ses} run-${run} ${task}: ${INPUT}" >> $logdir/re-runL2subj.log
+                    echo "MISSING sub-${sub} ses-${ses} run-${run} ${task}: ${INPUT}" >> $logdir/re-runL2subj_sub-${sub}.log
                 fi
             done
         done
         
         # Skip subject if fewer than 2 valid inputs found (need at least 2 for L2 analysis)
         if [ ${#all_inputs[@]} -lt 2 ]; then
-            echo "SKIP sub-${sub} ${task}: insufficient inputs (${#all_inputs[@]} found), need at least 2" >> $logdir/re-runL2subj.log
+            echo "SKIP sub-${sub} ${task}: insufficient inputs (${#all_inputs[@]} found), need at least 2" >> $logdir/re-runL2subj_sub-${sub}.log
             continue
         fi
         
@@ -78,7 +78,8 @@ for task in "${tasks[@]}"; do
         NSES=${#all_inputs[@]}
 
         # Set output path for subject-level analysis
-        OUTPUT=${MAINOUTPUT}/L2_task-${task}_model-${model}_type-${type}_subj-${sub}_sm-${sm}
+        mkdir 
+        OUTPUT=${MAINOUTPUT}/subject-level/L2_task-${task}_model-${model}_type-${type}_subj-${sub}
         
         # skip if output already exists
         #if [ -e ${OUTPUT}.gfeat/cope${NCOPES}.feat/cluster_mask_zstat1.nii.gz ]; then
@@ -97,7 +98,7 @@ for task in "${tasks[@]}"; do
         
         ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}_type-act_subject-level.fsf
         # Create dynamic FSF template
-        OTEMPLATE=${MAINOUTPUT}/L2_task-${task}_model-${model}_type-${type}_subj-${sub}.fsf
+        OTEMPLATE=${MAINOUTPUT}/subject-level/L2_task-${task}_model-${model}_type-${type}_subj-${sub}.fsf
         
         # Start with base template and modify for dynamic inputs
         cp ${ITEMPLATE} ${OTEMPLATE}
@@ -115,7 +116,7 @@ for task in "${tasks[@]}"; do
         done
         
         # Log what we're processing
-        echo "PROCESSING sub-${sub}: ${#all_inputs[@]} inputs (${input_labels[*]})" >> $logdir/re-runL2subj.log
+        echo "PROCESSING sub-${sub}: ${#all_inputs[@]} inputs (${input_labels[*]})" >> $logdir/re-runL2subj_sub-${sub}.log
         
         # Add to command file
         echo feat $OTEMPLATE >>$logdir/cmd_L2_${PBS_JOBID}.txt

@@ -4,7 +4,7 @@
 maindir=/gpfs/scratch/tug87422/smithlab-shared/night-owls #this should be the only line that has to change if the rest of the script is set up correctly
 scriptdir=$maindir/code
 
-mapfile -t lines < "$scriptdir/sublist.txt"
+mapfile -t lines < "$scriptdir/sublist-ses.txt"
 pairs=()
 for line in "${lines[@]}"; do
   # split into sub and ses

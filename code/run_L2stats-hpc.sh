@@ -19,8 +19,12 @@ while [ $counter -lt ${#myArray[@]} ]; do
     script="L2stats-hpc.sh"
     qsub -v subjects="${subjects[@]}" "$script"
     echo $subjects $script
-
+    
     script_subj="L2stats-hpc-subj.sh"
     qsub -v subjects="${subjects[@]}" "$script_subj"
     echo $subjects $script_subj
+
+    script_t1w="L2stats-hpc-t1w.sh"
+    qsub -v subjects="${subjects[@]}" "$script_t1w"
+    echo $subjects $script_t1w
 done

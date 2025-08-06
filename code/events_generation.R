@@ -2,7 +2,9 @@ library(readr)
 
 events_gen <- function(sub,ses){
   sub <- as.character(sub)
+  ses2 <- sprintf("%02d", ses)
   ses <- as.character(ses)
+  ses2 <- as.character(ses2)
     
   for (r in 1:2){
     
@@ -12,7 +14,7 @@ events_gen <- function(sub,ses){
     
     #Generate folders, if don't exist
     out.path <- paste0('C:/Users/mmatt/Desktop/Projects/NightOwls/night-owls/bids/sub-',
-                       sub,'/ses-',ses,'/func/')
+                       sub,'/ses-',ses2,'/func/')
     if (!dir.exists(out.path)) {
       dir.create(out.path, recursive = TRUE)
     }
@@ -67,7 +69,7 @@ events_gen <- function(sub,ses){
     mid.events <- mid.events[order(mid.events$onset),]
     
     ##Export
-    mid.out <- paste0('sub-',sub,'_ses-',ses,'_task-mid_run-',r,'_events.tsv')
+    mid.out <- paste0('sub-',sub,'_ses-',ses2,'_task-mid_run-',r,'_events.tsv')
     write_delim(mid.events,paste0(out.path,mid.out),na='n/a',delim = "\t")     
     
   } 
@@ -154,27 +156,19 @@ events_gen(103,12)
 
 
 
+#sub 104
+events_gen(104,1)
+events_gen(104,2)
+events_gen(104,3)
+events_gen(104,4)
+events_gen(104,5)
+events_gen(104,6)
+events_gen(104,7)
+events_gen(104,8)
+events_gen(104,9)
+events_gen(104,10)
+events_gen(104,11)
+events_gen(104,12)
 
-
-#Ses-03 Completed
-events_gen(101,03)
-
-#Ses-04 Completed
-events_gen(101,04)
-
-#Ses-05 Completed
-events_gen(101,05)
-
-#Ses-06 Completed
-events_gen(101,06)
-
-#Ses-07 Completed
-events_gen(101,07)
-
-#Ses-08 Completed
-events_gen(101,08)
-
-#Ses-09 Completed
-events_gen(101,09)
 
 
