@@ -20,7 +20,7 @@ TYPE=act
 # set inputs and general outputs (should not need to chage across studies in Smith Lab)
 MAINOUTPUT=${maindir}/derivatives/fsl/sub-${sub}
 mkdir -p $MAINOUTPUT
-DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz
+DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz
 NVOLUMES=`fslnvols ${DATA}`
 CONFOUNDEVS=${maindir}/derivatives/fsl/confounds/sub-${sub}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-fslConfounds.tsv
 
