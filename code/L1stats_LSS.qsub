@@ -1,6 +1,10 @@
+
+#goal of L1stats.qsub: to generate the command list for torque-launch to run L1stats.sh in parallel
+# then use torque-launch to launch the command list with specified number of cores
+
 #!/bin/bash
 #PBS -l walltime=1:00:00
-#PBS -N L1stats-t1w
+#PBS -N L1stats
 #PBS -q normal
 #PBS -l nodes=1:ppn=28
 
@@ -18,6 +22,7 @@
 cd $PBS_O_WORKDIR
 umask 0000
 
+
 # ensure paths are correct
 shareddir=/gpfs/scratch/tug87422/smithlab-shared
 projectdir=$shareddir/night-owls
@@ -26,29 +31,19 @@ bidsdir=$projectdir/bids
 logdir=$projectdir/logs
 mkdir -p $logdir
 
-rm -f $logdir/cmd_L1stats-t1w_${PBS_JOBID}.txt
-touch $logdir/cmd_L1stats-t1w_${PBS_JOBID}.txt
+rm -f $logdir/cmd_L1stats_${PBS_JOBID}.txt
+touch $logdir/cmd_L1stats_${PBS_JOBID}.txt
 
-rm -f L1stats-t1w.o*
-rm -f L1stats-t1w.e*
+rm -f L1stats.o*
+rm -f L1stats.e*
 
-
-for sub in ${subjects[@]}; do
-	for ses in {01..12}; do
-		for task in mid sharedreward; do
-			scriptname=${scriptdir}/L1stats-${task}-t1w.sh
-			for run in 1 2; do
-
-				DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-T1w_desc-preproc_bold_5mm.nii.gz
+				DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz
 				if [ -e $DATA ]; then  # don't run unless the data exists
-					echo "bash ${scriptname} ${sub} ${ses} ${run}" >> $logdir/cmd_L1stats-t1w_${PBS_JOBID}.txt
+					echo "bash ${scriptname} ${sub} ${ses} ${run} ${trial}" >> $logdir/cmd_L1stats_${PBS_JOBID}.txt
 				else
 					echo "missing: ${DATA}"
 				fi
 
-			done
-		done
-	done
-done
 
-torque-launch -p "$logdir/chk_L1stats-t1w_${PBS_JOBID}.txt" "$logdir/cmd_L1stats-t1w_${PBS_JOBID}.txt"
+
+torque-launch -p "$logdir/chk_L1stats_${PBS_JOBID}.txt" "$logdir/cmd_L1stats_${PBS_JOBID}.txt"
