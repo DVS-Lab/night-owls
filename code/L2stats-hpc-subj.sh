@@ -78,7 +78,7 @@ for task in "${tasks[@]}"; do
         NSES=${#all_inputs[@]}
 
         # Set output path for subject-level analysis
-        mkdir 
+        mkdir ${MAINOUTPUT}/subject-level/
         OUTPUT=${MAINOUTPUT}/subject-level/L2_task-${task}_model-${model}_type-${type}_subj-${sub}
         
         # skip if output already exists
