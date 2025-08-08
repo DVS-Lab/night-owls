@@ -125,6 +125,7 @@ done
 
 
 #T1w:
+echo "T1w below" >> $logdir/re-runL2subj_sub-${sub}.log
 
 for task in "${tasks[@]}"; do
 
@@ -135,7 +136,6 @@ for task in "${tasks[@]}"; do
         # Initialize arrays to store all available inputs for this subject
         all_inputs=()
         input_labels=()
-         echo "T1w below" >> $logdir/re-runL2subj_sub-${sub}.log
         
         # Collect all available L1 outputs across all sessions and runs
         for ses in {01..12}; do
@@ -170,6 +170,7 @@ for task in "${tasks[@]}"; do
         NSES=${#all_inputs[@]}
 
         # Set output path for subject-level analysis
+        mkdir ${MAINOUTPUT}/subject-level/
         OUTPUT=${MAINOUTPUT}/subject-level/L2_task-${task}_model-${model}_type-${type}_subj-${sub}
         
         # skip if output already exists
