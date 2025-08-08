@@ -90,7 +90,7 @@ torque-launch -p "$logdir/chk_L2_${PBS_JOBID}.txt" "$logdir/cmd_L2_${PBS_JOBID}.
 for task in "${tasks[@]}"; do
     for sub in ${subjects[@]}; do
         for ses in {01..12}; do
-            #OUTPUT=${projectdir}/derivatives/fsl/space-mni/sub-${sub}/L2_task-${task}_model-${model}_type-${type}_ses-${ses}_sm-${sm} # Fix this path
+            OUTPUT=${projectdir}/derivatives/fsl/space-mni/sub-${sub}/L2_task-${task}_model-${model}_type-${type}_ses-${ses}
             
             # Loop through cope numbers based on task
             if [[ "$task" == "sharedreward" ]]; then
