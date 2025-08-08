@@ -65,10 +65,12 @@ for sub in ${subjects[@]}; do
             fi
 
             # skip if output already exists
-            #if [ -e ${OUTPUT}.gfeat/cope${NCOPES}.feat/cluster_mask_zstat1.nii.gz ]; then
-            #    echo "SKIP sub-${sub} ses-${ses} ${task}: L2 already done" >> $logdir/re-runL2_sub-${sub}-t1w.log
-            #    continue
-            #fi
+            NCOPES=$([ "$task" = "mid" ] && echo 10 || echo 15)
+
+            if [ -e ${OUTPUT}.gfeat/cope${NCOPES}.feat/cluster_mask_zstat1.nii.gz ]; then
+                echo "SKIP sub-${sub} ses-${ses} ${task}: L2 already done" >> $logdir/re-runL2_sub-${sub}.log
+                continue
+            fi
 
             # build and run session FSF
             OTEMPLATE=${SESDIR}/L2_task-${task}_model-${model}_type-${type}.fsf
