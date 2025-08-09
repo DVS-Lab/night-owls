@@ -1,7 +1,3 @@
-
-#goal of L1stats.qsub: to generate the command list for torque-launch to run L1stats.sh in parallel
-# then use torque-launch to launch the command list with specified number of cores
-
 #!/bin/bash
 #PBS -l walltime=1:00:00
 #PBS -N L1stats_LSS
@@ -35,9 +31,9 @@ rm -f $logdir/cmd_L1stats_${PBS_JOBID}.txt
 touch $logdir/cmd_L1stats_${PBS_JOBID}.txt
 
 rm -f L1stats.o*
-rm -f L1stats.e*
+#rm -f L1stats.e*
 
-				DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz
+				DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz
 				if [ -e $DATA ]; then  # don't run unless the data exists
 					echo "bash ${scriptname} ${sub} ${ses} ${run} ${trial}" >> $logdir/cmd_L1stats_${PBS_JOBID}.txt
 				else

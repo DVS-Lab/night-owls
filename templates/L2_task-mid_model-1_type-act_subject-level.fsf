@@ -267,9 +267,8 @@ set fmri(paradigm_hp)
 
 set fmri(fnirt_config) "T1_2_MNI152_2mm"
 
-
 # Number of lower-level copes feeding into higher-level analysis
-set fmri(ncopeinputs) 15
+set fmri(ncopeinputs) 10
 
 # Use lower-level cope 1 for higher-level analysis
 set fmri(copeinput.1) 1
@@ -300,21 +299,6 @@ set fmri(copeinput.9) 1
 
 # Use lower-level cope 10 for higher-level analysis
 set fmri(copeinput.10) 1
-
-# Use lower-level cope 11 for higher-level analysis
-set fmri(copeinput.11) 1
-
-# Use lower-level cope 12 for higher-level analysis
-set fmri(copeinput.12) 1
-
-# Use lower-level cope 13 for higher-level analysis
-set fmri(copeinput.13) 1
-
-# Use lower-level cope 14 for higher-level analysis
-set fmri(copeinput.14) 1
-
-# Use lower-level cope 15 for higher-level analysis
-set fmri(copeinput.15) 1
 
 # Add confound EVs text file
 set fmri(confoundevs) 0
