@@ -25,8 +25,8 @@ for ses in $(seq -w 1 12); do
   rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/anat/sub-${SUBJ}_space-MNI152NLin6Asym_desc-preproc_dseg.nii.gz" "${DST}/anat/"
 
   #Move func and fmap 
-  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/ses-${ses}/func/" "${DST}/"
-  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/ses-${ses}/fmap/" "${DST}/"
+  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/ses-${ses}/func/" "${DST}/func"
+  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/ses-${ses}/fmap/" "${DST}/fmap"
 
 
   #Move figures
