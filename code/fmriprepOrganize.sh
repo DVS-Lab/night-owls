@@ -31,10 +31,9 @@ for ses in $(seq -w 1 12); do
 
   #Move figures
   rsync -av "${SRC}/sub-${SUBJ}_anat.html" "${DST}/"
-  rsync -av "${SRC}/sub-${SUBJ}/figures/" "${DST}/"
+  rsync -av "${SRC}/sub-${SUBJ}/figures/" "${DST}/figures"
   rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}_ses-${ses}_func.html" "${DST}/"
   rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/figures" "${DST}/figures/"
 done
 
-#rm -rf /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only/
-#rm -rf /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/ses-*
+find /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only -name "*sub-${SUBJ}*" -print0 | xargs -0 rm -rf --
