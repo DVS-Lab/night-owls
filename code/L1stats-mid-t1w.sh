@@ -8,7 +8,7 @@ maindir="$(dirname "$scriptdir")"
 
 # study-specific inputs
 TASK=mid
-sm=5 # still needs to be done with afni (DVS needs to do this)
+sm=0 # still needs to be done with afni (DVS needs to do this)
 sub=$1
 ses=$2
 run=$3
@@ -18,7 +18,7 @@ model=1 # everyone should just have one model
 # set inputs and general outputs (should not need to change across studies in Smith Lab)
 MAINOUTPUT=${maindir}/derivatives/fsl/space-t1w/sub-${sub}/ses-${ses}
 mkdir -p $MAINOUTPUT
-DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-T1w_desc-preproc_bold.nii.gz
+DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-T1w_desc-preproc_bold_5mm.nii.gz
 if [ ! -e $DATA ]; then
 	echo " Exiting -- missing data: ${DATA}"
 	exit
@@ -47,13 +47,13 @@ fi
 # set output based in whether it is activation and/or temporal derivatives
 TYPE=act
 if [ $td -eq 1 ]; then
-	OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_sm-${sm}_td
+	OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_td
 	ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}_td.fsf
-	OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_sm-${sm}_td.fsf
+	OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_td.fsf
 elif [ $td -eq 0 ]; then
-	OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_sm-${sm}
+	OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}
 	ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}.fsf
-	OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_sm-${sm}.fsf
+	OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}.fsf
 else
 	echo "invalid parameter for temporal derivatives; it can only be 0 or 1."
 	exit

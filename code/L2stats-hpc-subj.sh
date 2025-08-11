@@ -7,8 +7,8 @@
 #PBS -l nodes=1:ppn=14
 
 # load modules and go to workdir
-module load fsl/6.0.2
-source $FSLDIR/etc/fslconf/fsl.sh
+# module load fsl/6.0.2
+# source $FSLDIR/etc/fslconf/fsl.sh
 cd $PBS_O_WORKDIR
 umask 0000
 
@@ -29,10 +29,9 @@ rm -f L2stats-sub.e*
 
 
 type="act"               # "act" or "ppi" (or "nppi-dmn")
-sm=5                    # smoothing kernel label
+#sm=5                    # smoothing kernel label
 model=1                 # first-level model number
-#tasks=("sharedreward" "mid")
-tasks=("sharedreward")
+tasks=("sharedreward" "mid")
 
 for task in "${tasks[@]}"; do
 
@@ -57,7 +56,7 @@ for task in "${tasks[@]}"; do
             
             # Check each run for this session
             for run in 1 2; do
-                INPUT=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-${run}_sm-${sm}.feat
+                INPUT=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-${run}.feat
                 
                 if [ -d "${INPUT}" ]; then
                     all_inputs+=(${INPUT})
@@ -78,13 +77,107 @@ for task in "${tasks[@]}"; do
         NSES=${#all_inputs[@]}
 
         # Set output path for subject-level analysis
-        OUTPUT=${MAINOUTPUT}/subject-level/L2_task-${task}_model-${model}_type-${type}_subj-${sub}_sm-${sm}
+        mkdir ${MAINOUTPUT}/subject-level/
+        OUTPUT=${MAINOUTPUT}/subject-level/L2_task-${task}_model-${model}_type-${type}_subj-${sub}
         
         # skip if output already exists
-        #if [ -e ${OUTPUT}.gfeat/cope${NCOPES}.feat/cluster_mask_zstat1.nii.gz ]; then
-        #    echo "SKIP sub-${sub} ${task}: L2 already done" >> $logdir/re-runL2subj.log
-        #    continue
+        if [ -e ${OUTPUT}.gfeat/cope${NCOPES}.feat/cluster_mask_zstat1.nii.gz ]; then
+            echo "SKIP sub-${sub} ${task}: L2 already done" >> $logdir/re-runL2subj.log
+            continue
+        fi
+        
+        # set template based on type
+        #if [ "${type}" == "act" ]; then
+        #    ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}_type-act_subject-level.fsf
+        #    NCOPES=34
+        #else
+        #    ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}_type-nppi-dmn_subject-level.fsf
+        #    NCOPES=$((34 + 1))
         #fi
+        
+        ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}_type-act_subject-level.fsf
+        # Create dynamic FSF template
+        OTEMPLATE=${MAINOUTPUT}/subject-level/L2_task-${task}_model-${model}_type-${type}_subj-${sub}.fsf
+        
+        # Start with base template and modify for dynamic inputs
+        cp ${ITEMPLATE} ${OTEMPLATE}
+        
+        # Update basic parameters
+        sed -i "s@OUTPUT@${OUTPUT}@g" ${OTEMPLATE}
+        sed -i "s@NSES@${NSES}@g" ${OTEMPLATE}
+            
+        # Add inputs
+        for i in "${!all_inputs[@]}"; do
+            feat_index=$((i + 1))
+            echo "set feat_files(${feat_index}) \"${all_inputs[i]}\"" >> ${OTEMPLATE}
+            echo "set fmri(evg${feat_index}.1) 1.0" >> ${OTEMPLATE}
+            echo "set fmri(groupmem.${feat_index}) 1" >> ${OTEMPLATE}
+        done
+        
+        # Log what we're processing
+        echo "PROCESSING sub-${sub}: ${#all_inputs[@]} inputs (${input_labels[*]})" >> $logdir/re-runL2subj_sub-${sub}.log
+        
+        # Add to command file
+        echo feat $OTEMPLATE >>$logdir/cmd_L2_${PBS_JOBID}.txt
+
+    done
+done
+
+
+#T1w:
+echo "T1w below" >> $logdir/re-runL2subj_sub-${sub}.log
+
+for task in "${tasks[@]}"; do
+
+    for sub in ${subjects[@]}; do
+
+        MAINOUTPUT=${projectdir}/derivatives/fsl/space-t1w/sub-${sub}
+        
+        # Initialize arrays to store all available inputs for this subject
+        all_inputs=()
+        input_labels=()
+        
+        # Collect all available L1 outputs across all sessions and runs
+        for ses in {01..12}; do
+            SESDIR=${MAINOUTPUT}/ses-${ses}
+            
+            # skip if the session folder itself doesn't exist
+            if [ ! -d "${SESDIR}" ]; then
+                echo "SKIP sub-${sub} ses-${ses} ${task}: session directory not found" >> $logdir/re-runL2subj_sub-${sub}.log
+                continue
+            fi
+            
+            # Check each run for this session
+            for run in 1 2; do
+                INPUT=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-${run}.feat
+                
+                if [ -d "${INPUT}" ]; then
+                    all_inputs+=(${INPUT})
+                    input_labels+=("ses-${ses}_run-${run}")
+                else
+                    echo "MISSING sub-${sub} ses-${ses} run-${run} ${task}: ${INPUT}" >> $logdir/re-runL2subj_sub-${sub}.log
+                fi
+            done
+        done
+        
+        # Skip subject if fewer than 2 valid inputs found (need at least 2 for L2 analysis)
+        if [ ${#all_inputs[@]} -lt 2 ]; then
+            echo "SKIP sub-${sub} ${task}: insufficient inputs (${#all_inputs[@]} found), need at least 2" >> $logdir/re-runL2subj_sub-${sub}.log
+            continue
+        fi
+        
+        # Set NSES to number of inputs
+        NSES=${#all_inputs[@]}
+
+        # Set output path for subject-level analysis
+        mkdir ${MAINOUTPUT}/subject-level/
+        OUTPUT=${MAINOUTPUT}/subject-level/L2_task-${task}_model-${model}_type-${type}_subj-${sub}
+        
+        # skip if output already exists
+        if [ -e ${OUTPUT}.gfeat/cope${NCOPES}.feat/cluster_mask_zstat1.nii.gz ]; then
+            echo "SKIP sub-${sub} ${task}: L2 already done" >> $logdir/re-runL2subj.log
+            continue
+        fi
         
         # set template based on type
         #if [ "${type}" == "act" ]; then
@@ -124,6 +217,33 @@ for task in "${tasks[@]}"; do
 done
 
 torque-launch -p "$logdir/chk_L2_${PBS_JOBID}.txt" "$logdir/cmd_L2_${PBS_JOBID}.txt"
+
+
+# delete unused files
+for task in "${tasks[@]}"; do
+    for sub in ${subjects[@]}; do
+        OUTPUT=${projectdir}/derivatives/fsl/space-mni/sub-${sub}/subject-level/L2_task-${task}_model-${model}_type-${type}_sub-${sub}
+        
+        # Loop through cope numbers based on task
+        if [[ "$task" == "sharedreward" ]]; then
+            for cope_num in {1..15}; do
+                rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/stats/res4d.nii.gz
+                rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/stats/corrections.nii.gz
+                rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/stats/threshac1.nii.gz
+                rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/filtered_func_data.nii.gz
+                rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/var_filtered_func_data.nii.gz
+            done
+        elif [[ "$task" == "mid" ]]; then
+            for cope_num in {1..10}; do
+                rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/stats/res4d.nii.gz
+                rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/stats/corrections.nii.gz
+                rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/stats/threshac1.nii.gz
+                rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/filtered_func_data.nii.gz
+                rm -f ${OUTPUT}.gfeat/cope${cope_num}.feat/var_filtered_func_data.nii.gz
+            done
+        fi
+    done
+done
 
 # delete unused files
 #for sub in ${subjects[@]}; do

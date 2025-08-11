@@ -1,12 +1,11 @@
 #!/bin/bash
 #PBS -l walltime=8:00:00
 #PBS -N fmriprep-nightowls
-#PBS -q large
+#PBS -q normal
 #PBS -l nodes=1:ppn=14
 
 # load modules and go to workdir.
-module load fsl/6.0.2
-source $FSLDIR/etc/fslconf/fsl.sh
+umask 0000
 module load singularity
 cd $PBS_O_WORKDIR
 

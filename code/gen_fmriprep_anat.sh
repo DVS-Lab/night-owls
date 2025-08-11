@@ -1,5 +1,6 @@
 #!/bin/bash
 
+umask 0000
 # ensure paths are correct
 projectname=night-owls 
 maindir=/gpfs/scratch/tug87422/smithlab-shared/$projectname
@@ -23,10 +24,10 @@ done
 
 # Generate configs and PBS scripts
 
-subjects=(sub-103) 
+mapfile -t subjects < "sublist.txt"
 
-for sub in ${subjects[@]}; do
-	
+for sub in "${subjects[@]}"; do
+  sub="sub-$sub"
     ## for sessions that have a functional image..
     sessions=( $(
         find "$bidsdir/$sub" \
@@ -94,7 +95,7 @@ singularity run --cleanenv \\
 	--nthreads 14 \\
 	--me-output-echos \\
 	--output-spaces anat MNI152NLin6Asym \\
-    --derivatives $maindir/derivatives/anat-only \\
+  --derivatives $maindir/derivatives/anat-only \\
 	--bids-filter-file /base/code/fmriprep-anat/fmriprep_config_${sub}_${ses}.json \\
 	--fs-no-reconall --fs-license-file /opts/fs_license.txt \\
 	-w /scratch
