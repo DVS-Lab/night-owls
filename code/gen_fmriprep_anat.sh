@@ -94,7 +94,7 @@ singularity run --cleanenv \\
 	--skip-bids-validation \\
 	--nthreads 14 \\
 	--me-output-echos \\
-	--output-spaces anat:res-2 MNI152NLin6Asym:res-2 \\
+	--output-spaces anat MNI152NLin6Asym \\
   --derivatives $maindir/derivatives/anat-only \\
 	--bids-filter-file /base/code/fmriprep-anat/fmriprep_config_${sub}_${ses}.json \\
 	--fs-no-reconall --fs-license-file /opts/fs_license.txt \\
