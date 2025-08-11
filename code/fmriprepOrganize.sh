@@ -19,21 +19,21 @@ for ses in $(seq -w 1 12); do
   mkdir -p "${DST}"
 
   #Move subject-level anat dir
-  rsync -av "${SRC}/sub-${SUBJ}/anat/" "${DST}/"
+  rsync -av "${SRC}/sub-${SUBJ}/anat" "${DST}/"
   #Move ses-specific xfm and dseg files 
   rsync -av "${SRC}/sub-${SUBJ}/ses-${ses}/anat/sub-${SUBJ}_ses-${ses}_from-orig_to-T1w_mode-image_xfm.txt" "${DST}/anat/"
   rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/anat/sub-${SUBJ}_space-MNI152NLin6Asym_desc-preproc_dseg.nii.gz" "${DST}/anat/"
 
   #Move func and fmap 
-  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/ses-${ses}/func/" "${DST}/func"
-  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/ses-${ses}/fmap/" "${DST}/fmap"
+  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/ses-${ses}/func" "${DST}/"
+  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/ses-${ses}/fmap" "${DST}/"
 
 
   #Move figures
   rsync -av "${SRC}/sub-${SUBJ}_anat.html" "${DST}/"
-  rsync -av "${SRC}/sub-${SUBJ}/figures/" "${DST}/figures"
+  rsync -av "${SRC}/sub-${SUBJ}/figures" "${DST}/"
   rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}_ses-${ses}_func.html" "${DST}/"
-  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/figures" "${DST}/figures/"
+  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/figures/" "${DST}/figures/"
 done
 
-find /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only -name "*sub-${SUBJ}*" -print0 | xargs -0 rm -rf --
+#find /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only -name "*sub-${SUBJ}*" -print0 | xargs -0 rm -rf --
