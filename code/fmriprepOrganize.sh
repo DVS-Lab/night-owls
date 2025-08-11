@@ -36,4 +36,5 @@ for ses in $(seq -w 1 12); do
   rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/figures/" "${DST}/figures/"
 done
 
-#find /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only -name "*sub-${SUBJ}*" -print0 | xargs -0 rm -rf --
+# Remove subject from old anat-only dir
+find /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only -name "*sub-${SUBJ}*" -print0 | xargs -0 rm -rf --
