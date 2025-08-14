@@ -4,7 +4,7 @@
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 basedir="$(dirname "$scriptdir")"
 
-for subinfo in "103 01" "103 02" "103 03" "103 04" "103 05" "103 06" "103 07" "103 08" "103 09" "103 10" "103 11" "103 12"; do
+for subinfo in "104 01" "104 02" "104 03" "104 04" "104 05" "104 06" "104 07" "104 08" "104 09" "104 10" "104 11" "104 12"; do
 
 	# split subinfo variable
 	set -- $subinfo
