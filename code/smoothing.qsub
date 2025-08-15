@@ -27,7 +27,7 @@ rm -f smoothing.e*
 
 
 for sub in ${subjects[@]}; do
-	for space in MNI152NLin6Asym_res-2 T1w; do
+	for space in MNI152NLin6Asym T1w; do
 		for ses in {01..12}; do
 			for task in mid sharedreward; do
 				scriptname=${scriptdir}/smooth-3dBlurToFWHM.sh
