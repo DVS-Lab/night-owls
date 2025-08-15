@@ -26,15 +26,15 @@ bidsdir=$projectdir/bids
 logdir=$projectdir/logs
 mkdir -p $logdir
 
-rm -f $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
-touch $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
 
-rm -f L1stats_${sub}.o*
-rm -f L1stats_${sub}.e*
 
 scriptname=${scriptdir}/L1stats-loop}.sh
 
 for sub in ${subjects[@]}; do
+
+	rm -f $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
+	touch $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
+	
 	for ses in {01..12}; do
 		for run in 1 2; do
 
