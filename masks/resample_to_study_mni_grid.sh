@@ -7,76 +7,64 @@ maindir="$(dirname "$scriptdir")"
 fmriprepdir="${maindir}/derivatives/fmriprep"
 maskdir="${scriptdir}"
 
-# ---- choose the study MNI grid (3-D boldref) ----
+# Pick the study MNI grid (3-D boldref). Pass as $1 or auto-detect the first one in derivatives.
 REF_MNI="${1:-}"
 if [[ -z "${REF_MNI}" ]]; then
-  # auto-pick the first MNI boldref in the study (you can change this to a specific one)
   REF_MNI="$(find "${fmriprepdir}" -type f -name '*space-MNI152NLin6Asym_boldref.nii.gz' | sort | head -n1 || true)"
 fi
-if [[ -z "${REF_MNI}" || ! -f "${REF_MNI}" ]]; then
-  echo "ERROR: Could not locate an MNI boldref. Pass one explicitly, e.g.:"
-  echo "  bash $(basename "$0") /path/to/sub-XXX_ses-YY_task-ZZ_run-1_space-MNI152NLin6Asym_boldref.nii.gz"
-  exit 1
-fi
+[[ -n "${REF_MNI}" && -f "${REF_MNI}" ]] || { echo "ERROR: provide an MNI boldref:  bash $(basename "$0") /path/to/*space-MNI152NLin6Asym_boldref.nii.gz"; exit 1; }
 echo "Using study MNI grid: ${REF_MNI}"
 
-# ---- masks to resample (add more here if needed) ----
-masks=(
-  "${maskdir}/BrainRewardSignature_2mm.nii"
-  "${maskdir}/VS-Imanova_2mm.nii"
-)
+# Behavior knobs
+: "${LINEAR_ALL:=0}"         # 0 = NN for VS, Linear for BRS; 1 = Linear for both (+threshold VS)
+: "${THR:=0.5}"              # threshold for VS when LINEAR_ALL=1
 
-# helper to strip the trailing "_2mm" to make a clean descriptor
-label_from_base () {
-  local base="$1"
-  base="${base%.nii}"
-  echo "${base%_2mm}"
+# Inputs (as you listed)
+BRS="${maskdir}/BrainRewardSignature_2mm.nii"   # continuous
+VS="${maskdir}/VS-Imanova_2mm.nii"              # binary
+
+[[ -f "$BRS" ]] || echo "WARN: missing ${BRS}"
+[[ -f "$VS"  ]] || echo "WARN: missing ${VS}"
+
+# Helper
+resample () { # src, ref, out, interp
+  local src="$1" ref="$2" out="$3" interp="$4"
+  antsApplyTransforms -d 3 -i "$src" -r "$ref" -o "$out" -n "$interp" -t identity
 }
 
-# tolerance checker for voxel sizes
-vox_ok () {
-  local img="$1" t=0.001
-  local p1 p2 p3
-  p1=$(fslval "$img" pixdim1); p2=$(fslval "$img" pixdim2); p3=$(fslval "$img" pixdim3)
-  awk -v a="$p1" -v b="$p2" -v c="$p3" -v t="$t" '
-    BEGIN {
-      dx = (a-2.7); dy = (b-2.7); dz = (c-2.97);
-      if (dx<0) dx=-dx; if (dy<0) dy=-dy; if (dz<0) dz=-dz;
-      exit( (dx<=t && dy<=t && dz<=t) ? 0 : 1 );
-    }'
+# BrainRewardSignature (continuous) → Linear
+if [[ -f "$BRS" ]]; then
+  out_brs="${maskdir}/space-MNI152NLin6Asym_desc-BrainRewardSignature_map.nii.gz"
+  echo "Resampling BrainRewardSignature → $(basename "$out_brs") (Linear)"
+  resample "$BRS" "$REF_MNI" "$out_brs" Linear
+fi
+
+# VS-Imanova (binary) → NN by default, or Linear+threshold if LINEAR_ALL=1
+if [[ -f "$VS" ]]; then
+  out_vs="${maskdir}/space-MNI152NLin6Asym_desc-VS-Imanova_mask.nii.gz"
+  if [[ "$LINEAR_ALL" == "1" ]]; then
+    echo "Resampling VS-Imanova → $(basename "$out_vs") (Linear + threshold ${THR})"
+    tmp="${out_vs%.nii.gz}_tmp.nii.gz"
+    resample "$VS" "$REF_MNI" "$tmp" Linear
+    # binarize after interpolation
+    fslmaths "$tmp" -thr "$THR" -bin "$out_vs"
+    rm -f "$tmp"
+  else
+    echo "Resampling VS-Imanova → $(basename "$out_vs") (NearestNeighbor)"
+    resample "$VS" "$REF_MNI" "$out_vs" NearestNeighbor
+  fi
+fi
+
+# Quick sanity checks (only if outputs exist)
+check_nonempty () {
+  local f="$1"
+  [[ -f "$f" ]] || return 0
+  read -r _min _max < <(fslstats "$f" -R)
+  if [[ "${_max:-0}" == "0" || "${_max:-0}" == "0.000000" ]]; then
+    echo "ERROR: output appears empty → $f"; exit 2
+  fi
 }
-
-for m in "${masks[@]}"; do
-  if [[ ! -f "$m" ]]; then
-    echo "WARN: mask not found → $m"
-    continue
-  fi
-
-  base="$(basename "$m")"
-  label="$(label_from_base "$base")"
-  out="${maskdir}/space-MNI152NLin6Asym_desc-${label}_mask.nii.gz"
-
-  echo "Resampling ${base} → $(basename "$out")"
-  antsApplyTransforms -d 3 \
-    -i "$m" \
-    -r "$REF_MNI" \
-    -o "$out" \
-    -n NearestNeighbor \
-    -t identity
-
-  # sanity checks
-  if [[ ! -s "$out" ]]; then
-    echo "ERROR: output not created: $out"; exit 2
-  fi
-  read -r min max < <(fslstats "$out" -R)
-  if [[ "${max:-0}" == "0" || "${max:-0}" == "0.000000" ]]; then
-    echo "ERROR: output appears empty (max=0): $out"; exit 3
-  fi
-  if ! vox_ok "$out"; then
-    p1=$(fslval "$out" pixdim1); p2=$(fslval "$out" pixdim2); p3=$(fslval "$out" pixdim3)
-    echo "NOTE: output voxels are ($p1,$p2,$p3); study grid expects (~2.7,2.7,2.97)."
-    echo "      This is fine if your chosen reference uses a different spacing."
-  fi
-done
+check_nonempty "${out_brs:-/dev/null}"
+check_nonempty "${out_vs:-/dev/null}"
 
 echo "Done."
