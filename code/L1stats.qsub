@@ -26,7 +26,7 @@ bidsdir=$projectdir/bids
 logdir=$projectdir/logs
 mkdir -p $logdir
 
-scriptname=${scriptdir}/L1stats-loop}.sh
+scriptname=${scriptdir}/L1stats-loop.sh
 tasks=(mid sharedreward)
 
 for sub in ${subjects[@]}; do
@@ -38,13 +38,24 @@ for sub in ${subjects[@]}; do
 		for run in 1 2; do
 			for task in "${tasks[@]}"; do
 
-				DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_5mm.nii.gz
+				DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-mid_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_5mm.nii.gz
 				if [ -e $DATA ]; then  # don't run unless the data exists
-					echo "bash ${scriptname} ${sub} ${ses} ${run}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
+					echo "#running ${sub} ${ses} ${run} mid" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
+
 				else
 					echo "#missing: ${DATA}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
 				fi
-				
+
+				DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-sharedreward_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_5mm.nii.gz
+				if [ -e $DATA ]; then  # don't run unless the data exists
+					echo "#running ${sub} ${ses} ${run} sharedreward" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
+
+				else
+					echo "#missing: ${DATA}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
+				fi
+
+				echo "bash ${scriptname} ${sub} ${ses} ${run}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
+
 			done
 		done
 	done
