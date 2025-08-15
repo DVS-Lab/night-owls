@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+umask 0000
+
 if [ $# -ne 1 ]; then
   echo "Usage: $0 <subject_id>   e.g. $0 101"
   exit 1
