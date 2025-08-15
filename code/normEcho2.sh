@@ -7,10 +7,10 @@ maindir="$(dirname "$scriptdir")"
 fmriprepdir="${maindir}/derivatives/fmriprep"
 
 # ---- edit as needed ----
-subs=(103)              # e.g., (101 103)
-sessions=(01)           # expand as needed
+subs=(101 103)
+sessions=(01 02 03 04 05 06 07 08 09 10 11 12)
 tasks=(mid sharedreward rest)
-runs=(1 2)              # echo-2 only
+runs=(1 2)
 : "${FORCE:=0}"
 
 pick_first_existing() {
