@@ -26,25 +26,26 @@ bidsdir=$projectdir/bids
 logdir=$projectdir/logs
 mkdir -p $logdir
 
-
-
 scriptname=${scriptdir}/L1stats-loop}.sh
+tasks=(mid sharedreward)
 
 for sub in ${subjects[@]}; do
 
 	rm -f $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
 	touch $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
-	
+
 	for ses in {01..12}; do
 		for run in 1 2; do
+			for task in "${tasks[@]}"; do
 
-			DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_5mm.nii.gz
-			if [ -e $DATA ]; then  # don't run unless the data exists
-				echo "bash ${scriptname} ${sub} ${ses} ${run}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
-			else
-				echo "#missing: ${DATA}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
-			fi
-
+				DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_5mm.nii.gz
+				if [ -e $DATA ]; then  # don't run unless the data exists
+					echo "bash ${scriptname} ${sub} ${ses} ${run}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
+				else
+					echo "#missing: ${DATA}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
+				fi
+				
+			done
 		done
 	done
 done
