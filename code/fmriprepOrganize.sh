@@ -37,4 +37,4 @@ for ses in $(seq -w 1 12); do
 done
 
 # Remove subject from old anat-only dir
-#find /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only -name "*sub-${SUBJ}*" -print0 | xargs -0 rm -rf --
+find /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only -name "*sub-${SUBJ}*" -print0 | xargs -0 rm -rf --
