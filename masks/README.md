@@ -1,14 +1,35 @@
 # Masks used in this project
-Both masks are already in `space-MNI152NLin6Asym_res-2`, which should make most extractions easy. 
 
-## VS-Imanova_2mm.nii
-This is the ventral striatum (VS) from the Oxforad-GSK-Imanova atlas (https://web.mit.edu/fsl_v5.0.10/fsl/doc/wiki/Atlases(2f)striatumstruc.html). Reference below.
+We now keep two **canonical** mask products in this folder that match the study’s MNI grid (the same grid used by our fMRIPrep `space-MNI152NLin6Asym` boldrefs). The original “2 mm” source files remain here for provenance.
 
-Tziortzi, A. C., Searle, G. E., Tzimopoulou, S., Salinas, C., Beaver, J. D., Jenkinson, M., Laruelle, M., Rabiner, E. A., & Gunn, R. N. (2011). Imaging dopamine receptors in humans with [11C]-(+)-PHNO: Dissection of D3 signal and anatomy. NeuroImage, 54(1), 264-277. doi: https://doi.org/10.1016/j.neuroimage.2010.06.044
+## What changed
 
+- The source masks (`*_2mm.nii`) shipped in **MNI152NLin6Asym, res-2**.  
+- We **resampled once** onto our study’s **MNI152NLin6Asym** grid (no `res-2` tag), using a 3-D MNI boldref as the reference.  
+- Interpolation matched data type:
+  - **Binary VS-Imanova** → `NearestNeighbor`
+  - **Continuous BrainRewardSignature** → `Linear`
+- Outputs are written in this directory with BIDS-like names:
+  - `space-MNI152NLin6Asym_desc-VS-Imanova_mask.nii.gz`
+  - `space-MNI152NLin6Asym_desc-BrainRewardSignature_map.nii.gz`
 
-## BrainRewardSignature_2mm.nii
-This is the multivariate brain sigature for reward (Speer et al., 2023, NeuroImage), which was downloaded from their NeuroVault repository on 2025-08-09 (https://neurovault.org/images/775976/). Reference below. 
+> Expected voxel sizes on our study MNI grid: ~**2.7 × 2.7 × 2.97 mm**. The grid comes from the dataset’s MNI boldrefs.
 
-Speer, S. P. H., Keysers, C., Barrios, J. C., Teurlings, C. J. S., Smidts, A., Boksem, M. A. S., Wager, T. D., & Gazzola, V. (2023). A multivariate brain signature for reward. NeuroImage, 271, 119990. doi: https://doi.org/10.1016/j.neuroimage.2023.119990
+## Files in this folder
 
+**Original sources (kept unchanged)**  
+- `VS-Imanova_2mm.nii` — binary mask from the Oxford-GSK-Imanova striatum atlas (see reference).  
+- `BrainRewardSignature_2mm.nii` — continuous map from Speer et al. (see reference).
+
+**Resampled study-ready products**  
+- `space-MNI152NLin6Asym_desc-VS-Imanova_mask.nii.gz` — NN-resampled binary mask on study MNI grid.  
+- `space-MNI152NLin6Asym_desc-BrainRewardSignature_map.nii.gz` — linearly resampled continuous map on study MNI grid.
+
+## How we generated the study-grid masks (reproducible note)
+
+From this `masks/` directory, we used a one-off script that resamples to the study MNI grid defined by a 3-D MNI boldref:
+
+```bash
+# usage
+bash resample_to_study_mni_grid.sh /full/path/to/sub-XXX_ses-YY_task-ZZ_run-1_part-mag_space-MNI152NLin6Asym_boldref.nii.gz
+# or allow the script to auto-pick the first MNI boldref it finds in derivatives/
