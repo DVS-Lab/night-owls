@@ -18,6 +18,8 @@ model=1 # everyone should just have one model
 tasks=(mid sharedreward)
 spaces=(mni t1w)
 
+
+
 rm -f $logdir/sub-${sub}_ses-${ses}_re-runL1.log
 
 for TASK in "${tasks[@]}"; do #Will need echo-2 loop as well
@@ -81,15 +83,45 @@ for TASK in "${tasks[@]}"; do #Will need echo-2 loop as well
             rm -rf ${OUTPUT}.feat
         fi
         
-        # create template and run analyses
-        sed -e 's@OUTPUT@'$OUTPUT'@g' \
-        -e 's@DATA@'$DATA'@g' \
-        -e 's@EVDIR@'$EVDIR'@g' \
-        -e 's@SMOOTH@'$sm'@g' \
-        -e 's@CONFOUNDEVS@'$CONFOUNDEVS'@g' \
-        -e 's@NVOLUMES@'$NVOLUMES'@g' \
-        <$ITEMPLATE> $OTEMPLATE
-        feat $OTEMPLATE
+        
+         # create template and run analyses
+        if [[ "${TASK}" == "mid" ]]; then
+            sed -e 's@OUTPUT@'$OUTPUT'@g' \
+            -e 's@DATA@'$DATA'@g' \
+            -e 's@EVDIR@'$EVDIR'@g' \
+            -e 's@SMOOTH@'$sm'@g' \
+            -e 's@CONFOUNDEVS@'$CONFOUNDEVS'@g' \
+            -e 's@NVOLUMES@'$NVOLUMES'@g' \
+            <$ITEMPLATE> $OTEMPLATE
+            feat $OTEMPLATE
+
+        else 
+            # empty EVs (specific to sharedreward)
+            EV_MISSED_DEC=${EVDIR}/_miss_decision.txt
+            if [ -e $EV_MISSED_DEC ]; then
+                SHAPE_MISSED_DEC=3
+            else
+                SHAPE_MISSED_DEC=10
+            fi
+            EV_MISSED_OUTCOME=${EVDIR}/_miss_outcome.txt
+            if [ -e $EV_MISSED_OUTCOME ]; then
+                SHAPE_MISSED_OUTCOME=3
+            else
+                SHAPE_MISSED_OUTCOME=10
+            fi
+
+            # create template and run analyses
+            sed -e 's@OUTPUT@'$OUTPUT'@g' \
+            -e 's@DATA@'$DATA'@g' \
+            -e 's@EVDIR@'$EVDIR'@g' \
+            -e 's@SMOOTH@'$sm'@g' \
+            -e 's@CONFOUNDEVS@'$CONFOUNDEVS'@g' \
+            -e 's@NVOLUMES@'$NVOLUMES'@g' \
+            -e 's@SHAPE_MISSED_DEC@'$SHAPE_MISSED_DEC'@g' \
+            -e 's@SHAPE_MISSED_OUTCOME@'$SHAPE_MISSED_OUTCOME'@g' \
+            <$ITEMPLATE> $OTEMPLATE
+            feat $OTEMPLATE
+        fi
 
         # fix registration as per NeuroStars post:
         # https://neurostars.org/t/performing-full-glm-analysis-with-fsl-on-the-bold-images-preprocessed-by-fmriprep-without-re-registering-the-data-to-the-mni-space/784/3
