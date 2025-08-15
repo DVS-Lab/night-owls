@@ -18,7 +18,7 @@ model=1 # everyone should just have one model
 tasks=(mid sharedreward)
 spaces=(mni t1w)
 
-rm $logdir/sub-${sub}_ses-${ses}_re-runL1.log
+rm -f $logdir/sub-${sub}_ses-${ses}_re-runL1.log
 
 for TASK in "${tasks[@]}"; do #Will need echo-2 loop as well
   for space in "${spaces[@]}"; do
@@ -28,7 +28,7 @@ for TASK in "${tasks[@]}"; do #Will need echo-2 loop as well
         mkdir -p $MAINOUTPUT
 
         if [[ "${space}" == "mni" ]]; then
-            DATA="${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_res-2_desc-preproc_bold_5mm.nii.gz"
+            DATA="${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_5mm.nii.gz"
         elif [[ "${space}" == "t1w" ]]; then
             DATA="${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-T1w_desc-preproc_bold_5mm.nii.gz"
         else
