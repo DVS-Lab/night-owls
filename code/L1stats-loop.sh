@@ -18,9 +18,9 @@ model=1 # everyone should just have one model
 tasks=(mid sharedreward)
 spaces=(mni t1w)
 
-rm $logdir/sub-${sub}_re-runL1.log
+rm $logdir/sub-${sub}_ses-${ses}_re-runL1.log
 
-for TASK in "${tasks[@]}"; do
+for TASK in "${tasks[@]}"; do #Will need echo-2 loop as well
   for space in "${spaces[@]}"; do
 
         # set inputs and general outputs (should not need to change across studies in Smith Lab)
@@ -32,12 +32,12 @@ for TASK in "${tasks[@]}"; do
         elif [[ "${space}" == "t1w" ]]; then
             DATA="${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-T1w_desc-preproc_bold_5mm.nii.gz"
         else
-            echo "ERROR: unexpected space='$space' (expected 'mni' or 't1w')" >> ${logdir}/sub-${sub}_re-runL1.log
+            echo "ERROR: unexpected space='$space' (expected 'mni' or 't1w')" >> ${logdir}/sub-${sub}_ses-${ses}_re-runL1.log
             exit
         fi
 
         if [ ! -e $DATA ]; then
-            echo " Exiting -- missing data: ${DATA}" >> ${logdir}/sub-${sub}_re-runL1.log
+            echo " Exiting -- missing data: ${DATA}" >> ${logdir}/sub-${sub}_ses-${ses}_re-runL1.log
             exit
         fi
 
@@ -47,14 +47,14 @@ for TASK in "${tasks[@]}"; do
         CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-TedanaPlusConfounds.tsv  
 
         if [ ! -e $CONFOUNDEVS ]; then
-            echo "missing confounds: sub-${sub}_ses-${ses}_run-${run}" >> ${logdir}/sub-${sub}_re-runL1.log
+            echo "missing confounds: sub-${sub}_ses-${ses}_run-${run}" >> ${logdir}/sub-${sub}_ses-${ses}_re-runL1.log
             exit # exiting to ensure nothing gets run without confounds
         fi
 
         EVDIR=${maindir}/derivatives/fsl/EVFiles/sub-${sub}/ses-${ses}/${TASK}/run-${run}/
         if [ ! -e $EVDIR ]; then
             echo ${sub} ${acq} "EVDIR missing"
-            echo "missing events files: $EVDIR " >> ${logdir}/sub-${sub}_re-runL1.log
+            echo "missing events files: $EVDIR " >> ${logdir}/sub-${sub}_ses-${ses}_re-runL1.log
             exit # exiting to ensure nothing gets run without confounds
         fi
 
@@ -69,7 +69,7 @@ for TASK in "${tasks[@]}"; do
             ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}.fsf
             OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}.fsf
         else
-            echo "invalid parameter for temporal derivatives; it can only be 0 or 1." >> ${logdir}/sub-${sub}_re-runL1.log
+            echo "invalid parameter for temporal derivatives; it can only be 0 or 1." >> ${logdir}/sub-${sub}_ses-${ses}_re-runL1.log
             exit
         fi
 
@@ -77,7 +77,7 @@ for TASK in "${tasks[@]}"; do
         if [ -e ${OUTPUT}.feat/cluster_mask_zstat1.nii.gz ]; then
             exit
         else
-            echo "missing feat output: $OUTPUT " >> ${logdir}/sub-${sub}_re-runL1.log
+            echo "missing feat output: $OUTPUT " >> ${logdir}/sub-${sub}_ses-${ses}_re-runL1.log
             rm -rf ${OUTPUT}.feat
         fi
         

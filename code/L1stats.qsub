@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l walltime=2:00:00
+#PBS -l walltime=4:00:00
 #PBS -N L1stats
 #PBS -q normal
 #PBS -l nodes=1:ppn=28
@@ -42,7 +42,7 @@ for sub in ${subjects[@]}; do
 			if [ -e $DATA ]; then  # don't run unless the data exists
 				echo "bash ${scriptname} ${sub} ${ses} ${run}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
 			else
-				echo "missing: ${DATA}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
+				echo "#missing: ${DATA}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
 			fi
 
 		done
