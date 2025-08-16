@@ -91,22 +91,14 @@ try
 
 
 
-            if response(t) == 0 %missed response
+            if response(t) == 0 || response(t) == 1 || response(t) == 4 || response(t) == 5      %missed response or key
                 fprintf(fid,'%f\t%f\t%s\t%s\n',onset_decision(t),2.8,'miss_decision','n/a'); % max duration with outcome as #
                 fprintf(fid,'%f\t%f\t%s\t%s\n',onset_outcome(t),duration(t),'miss_outcome','n/a'); % outcome is just #
             else
                 if Partner(t) == 1 % computer
-                    if response(t) == 2 || response == 3 %If guessed higher or lower
-                        fprintf(fid,'%f\t%f\t%s\t%f\n',onset_decision(t),RT(t),'guess_computer',RT(t));
-                    else %If guessed inorrect key (1,4,5)
-                        fprintf(fid,'%f\t%f\t%s\t%f\n',onset_decision(t),RT(t),'guess_misc_computer',RT(t));
-                    end
+                    fprintf(fid,'%f\t%f\t%s\t%f\n',onset_decision(t),RT(t),'guess_computer',RT(t));
                 elseif Partner(t) == 2 % stranger (face)
-                    if response(t) == 2 || response == 3 %If guessed higher or lower
-                        fprintf(fid,'%f\t%f\t%s\t%f\n',onset_decision(t),RT(t),'guess_face',RT(t));
-                    else %If incorrect key
-                        fprintf(fid,'%f\t%f\t%s\t%f\n',onset_decision(t),RT(t),'guess_misc_face',RT(t));
-                    end
+                    fprintf(fid,'%f\t%f\t%s\t%f\n',onset_decision(t),RT(t),'guess_face',RT(t));
                 end
                 fprintf(fid,'%f\t%f\t%s\t%s\n',onset_outcome(t),duration(t),['outcome_' trial_type],'n/a');
             end
