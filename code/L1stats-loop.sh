@@ -57,7 +57,7 @@ for TASK in "${tasks[@]}"; do #Will need echo-2 loop as well
                 if [[ "${confound}" == "cnfds-tedana" ]]; then
                     CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-TedanaPlusConfounds.tsv 
                 else
-                    CONFOUNDEVS=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_desc-confounds_timeseries.tsv 
+                    CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-fslConfounds.tsv 
 
                 fi
 
@@ -80,7 +80,7 @@ for TASK in "${tasks[@]}"; do #Will need echo-2 loop as well
                     ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}_td.fsf
                     OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_td.fsf
                 elif [ $td -eq 0 ]; then
-                    OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_${space}_${echo}_${confound}
+                    OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_space-${space}_${echo}_${confound}
                     ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}.fsf
                     OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}.fsf
                 else
