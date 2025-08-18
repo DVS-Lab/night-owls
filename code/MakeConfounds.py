@@ -54,7 +54,7 @@ for f in cons:
 
 	# generate output files
 	outfile="%s_ses-%s_task-%s_run-%s_desc-fslConfounds.tsv"%(sub,ses,task,run)	
-	outdir=derivatives_path+"fsl/confounds/%s/" %(sub)
+	outdir=derivatives_path+"fsl/confounds_tedana/%s/" %(sub)
 	if not os.path.exists(outdir):
 		os.makedirs(outdir)
 	output=outdir+outfile
