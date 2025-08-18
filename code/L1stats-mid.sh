@@ -8,7 +8,7 @@ maindir="$(dirname "$scriptdir")"
 
 # study-specific inputs
 TASK=mid
-sm=0 # still needs to be done with afni (DVS needs to do this)
+sm=0 
 sub=$1
 ses=$2
 run=$3
@@ -20,25 +20,24 @@ MAINOUTPUT=${maindir}/derivatives/fsl/space-mni/sub-${sub}/ses-${ses}
 mkdir -p $MAINOUTPUT
 DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-MNI152NLin6Asym_res-2_desc-preproc_bold_5mm.nii.gz
 if [ ! -e $DATA ]; then
-	echo " Exiting -- missing data: ${DATA}"
+	echo " Exiting -- missing data: ${DATA}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
 	exit
 fi
 
 # check in template
 NVOLUMES=`fslnvols $DATA`
 #CONFOUNDEVS=${maindir}/derivatives/fsl/confounds/sub-${sub}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-fslConfounds.tsv
-CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-TedanaPlusConfounds.tsv  # switch to this later
+CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-TedanaPlusConfounds.tsv  
 
 if [ ! -e $CONFOUNDEVS ]; then
-	echo "missing confounds: sub-${sub}_ses-${ses}_run-${run}"
-	echo "missing confounds: sub-${sub}_ses-${ses}_run-${run}" >> ${maindir}/re-runL1.log
+	echo "missing confounds: sub-${sub}_ses-${ses}_run-${run}" >> ${maindir}/sub-${sub}_re-runL1.log
 	exit # exiting to ensure nothing gets run without confounds
 fi
 
 EVDIR=${maindir}/derivatives/fsl/EVFiles/sub-${sub}/ses-${ses}/${TASK}/run-${run}/
 if [ ! -e $EVDIR ]; then
 	echo ${sub} ${acq} "EVDIR missing"
-	echo "missing events files: $EVDIR " >> ${maindir}/re-runL1.log
+	echo "missing events files: $EVDIR " >> ${maindir}/sub-${sub}_re-runL1.log
 	exit # exiting to ensure nothing gets run without confounds
 fi
 
@@ -55,7 +54,7 @@ elif [ $td -eq 0 ]; then
 	ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}.fsf
 	OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}.fsf
 else
-	echo "invalid parameter for temporal derivatives; it can only be 0 or 1."
+	echo "invalid parameter for temporal derivatives; it can only be 0 or 1." >> ${maindir}/sub-${sub}_re-runL1.log
 	exit
 fi
 
@@ -63,7 +62,7 @@ fi
 if [ -e ${OUTPUT}.feat/cluster_mask_zstat1.nii.gz ]; then
 	exit
 else
-	echo "missing feat output: $OUTPUT " >> ${maindir}/re-runL1.log
+	echo "missing feat output: $OUTPUT " >> ${maindir}/sub-${sub}_re-runL1.log
 	rm -rf ${OUTPUT}.feat
 fi
    
