@@ -5,7 +5,7 @@ import pandas as pd
 
 # Hard-coded input and output
 mriqc_path = "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/mriqc"  
-out_file = "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/data-outputs/mriqc_metrics.csv"
+out_file = "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/mriqc_metrics.csv"
 
 # Collect all *_bold.json files
 j_files = []
@@ -63,20 +63,8 @@ avg_df["echo"] = "avg"
 # Combine original + averages
 df_final = pd.concat([df, avg_df], ignore_index=True)
 
-# Sort so echoes are in order and 'avg' appears last
-def echo_sort_key(e):
-    if e == "avg":
-        return float('inf')
-    else:
-        return int(e.split("-")[1])
-
-# First sort by sub, ses, task, run
-df_final = df_final.sort_values(by=["sub", "ses", "task", "run"])
-
-# Then sort echoes within each run
-df_final = df_final.iloc[df_final.groupby(["sub", "ses", "task", "run"]).echo.apply(
-    lambda x: x.map(echo_sort_key).sort_values().index
-).explode().astype(int)]
+# Simple sort by sub → ses → task → run → echo (alphabetical)
+df_final = df_final.sort_values(by=["sub", "ses", "task", "run", "echo"])
 
 # Reorder columns
 columns_order = ["sub", "ses", "task", "run", "echo", "image", "mean_fd", "tsnr"]
