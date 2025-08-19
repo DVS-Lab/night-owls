@@ -4,8 +4,8 @@ import os, re, json
 import pandas as pd
 
 # Hard-coded input and output
-mriqc_path = "/ZPOOL/data/projects/rf1-sra-data/bids/derivatives/mriqc"  
-out_file = "/ZPOOL/data/projects/rf1-sra-data/bids/derivatives/mriqc_metrics.csv"
+mriqc_path = "/ZPOOL/data/projects/night-owls/bids/derivatives/mriqc"  
+out_file = "/ZPOOL/data/projects/night-owls/bids/derivatives/mriqc_metrics.csv"
 
 # Collect all *_bold.json files
 j_files = []
