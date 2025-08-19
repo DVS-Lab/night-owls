@@ -5,7 +5,7 @@ import pandas as pd
 
 # Hard-coded input and output
 mriqc_path = "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/mriqc"  
-out_file = "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/mriqc_metrics.csv"
+out_file = "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/data-outputs/mriqc_metrics.csv"
 
 # Collect all *_bold.json files
 j_files = []
