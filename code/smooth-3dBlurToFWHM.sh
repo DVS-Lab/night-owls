@@ -21,17 +21,16 @@ ses=`zeropad ${ses} 2`
 if [ $me -eq 1 ]; then 
 	INDATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-${space}_desc-preproc_bold.nii.gz
 	OUTDATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-${space}_desc-preproc_bold_${sm}mm.nii.gz
-	MASK=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-${space}_desc-brain_mask.nii.gz
 elif [ $me -eq 0 ]; then 
-	# sub-101_ses-01_task-sharedreward_run-2_echo-2_part-mag_desc-preproc_bold.nii.gz
-	# will need to move these to space-MNI152NLin6Asym (or whatever we want to use)
-	INDATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_echo-2_part-mag_desc-preproc_bold.nii.gz
-	OUTDATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_echo-2_part-mag_desc-preproc_bold_${sm}mm.nii.gz
-	MASK=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_desc-brain_mask.nii.gz
+	INDATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold.nii.gz
+	OUTDATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold_${sm}mm.nii.gz
 else
 	echo "exiting: invalid option for multiecho (me) variable. use 1 for on, 0 for off."
 	exit
 fi
+
+# only two spaces, so two masks per run
+MASK=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-${space}_desc-brain_mask.nii.gz
 
 
 if [ ! -e $INDATA ]; then
