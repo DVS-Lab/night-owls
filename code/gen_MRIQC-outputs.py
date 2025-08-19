@@ -21,15 +21,13 @@ for j in j_files:
     fname = os.path.basename(j)
 
     # Regex to capture subject, session, task, run, echo
+    # Regex to capture subject, session, task, run, echo
     match = re.match(
-        r"(sub-[^_]+)_"
-        r"(ses-[^_]+)_"
-        r"(task-[^_]+)_"
-        r"(run-[^_]+)_"
-        r"(echo-[^_]+)_", 
+        r"(sub-[^_]+)_(ses-[^_]+)_(task-[^_]+)_(run-[^_]+)_(echo-[^_]+)",
         fname
     )
     if not match:
+        print(f"⚠️ Skipping unmatched file: {fname}")
         continue
 
     sub, ses, task, run, echo = match.groups()
