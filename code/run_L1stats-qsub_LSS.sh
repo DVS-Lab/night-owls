@@ -4,10 +4,8 @@
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 maindir="$(dirname "$scriptdir")"
 
-#mapfile -t myArray < "${scriptdir}/sublist.txt" 
-
 # grab the first n elements
-ntasks=1
+ntasks=28
 counter=0
 
 #still decide to manually add the sub-ses pair because of some sub has different number of sessions
@@ -23,43 +21,25 @@ for subinfo in "101 01" "101 02" "101 03" "101 04" "101 05" "101 06" "101 07" "1
 	sub=$1
 	ses=$2
 
-		for task in mid sharedreward; do
+	for task in mid sharedreward; do
 			scriptname=${scriptdir}/L1statsSingleTrial-${task}.sh
 
-			for run in 1 2; do
+		for run in 1 2; do
 				if [ $task == "sharedreward" ]; then
 				t=54
 				else 
 				t=56
 				fi
 
-				#myArray=($(seq 1 $trial))
-
-				for trial in $(seq 1 $t); do
-				
+				myArray=($(seq 1 $trial))				
 				#for trial in 2; do #test
-				#while [ $counter -lt ${#myArray[@]} ]; do
-				#trial=${myArray[@]:$counter:$ntasks}
-				
-
-					#dealing with bad trials, bad runs: dealing with miss_outcome and when loop till that one trial, continue
-					##NOTEongoing task for: record the number of the missed trial that is spit out by the matlab EV gen script
-					# and plug in the task-sub-ses-run-trial as a new elif-branch here,
-
-						if [[ $task == "sharedreward"  &&  $sub -eq 101  &&  $ses -eq 3   &&  $run -eq 1   &&  $trial -eq 2 ]]; then
-						continue
-						elif [[ $task == "sharedreward"  &&  $sub -eq 101  &&  $ses -eq 4  &&  $run -eq 4   && ( $trial -eq 15 || $trial -eq 32 ) ]]; then
-						continue
-						elif [[ $task == "sharedreward"  &&  $sub -eq 103  &&  $ses -eq 2   &&  $run -eq 1   &&  $trial -eq 36 ]]; then
-						continue				
-						fi
-
-					#let counter=$counter+$ntasks
-
-							# Loop over each task script and submit with the same subject chunk
-							qsub -v scriptname=${scriptname},task=${task},sub=${sub},ses=${ses},run=${run},trial=${trial}  L1stats_LSS.qsub
-				done
-
-			done
+			while [ $counter -lt ${#myArray[@]} ]; do
+				trial=${myArray[@]:$counter:$ntasks}
+				let counter=$counter+$ntasks
+				# Loop over each task script and submit with the same subject chunk
+				qsub -v scriptname=${scriptname},task=${task},sub=${sub},ses=${ses},run=${run},trial=${trial@}  L1stats_LSS.qsub
+			#unsure whether these three should be here or .qsub: acq=${acq}, space=${space}, confounds=${confounds}
+			done	
 		done
+	done
 done

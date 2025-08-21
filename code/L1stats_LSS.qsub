@@ -30,15 +30,39 @@ mkdir -p $logdir
 rm -f $logdir/cmd_L1stats_${PBS_JOBID}.txt
 touch $logdir/cmd_L1stats_${PBS_JOBID}.txt
 
-rm -f L1stats.o*
-#rm -f L1stats.e*
+rm -f L1stats_LSS.o*
+rm -f L1stats_LSS.e*
 
-				DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-MNI152NLin6Asym_res-2_desc-preproc_bold.nii.gz
-				if [ -e $DATA ]; then  # don't run unless the data exists
-					echo "bash ${scriptname} ${sub} ${ses} ${run} ${trial}" >> $logdir/cmd_L1stats_${PBS_JOBID}.txt
-				else
-					echo "missing: ${DATA}"
-				fi
+for task in ${task}; do
+	for sub in ${sub}; do
+		for ses in ${ses}; do
+			for run in ${run}; do
+				for trial in ${trial@}; do
+					for acq in 'multiecho' 'single';do 
+						for space in 'MNI152NLin6Asym' 'T1w'; do
+							for confounds in 'tedana' 'base'; do 
+
+								if [ "${acq}" == single ]; then
+									DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold.nii.gz
+								else
+									DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold.nii.gz
+								fi
+
+								if [ -e $DATA ]; then  # don't run unless the data exists
+								echo "bash ${scriptname} ${sub} ${ses} ${run} ${trial@} ${acq} ${space} ${confounds}" >> $logdir/cmd_L1stats_${PBS_JOBID}.txt
+								else
+								echo "missing: ${DATA}"
+								fi
+
+								
+							done
+						done
+					done
+				done
+			done
+		done
+	done
+done	
 
 
 
