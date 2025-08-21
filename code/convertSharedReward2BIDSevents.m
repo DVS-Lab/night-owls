@@ -91,23 +91,14 @@ try
 
 
 
-            if response(t) == 0 %missed response
+            if response(t) == 0 || response(t) == 1 || response(t) == 4 || response(t) == 5      %missed response or key
                 fprintf(fid,'%f\t%f\t%s\t%s\n',onset_decision(t),2.8,'miss_decision','n/a'); % max duration with outcome as #
                 fprintf(fid,'%f\t%f\t%s\t%s\n',onset_outcome(t),duration(t),'miss_outcome','n/a'); % outcome is just #
             else
-                % Ori: Right index is 2, left index is 7
                 if Partner(t) == 1 % computer
-                    if response(t) == 2
-                        fprintf(fid,'%f\t%f\t%s\t%f\n',onset_decision(t),RT(t),'guess_rightButton_computer',RT(t));
-                    elseif response(t) == 7
-                        fprintf(fid,'%f\t%f\t%s\t%f\n',onset_decision(t),RT(t),'guess_leftButton_computer',RT(t));
-                    end
+                    fprintf(fid,'%f\t%f\t%s\t%f\n',onset_decision(t),RT(t),'guess_computer',RT(t));
                 elseif Partner(t) == 2 % stranger (face)
-                    if response(t) == 2
-                        fprintf(fid,'%f\t%f\t%s\t%f\n',onset_decision(t),RT(t),'guess_rightButton_face',RT(t));
-                    elseif response(t) == 7
-                        fprintf(fid,'%f\t%f\t%s\t%f\n',onset_decision(t),RT(t),'guess_leftButton_face',RT(t));
-                    end
+                    fprintf(fid,'%f\t%f\t%s\t%f\n',onset_decision(t),RT(t),'guess_face',RT(t));
                 end
                 fprintf(fid,'%f\t%f\t%s\t%s\n',onset_outcome(t),duration(t),['outcome_' trial_type],'n/a');
             end
