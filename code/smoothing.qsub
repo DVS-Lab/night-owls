@@ -34,7 +34,12 @@ for sub in ${subjects[@]}; do
 				for run in 1 2; do
 					for me in 0 1; do
 
-						DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold.nii.gz
+						if [ "${me}" == 1 ]; then
+							DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold.nii.gz
+						else
+							DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold.nii.gz
+						fi
+
 						if [ -e $DATA ]; then  # don't run unless the data exists
 							echo "bash ${scriptname} ${sub} ${ses} ${task} ${run} ${me} ${space}" >> $logdir/cmd_smoothing_${PBS_JOBID}.txt
 						else
