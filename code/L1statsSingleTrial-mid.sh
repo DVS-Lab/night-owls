@@ -7,7 +7,7 @@ maindir="$(dirname "$scriptdir")"
 
 
 # study-specific inputs
-sm=5 # this is already hard coded into all fsf files
+sm=0 # this is already hard coded into all fsf files
 sub=$1
 ses=`zeropad $2 2`
 TASK=mid
@@ -31,6 +31,8 @@ DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_se
 fi
 
 NVOLUMES=`fslnvols ${DATA}`
+
+#####confoundev need 1. ask if based confound generated from Matt 2. if statement based on value of ${confounds}
 CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-TedanaPlusConfounds.tsv
 
 
