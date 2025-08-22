@@ -1,0 +1,14 @@
+/ContrastName1	main_pos 
+/ContrastName2	main_neg 
+/ContrastName3	cov_pos 
+/ContrastName4	cov_neg 
+/NumWaves	2
+/NumContrasts	4
+/PPheights		1.000000e+00	1.000000e+00	1.100000e+01	1.100000e+01
+/RequiredEffect		2.521	2.521	8.034	8.034
+
+/Matrix
+1.000000e+00 0.000000e+00 
+-1.000000e+00 0.000000e+00 
+0.000000e+00 1.000000e+00 
+0.000000e+00 -1.000000e+00 
