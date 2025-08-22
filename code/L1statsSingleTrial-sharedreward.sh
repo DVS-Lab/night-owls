@@ -24,9 +24,9 @@ TYPE=act
 MAINOUTPUT=${maindir}/derivatives/fsl/sub-${sub}
 mkdir -p $MAINOUTPUT
 if [ "${acq}" == single ]; then
-	DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-${space}_desc-preproc_bold_${sm}mm.nii.gz
+	DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-${space}_desc-preproc_bold_${sm}mm.nii.gz
 else
-	DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold_${sm}mm.nii.gz
+	DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold_${sm}mm.nii.gz
 fi
 
 NVOLUMES=`fslnvols ${DATA}`
@@ -66,11 +66,6 @@ else
 	SHAPE_MISSED_OUTCOME=10
 fi
 
-# create common directory for zstat outputs
-zoutdir=${MAINOUTPUT}/LSS_task-${TASK}_sub-${sub}_ses-${ses}_run-${run}_sm-${sm}
-if [ ! -d $zoutdir ]; then
-	mkdir -p $zoutdir
-fi
 
 # set output based in whether it is activation or ppi
 OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${MODEL}-type-${TYPE}_sub-${sub}_ses-${ses}_run-${run}_sm-${sm}_trial-${trial}_acq-${acq}_space-${space}_confounds-${confounds}
@@ -85,7 +80,7 @@ fi
 
 # create template and run analyses	
 ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${MODEL}_type-${TYPE}.fsf
-OTEMPLATE=${MAINOUTPUT}/L1_sub-${sub}_task-${TASK}_model-${MODEL}_type-${TYPE}_ses-${ses}_run-${run}_sm-${sm}_trial-${trial}.fsf
+OTEMPLATE=${MAINOUTPUT}/L1_sub-${sub}_task-${TASK}_model-${MODEL}_type-${TYPE}_ses-${ses}_run-${run}_sm-${sm}_trial-${trial}_acq-${acq}_space-${space}_confounds-${confounds}.fsf
 sed -e 's@OUTPUT@'$OUTPUT'@g' \
 -e 's@EVDIR@'$EVDIR'@g' \
 -e 's@DATA@'$DATA'@g' \
