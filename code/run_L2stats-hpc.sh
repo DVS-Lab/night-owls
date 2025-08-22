@@ -20,7 +20,7 @@ while [ $counter -lt ${#myArray[@]} ]; do
     qsub -v subjects="${subjects[@]}" "$script"
     echo $subjects $script
     
-    script_subj="L2stats-hpc-subj.sh"
-    qsub -v subjects="${subjects[@]}" "$script_subj"
-    echo $subjects $script_subj
+    #script_subj="L2stats-hpc-subj.sh"
+    #qsub -v subjects="${subjects[@]}" "$script_subj"
+    #echo $subjects $script_subj
 done
