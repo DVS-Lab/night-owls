@@ -429,7 +429,7 @@ set fmri(tempfilt_yn3) 0
 set fmri(deriv_yn3) 0
 
 # Custom EV file (EV 3)
-set fmri(custom3) "EVDIR_guess_rightButton_computer.txt"
+set fmri(custom3) "EVDIR_guess_computer.txt"
 
 # Orthogonalise EV 3 wrt EV 0
 set fmri(ortho3.0) 0
@@ -485,7 +485,7 @@ set fmri(tempfilt_yn4) 0
 set fmri(deriv_yn4) 0
 
 # Custom EV file (EV 4)
-set fmri(custom4) "EVDIR_guess_rightButton_face.txt"
+set fmri(custom4) "EVDIR_guess_face.txt"
 
 # Orthogonalise EV 4 wrt EV 0
 set fmri(ortho4.0) 0
