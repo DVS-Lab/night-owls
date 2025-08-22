@@ -4,7 +4,7 @@ import pandas as pd
 total_earnings_across_sessions = 0
 
 # Iterate over sessions
-for ses in range(1, 6):
+for ses in range(6, 13):
     total_earnings_for_session = 0
     
     # Process MID runs
