@@ -10,7 +10,7 @@ maindir="$(dirname "$scriptdir")"
 #for sub in 101 103 104 105; do
 for sub in 101; do
 	for acq in 'multiecho' 'single';do 	
-		for confounds in 'tedana' 'base'; do  #need to figure out is the based confound generated at all
+		for confounds in tedana; do  #need to figure out is the based confound generated at all
 			for task in mid sharedreward; do
 				#for ses in {01..12}; do
 					ses=01
