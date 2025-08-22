@@ -14,6 +14,17 @@
 # PATH=${FSLDIR}/bin:${PATH}
 # export FSLDIR PATH
 
+set -Eeuo pipefail
+
+# --- environment guards (fail early if submit-side -v was missing anything) ---
+: "${task:?required}"
+: "${sub:?required}"
+: "${confounds:?required}"
+: "${acq:?required}"
+: "${run:?required}"
+: "${space:?required}"
+: "${ses:?required}"
+
 
 cd $PBS_O_WORKDIR
 umask 0000
@@ -33,24 +44,25 @@ touch $logdir/cmd_L1stats_${PBS_JOBID}.txt
 rm -f L1stats_LSS.o*
 rm -f L1stats_LSS.e*
 
-for ses in {01..12}; do
-	for run in 1 2; do
-		for space in 'MNI152NLin6Asym' 'T1w'; do
-	
-					if [ "${acq}" == single ]; then		
-					DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold.nii.gz
-					else
-					DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold.nii.gz
-					fi
+if [ $task == "sharedreward" ]; then
+	t=54
+else 
+	t=56
+fi
 
-					if [ -e $DATA ]; then  # don't run unless the data exists
-					echo "bash ${scriptname} ${sub} ${ses} ${run} ${trial@} ${acq} ${space} ${confounds}" >> $logdir/cmd_L1stats_${PBS_JOBID}.txt						
-					else
-					echo "missing: ${DATA}"
-					fi
 
-		done
-	done
-done	
+for trial in `seq $t`; do
+	if [ "${acq}" == single ]; then		
+		DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold_5mm.nii.gz
+	else
+		DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold_5mm.nii.gz
+	fi
+
+	if [ -e $DATA ]; then  # don't run unless the data exists
+		echo "bash L1statsSingleTrial-${task}.sh ${sub} ${ses} ${run} ${trial} ${acq} ${space} ${confounds}" >> $logdir/cmd_L1stats_${PBS_JOBID}.txt						
+	else
+		echo "missing: ${DATA}"
+	fi
+done
 
 torque-launch -p "$logdir/chk_L1stats_${PBS_JOBID}.txt" "$logdir/cmd_L1stats_${PBS_JOBID}.txt"
