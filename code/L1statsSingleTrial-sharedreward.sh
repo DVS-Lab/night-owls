@@ -36,7 +36,7 @@ CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/su
 
 if [ ! -e $CONFOUNDEVS ]; then
 	echo "missing confounds: sub-${sub}_ses-${ses}_run-${run}"
-	echo "missing: $CONFOUNDEVS " >> ${maindir}/re-runL1_midLSS.log
+	echo "missing: $CONFOUNDEVS" >> ${maindir}/re-runL1-LSS-${TASK}.log
 	exit # exiting to ensure nothing gets run without confounds
 fi
 

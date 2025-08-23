@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l walltime=0:30:00
+#PBS -l walltime=1:00:00
 #PBS -N L1stats_LSS
 #PBS -q normal
 #PBS -l nodes=2:ppn=28
@@ -44,8 +44,6 @@ mkdir -p $logdir
 rm -f $logdir/cmd_L1stats_${PBS_JOBID}.txt
 touch $logdir/cmd_L1stats_${PBS_JOBID}.txt
 
-rm -f L1stats_LSS.o*
-rm -f L1stats_LSS.e*
 
 if [ $task == "sharedreward" ]; then
 	t=54
