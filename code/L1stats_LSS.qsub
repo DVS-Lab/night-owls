@@ -4,6 +4,9 @@
 #PBS -q normal
 #PBS -l nodes=2:ppn=28
 #PBS -m n
+#PBS -o /home/tug87422/scratch/smithlab-shared/night-owls/logs/pbs
+#PBS -e /home/tug87422/scratch/smithlab-shared/night-owls/logs/pbs
+
 
 
 
