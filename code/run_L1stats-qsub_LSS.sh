@@ -12,9 +12,7 @@ for sub in 101 103 104 105; do
 		for confounds in tedana; do  #need to figure out is the based confound generated at all
 			for task in mid sharedreward; do
 				for ses in {01..12}; do
-					for space in 'MNI152NLin6Asym' 'T1w'; do
-						qsub -v task=${task},sub=${sub},confounds=${confounds},acq=${acq},space=${space},ses=${ses} ${scriptdir}/L1stats_LSS.qsub
-					done
+					qsub -v task=${task},sub=${sub},confounds=${confounds},acq=${acq},ses=${ses} ${scriptdir}/L1stats_LSS.qsub
 				done
 			done	
 		done
