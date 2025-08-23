@@ -2,7 +2,12 @@
 #PBS -l walltime=1:00:00
 #PBS -N L1stats_LSS
 #PBS -q normal
-#PBS -l nodes=1:ppn=28
+#PBS -l nodes=2:ppn=28
+#PBS -m n
+#PBS -o /home/tug87422/scratch/smithlab-shared/night-owls/logs/pbs
+#PBS -e /home/tug87422/scratch/smithlab-shared/night-owls/logs/pbs
+
+
 
 
 # load modules and go to workdir
@@ -21,8 +26,6 @@ set -Eeuo pipefail
 : "${sub:?required}"
 : "${confounds:?required}"
 : "${acq:?required}"
-: "${run:?required}"
-: "${space:?required}"
 : "${ses:?required}"
 
 
@@ -41,8 +44,6 @@ mkdir -p $logdir
 rm -f $logdir/cmd_L1stats_${PBS_JOBID}.txt
 touch $logdir/cmd_L1stats_${PBS_JOBID}.txt
 
-rm -f L1stats_LSS.o*
-rm -f L1stats_LSS.e*
 
 if [ $task == "sharedreward" ]; then
 	t=54
@@ -50,19 +51,22 @@ else
 	t=56
 fi
 
+for space in MNI152NLin6Asym T1w; do
+	for run in 1 2; do
+		for trial in `seq $t`; do
+			if [ "${acq}" == single ]; then		
+				DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold_5mm.nii.gz
+			else
+				DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold_5mm.nii.gz
+			fi
 
-for trial in `seq $t`; do
-	if [ "${acq}" == single ]; then		
-		DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold_5mm.nii.gz
-	else
-		DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold_5mm.nii.gz
-	fi
-
-	if [ -e $DATA ]; then  # don't run unless the data exists
-		echo "bash L1statsSingleTrial-${task}.sh ${sub} ${ses} ${run} ${trial} ${acq} ${space} ${confounds}" >> $logdir/cmd_L1stats_${PBS_JOBID}.txt						
-	else
-		echo "missing: ${DATA}"
-	fi
+			if [ -e $DATA ]; then  # don't run unless the data exists
+				echo "bash L1statsSingleTrial-${task}.sh ${sub} ${ses} ${run} ${trial} ${acq} ${space} ${confounds}" >> $logdir/cmd_L1stats_${PBS_JOBID}.txt						
+			else
+				echo "missing: ${DATA}"
+			fi
+		done
+	done
 done
 
 torque-launch -p "$logdir/chk_L1stats_${PBS_JOBID}.txt" "$logdir/cmd_L1stats_${PBS_JOBID}.txt"

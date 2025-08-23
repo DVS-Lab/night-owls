@@ -36,7 +36,7 @@ CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/su
 
 if [ ! -e $CONFOUNDEVS ]; then
 	echo "missing confounds: sub-${sub}_ses-${ses}_run-${run}"
-	echo "missing: $CONFOUNDEVS " >> ${maindir}/re-runL1_midLSS.log
+	echo "missing: $CONFOUNDEVS" >> ${maindir}/re-runL1-LSS-${TASK}.log
 	exit # exiting to ensure nothing gets run without confounds
 fi
 
@@ -47,7 +47,7 @@ SINGLETRIAL=${SSLEVDIR}run-${run}_SingleTrial${trial}.txt
 OTHERTRIAL=${SSLEVDIR}run-${run}_OtherTrials${trial}.txt
 
 # create common directory for zstat outputs
-zoutdir=${MAINOUTPUT}/LSS_task-${TASK}_sub-${sub}_ses-${ses}_run-${run}_sm-${sm}
+zoutdir=${MAINOUTPUT}/LSS_task-${TASK}_sub-${sub}_ses-${ses}_run-${run}_acq-${acq}_space-${space}_confounds-${confounds}_sm-${sm}
 if [ ! -d $zoutdir ]; then
 	mkdir -p $zoutdir
 fi
@@ -94,21 +94,8 @@ sed -e 's@OUTPUT@'$OUTPUT'@g' \
 feat $OTEMPLATE
 
 
-# fix registration as per NeuroStars post:
-# https://neurostars.org/t/performing-full-glm-analysis-with-fsl-on-the-bold-images-prepro>
-mkdir -p ${OUTPUT}.feat/reg
-cp $FSLDIR/etc/flirtsch/ident.mat ${OUTPUT}.feat/reg/example_func2standard.mat
-cp $FSLDIR/etc/flirtsch/ident.mat ${OUTPUT}.feat/reg/standard2example_func.mat
-cp ${OUTPUT}.feat/mean_func.nii.gz ${OUTPUT}.feat/reg/standard.nii.gz
-
-# delete unused files
-rm -rf ${OUTPUT}.feat/stats/res4d.nii.gz
-rm -rf ${OUTPUT}.feat/stats/corrections.nii.gz
-rm -rf ${OUTPUT}.feat/stats/threshac1.nii.gz
-rm -rf ${OUTPUT}.feat/filtered_func_data.nii.gz
-
 # copy zstat image to common output folder and delete feat output
 cp ${OUTPUT}.feat/stats/zstat1.nii.gz ${zoutdir}/zstat_trial-${trial}.nii.gz
 chmod -R 777 ${zoutdir}
-rm -rf ${OUTPUT}.feat
+rm -rf ${OUTPUT}.feat ${OTEMPLATE}
 chmod -R 777 ${MAINOUTPUT}
