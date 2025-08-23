@@ -47,7 +47,7 @@ SINGLETRIAL=${SSLEVDIR}run-${run}_SingleTrial${trial}.txt
 OTHERTRIAL=${SSLEVDIR}run-${run}_OtherTrials${trial}.txt
 
 # create common directory for zstat outputs
-zoutdir=${MAINOUTPUT}/LSS_task-${TASK}_sub-${sub}_ses-${ses}_run-${run}_sm-${sm}
+zoutdir=${MAINOUTPUT}/LSS_task-${TASK}_sub-${sub}_ses-${ses}_run-${run}_acq-${acq}_space-${space}_confounds-${confounds}_sm-${sm}
 if [ ! -d $zoutdir ]; then
 	mkdir -p $zoutdir
 fi

@@ -21,7 +21,6 @@ set -Eeuo pipefail
 : "${sub:?required}"
 : "${confounds:?required}"
 : "${acq:?required}"
-: "${run:?required}"
 : "${space:?required}"
 : "${ses:?required}"
 
@@ -50,19 +49,20 @@ else
 	t=56
 fi
 
+for run in 1 2; do
+	for trial in `seq $t`; do
+		if [ "${acq}" == single ]; then		
+			DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold_5mm.nii.gz
+		else
+			DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold_5mm.nii.gz
+		fi
 
-for trial in `seq $t`; do
-	if [ "${acq}" == single ]; then		
-		DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold_5mm.nii.gz
-	else
-		DATA=${projectdir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold_5mm.nii.gz
-	fi
-
-	if [ -e $DATA ]; then  # don't run unless the data exists
-		echo "bash L1statsSingleTrial-${task}.sh ${sub} ${ses} ${run} ${trial} ${acq} ${space} ${confounds}" >> $logdir/cmd_L1stats_${PBS_JOBID}.txt						
-	else
-		echo "missing: ${DATA}"
-	fi
+		if [ -e $DATA ]; then  # don't run unless the data exists
+			echo "bash L1statsSingleTrial-${task}.sh ${sub} ${ses} ${run} ${trial} ${acq} ${space} ${confounds}" >> $logdir/cmd_L1stats_${PBS_JOBID}.txt						
+		else
+			echo "missing: ${DATA}"
+		fi
+	done
 done
 
 torque-launch -p "$logdir/chk_L1stats_${PBS_JOBID}.txt" "$logdir/cmd_L1stats_${PBS_JOBID}.txt"
