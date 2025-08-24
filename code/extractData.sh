@@ -1,28 +1,25 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Where this script lives: .../code
+# -------- fixed locations (relative to THIS script), and required tools --------
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-rootdir="$(dirname "$scriptdir")"
-
-# Inputs (relative to repo layout you've been using)
+rootdir="$(dirname "$scriptdir")"                 # project root (…/night-owls)
 FSL_DERIV="${rootdir}/derivatives/fsl"
 FMRIPREP_DERIV="${rootdir}/derivatives/fmriprep"
 MASKS_DIR="${rootdir}/masks"
 OUT_DIR="${rootdir}/derivatives/extractions"
-mkdir -p "$OUT_DIR"
 
-# Masks/maps (in MNI space by construction)
 BRS_MNI="${MASKS_DIR}/space-MNI152NLin6Asym_desc-BrainRewardSignature_map.nii.gz"
 VS_MNI="${MASKS_DIR}/space-MNI152NLin6Asym_desc-VS-Imanova_mask.nii.gz"
 
-# Check required tools
-need_cmd() { command -v "$1" >/dev/null 2>&1 || { echo "ERROR: '$1' not found in PATH." >&2; exit 1; }; }
-for c in fslstats fslcc flirt; do need_cmd "$c"; done
-have_ants=1
-command -v antsApplyTransforms >/dev/null 2>&1 || have_ants=0
+command -v antsApplyTransforms >/dev/null || { echo "ERROR: antsApplyTransforms not found in PATH"; exit 1; }
+command -v fslstats >/dev/null || { echo "ERROR: fslstats not found in PATH"; exit 1; }
+command -v fslcc >/dev/null    || { echo "ERROR: fslcc not found in PATH"; exit 1; }
 
-# Map zstat number -> human-readable label for each task
+[[ -d "$FSL_DERIV" ]] || { echo "ERROR: Can't find ${FSL_DERIV}"; exit 1; }
+mkdir -p "$OUT_DIR"
+
+# -------- contrast label maps (from your screenshots) --------
 contrast_label() {
   local task="$1" z="$2"
   case "$task" in
@@ -51,120 +48,97 @@ contrast_label() {
   esac
 }
 
-# Resample/warp a source (MNI) image into the *exact* grid of a target image.
-# If target is MNI grid, do identity apply with flirt. If target is T1w grid, use ANTs MNI->T1w xfm if available.
-# Usage: resample_mni_to_target <sub> <ses> <target_img> <out_img> <src_mni_img>
-resample_mni_to_target() {
-  local sub="$1" ses="$2" target="$3" out="$4" src="$5"
-  local space
-  if [[ "$target" == *"_space-mni_"* ]] || [[ "$target" == *"_space-MNI"* ]]; then
-    space="MNI"
-  else
-    space="T1w"
-  fi
+# -------- warp/resample helper (NO FLIRT) --------
+# Resample a MNI-space mask/map to the exact grid of a target zstat image.
+# - If zstat is in MNI space: identity into zstat grid (no transform).
+# - If zstat is in T1w space: apply fMRIPrep MNI→T1w H5 (ses-specific if present).
+mni_to_target() {
+  local sub="$1" ses="$2" target_img="$3" src_mni="$4" out_img="$5"
 
-  if [[ "$space" == "MNI" ]]; then
-    flirt -in "$src" -ref "$target" -applyxfm -usesqform -interp trilinear -out "$out"
+  # detect target space from FEAT name or header path (we pass space separately to avoid header reads)
+  local space_hint="$6"  # "mni" or "t1w"
+  if [[ "$space_hint" == "mni" ]]; then
+    antsApplyTransforms -d 3 -i "$src_mni" -r "$target_img" -n Linear -o "$out_img"
   else
-    local anatdir="${FMRIPREP_DERIV}/sub-${sub}/ses-${ses}/anat"
-    local h5=
+    local anat="${FMRIPREP_DERIV}/sub-${sub}/ses-${ses}/anat"
+    local h5=""
     for cand in \
-      "${anatdir}/sub-${sub}_ses-${ses}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5" \
-      "${anatdir}/sub-${sub}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5" \
-      "${anatdir}/sub-${sub}_ses-${ses}_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5" \
-      "${anatdir}/sub-${sub}_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5"
+      "${anat}/sub-${sub}_ses-${ses}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5" \
+      "${anat}/sub-${sub}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5" \
+      "${anat}/sub-${sub}_ses-${ses}_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5" \
+      "${anat}/sub-${sub}_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5"
     do
       [[ -f "$cand" ]] && { h5="$cand"; break; }
     done
-
-    if [[ $have_ants -eq 1 && -n "${h5}" ]]; then
-      antsApplyTransforms -d 3 \
-        -i "$src" \
-        -r "$target" \
-        -t "$h5" \
-        -n Linear \
-        -o "$out"
-    else
-        echo "can't do ANTS, so something is wrong..."
-        exit
-    fi
+    [[ -z "$h5" ]] && { echo "WARN: no MNI→T1w transform for sub-${sub} ses-${ses}; skipping $target_img" >&2; return 1; }
+    antsApplyTransforms -d 3 -i "$src_mni" -r "$target_img" -t "$h5" -n Linear -o "$out_img"
   fi
 }
 
-# Compute VS mean and BRS correlation for a single zstat image
-# Usage: process_one <zimg> <featdir> <sub> <ses> <run> <task> <space> <acq> <confounds> <znum> <label>
+# -------- per-image processing --------
 process_one() {
-  local zimg="$1" featdir="$2" sub="$3" ses="$4" run="$5" task="$6" space="$7" acq="$8" confounds="$9" znum="${10}" label="${11}"
-
-  local tmp
-  tmp="$(mktemp -d)"
-  trap 'rm -rf "$tmp"' RETURN
+  local zimg="$1" featdir="$2" sub="$3" ses="$4" run="$5" task="$6" space_tag="$7" acq="$8" confounds="$9" znum="${10}" label="${11}"
 
   local brainmask="${featdir}/mask.nii.gz"
-  if [[ ! -f "$brainmask" ]]; then
-    echo "WARN: ${brainmask} missing; skipping ${zimg}" >&2
-    return
-  fi
+  [[ -f "$brainmask" ]] || { echo "WARN: missing FEAT mask: $brainmask — skipping"; return; }
 
-  local brs_res="${tmp}/brs_res.nii.gz"
-  local vs_res="${tmp}/vs_res.nii.gz"
+  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
 
-  resample_mni_to_target "$sub" "$ses" "$zimg" "$brs_res" "$BRS_MNI"
-  resample_mni_to_target "$sub" "$ses" "$zimg" "$vs_res" "$VS_MNI"
 
+if [[ "$space_tag" == "mni" ]]; then
+  brs_res="$BRS_MNI"   # use MNI map as-is
+  vs_res="$VS_MNI"
+else
+  brs_res="$tmp/brs_in_T1w.nii.gz"   # define outputs first
+  vs_res="$tmp/vs_in_T1w.nii.gz"
+  mni_to_target "$sub" "$ses" "$zimg" "$BRS_MNI" "$brs_res" "t1w" || return
+  mni_to_target "$sub" "$ses" "$zimg" "$VS_MNI"  "$vs_res"  "t1w" || return
+fi
+
+
+
+  # VS mean
   local vs_mean="NA"
-  if [[ -f "$vs_res" ]]; then
-    vs_mean="$(fslstats "$zimg" -k "$vs_res" -M 2>/dev/null || echo NA)"
-  fi
+  [[ -f "$vs_res" ]] && vs_mean="$(fslstats "$zimg" -k "$vs_res" -M 2>/dev/null || echo NA)"
 
+  # Signed whole-brain spatial corr with BRS (mask to FEAT brainmask)
   local brs_corr="NA"
   if [[ -f "$brs_res" ]]; then
-    # Whole-brain mask from FEAT; keep sign; include full range (-1..1)
     brs_corr="$(fslcc -m "$brainmask" --noabs -t -1 "$zimg" "$brs_res" 2>/dev/null | awk '{print $NF}' || echo NA)"
   fi
 
-  echo -e "${sub}\t${ses}\t${run}\t${task}\t${space}\t${acq}\t${confounds}\t${znum}\t${label}\t${vs_mean}\t${brs_corr}"
+  echo -e "${sub}\t${ses}\t${run}\t${task}\t${space_tag}\t${acq}\t${confounds}\t${znum}\t${label}\t${vs_mean}\t${brs_corr}"
 }
 
-main() {
-  local out="${OUT_DIR}/extractions_L1stats.tsv"
-  echo -e "sub\tses\trun\ttask\tspace\tacq\tconfounds\tzstat\tlabel\tVS_mean\tBRS_corr" > "$out"
+# -------- main --------
+out="${OUT_DIR}/extractions_L1stats.tsv"
+echo -e "sub\tses\trun\ttask\tspace\tacq\tconfounds\tzstat\tlabel\tVS_mean\tBRS_corr" > "$out"
 
-  local glob="${GLOB:-}"
-  shopt -s nullglob
-  local arr=()
-  if [[ -n "$glob" ]]; then
-    while IFS= read -r -d '' f; do arr+=("$f"); done < <(find "$FSL_DERIV" -type f -path "*/L1_*/*.feat/stats/zstat*.nii.gz" -path "*${glob}*" -print0)
-  else
-    while IFS= read -r -d '' f; do arr+=("$f"); done < <(find "$FSL_DERIV" -type f -path "*/L1_*/*.feat/stats/zstat*.nii.gz" -print0)
-  fi
+shopt -s nullglob
+# ONLY L1_task-… FEATs under derivatives/fsl; ignore everything else
+while IFS= read -r -d '' zimg; do
+  featdir="$(dirname "$(dirname "$zimg")")"                 # …/L1_task-….feat
+  sesdir="$(basename "$(dirname "$featdir")")"              # ses-XX
+  subdir="$(basename "$(dirname "$(dirname "$featdir")")")" # sub-XXX
+  sub="${subdir#sub-}"; ses="${sesdir#ses-}"
 
-  for zimg in "${arr[@]}"; do
-    local featdir; featdir="$(dirname "$(dirname "$zimg")")"
-    local subdir sesdir; subdir="$(basename "$(dirname "$(dirname "$featdir")")")"; sesdir="$(basename "$(dirname "$featdir")")"
-    local sub="${subdir#sub-}"; local ses="${sesdir#ses-}"
+  fbase="$(basename "$featdir")"; fbase="${fbase%.feat}"
 
-    local featbase; featbase="$(basename "$featdir")"; featbase="${featbase%.feat}"
+  task="$(sed -E 's/^.*_task-([^_]+).*$/\1/' <<<"$fbase")"
+  run="$(sed -E 's/^.*_run-([0-9]+).*$/\1/' <<<"$fbase")"
+  space_raw="$(sed -E 's/^.*_space-([^_]+).*$/\1/' <<<"$fbase")"
+  acq_raw="$(sed -E 's/^.*_(multi-echo|single-echo)_.*$/\1/' <<<"$fbase")"
+  confounds="$(sed -E 's/^.*_cnfds-([^_]+).*$/\1/' <<<"$fbase")"
+  znum="$(basename "$zimg" | sed -E 's/^zstat([0-9]+).*$/\1/')"
 
-    local task run space_raw acq_raw confounds znum
-    task="$(sed -E 's/^.*_task-([^_]+).*$/\1/' <<<"$featbase")"
-    run="$(sed -E 's/^.*_run-([0-9]+).*$/\1/' <<<"$featbase")"
-    space_raw="$(sed -E 's/^.*_space-([^_]+).*$/\1/' <<<"$featbase")"
-    acq_raw="$(sed -E 's/^.*_(multi-echo|single-echo)_.*$/\1/' <<<"$featbase")"
-    confounds="$(sed -E 's/^.*_cnfds-([^_]+).*$/\1/' <<<"$featbase")"
-    znum="$(basename "$zimg" | sed -E 's/^zstat([0-9]+).*$/\1/')"
+  # normalize tags used in output and in mni_to_target's space hint
+  space_tag="t1w"; [[ "$space_raw" =~ ^(mni|MNI) ]] && space_tag="mni"
+  acq="single"; [[ "$acq_raw" == "multi-echo" ]] && acq="multiecho"
 
-    local space acq
-    if [[ "$space_raw" =~ ^(mni|MNI) ]]; then space="MNI152NLin6Asym"; else space="T1w"; fi
-    if [[ "$acq_raw" == "multi-echo" ]]; then acq="multiecho"; else acq="single"; fi
+  label="$(contrast_label "$task" "$znum")"
+  [[ -z "$label" ]] && continue  # only extract requested contrasts
 
-    local label; label="$(contrast_label "$task" "$znum")"
-    [[ -z "$label" ]] && continue
+  process_one "$zimg" "$featdir" "$sub" "$ses" "$run" "$task" "$space_tag" "$acq" "$confounds" "$znum" "$label" >> "$out"
+done < <(find "$FSL_DERIV" -type f -path "*/L1_task-*/stats/zstat*.nii.gz" -print0)
 
-    process_one "$zimg" "$featdir" "$sub" "$ses" "$run" "$task" "$space" "$acq" "$confounds" "$znum" "$label" >> "$out"
-  done
-
-  echo "[${EPOCHREALTIME%.*}] Done. Wrote: $out"
-}
-
-main "$@"
+echo "[$(date '+%F %T')] Done. Wrote: $out"
