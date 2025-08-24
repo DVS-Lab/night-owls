@@ -80,9 +80,9 @@ for TASK in "${tasks[@]}"; do #Will need echo-2 loop as well
                     ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}_td.fsf
                     OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_td.fsf
                 elif [ $td -eq 0 ]; then
-                    OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_space-${space}_${echo}_${confound}
+                    OUTPUT=${MAINOUTPUT}/L1_sub-${sub}_ses-${ses}_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_space-${space}_${echo}_${confound}
                     ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}.fsf
-                    OTEMPLATE=${MAINOUTPUT}/L1_task-${TASK}_model-${model}_type-${TYPE}_run-${run}.fsf
+                    OTEMPLATE=${MAINOUTPUT}/L1_sub-${sub}_task-${TASK}_model-${model}_type-${TYPE}_ses-${ses}_run-${run}_space-${space}_${echo}_${confound}.fsf
                 else
                     echo "invalid parameter for temporal derivatives; it can only be 0 or 1." >> ${logdir}/sub-${sub}_ses-${ses}_re-runL1.log
                     exit

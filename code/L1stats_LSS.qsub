@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -l walltime=1:00:00
+#PBS -l walltime=2:00:00
 #PBS -N L1stats_LSS
 #PBS -q normal
 #PBS -l nodes=2:ppn=28
