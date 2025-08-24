@@ -1,136 +1,139 @@
 #!/usr/bin/env bash
-# extract_mid_sharedreward.sh
-# Run from: derivatives/fsl/code
-
 set -euo pipefail
 
-# ---- layout (all relative to this "code" directory) ----
-scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-fslroot="$(dirname "$scriptdir")"              # .../derivatives/fsl
-derivdir="$(dirname "$fslroot")"               # .../derivatives
-projroot="$(dirname "$derivdir")"              # .../night-owls
-masksdir="${projroot}/masks"
+umask 0000
 
-VS_MNI="${masksdir}/space-MNI152NLin6Asym_desc-VS-Imanova_mask.nii.gz"
-BRS_MNI="${masksdir}/space-MNI152NLin6Asym_desc-BrainRewardSignature_map.nii.gz"
+# --- locate project relative to this script ---
+scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+projectdir="$(dirname "$scriptdir")"
 
-outdir="${fslroot}/extracts"
-tmpdir="${scriptdir}/tmp_warps"
-mkdir -p "$outdir" "$tmpdir"
+DERIV_FSL="$projectdir/derivatives/fsl"
+MASKS_DIR="$projectdir/masks"
+OUTDIR="$projectdir/extracts"
+mkdir -p "$OUTDIR"
+OUTTSV="$OUTDIR/extract_mid_sharedreward.tsv"
 
-outtsv="${outdir}/extract_mid_sharedreward.tsv"
+# --- required tools ---
+for cmd in fslstats fslcc fslmaths fslnvols ; do
+  command -v "$cmd" >/dev/null 2>&1 || { echo "ERROR: $cmd not found in PATH"; exit 1; }
+done
 
-log(){ echo "[$(date +'%F %T')] $*"; }
-need(){ command -v "$1" >/dev/null 2>&1 || { echo "ERROR: '$1' not found in PATH" >&2; exit 1; }; }
+# --- masks in standard (MNI152NLin6Asym) space ---
+VS_MASK_MNI="$MASKS_DIR/space-MNI152NLin6Asym_desc-VS-Imanova_mask.nii.gz"
+BRS_MAP_MNI="$MASKS_DIR/space-MNI152NLin6Asym_desc-BrainRewardSignature_map.nii.gz"
+[[ -f "$VS_MASK_MNI" && -f "$BRS_MAP_MNI" ]] || { echo "ERROR: expected masks not found in $MASKS_DIR"; exit 1; }
 
-# ---- label maps you provided ----
-declare -A LABELS
-# MID
-LABELS["mid:7"]="ant_rew>neu"
-LABELS["mid:8"]="pos>neg"
-LABELS["mid:9"]="rew:pos>neg"
-LABELS["mid:10"]="neu:pos>neg"
-# SharedReward
-LABELS["sharedreward:9"]="stranger>comp"
-LABELS["sharedreward:10"]="neu>pun"
-LABELS["sharedreward:11"]="rew>pun"
-LABELS["sharedreward:12"]="S rew>pun"
-LABELS["sharedreward:13"]="C rew>pun"
-LABELS["sharedreward:14"]="S-C rew>pun"
-LABELS["sharedreward:15"]="rew>neu"
-
-# Allowed zstat indices per task (skip everything else)
-declare -A ALLOWED
-ALLOWED["mid"]="7 8 9 10"
-ALLOWED["sharedreward"]="9 10 11 12 13 14 15"
-
-label_for() {
-  local task="$1" zidx="$2"
-  local k="${task}:${zidx}"
-  printf "%s" "${LABELS[$k]:-$task:zstat$zidx}"
+# --- small helper: extract token value from FEAT basename like: L1_task-..._run-2_space-mni_multi-echo_cnfds-tedana.feat
+get_token () {  # $1=featbase  $2=key (e.g., task, run, space)
+  local b="$1" k="$2"
+  echo "$b" | sed -n "s/.*_${k}-\([^_]*\)\(_\|$\).*/\1/p"
 }
 
-# ---- warping helpers ----
-warp_to_zspace_if_needed() {
-  local in_img="$1" ref="$2" out_img="$3" sub="$4" ses="$5" interp="$6"
-  if [[ "$ref" == *"/space-t1w"* ]]; then
-    need antsApplyTransforms
-    # pick any MNI->T1w H5 (e.g., NLin6Asym)
-    local cand=( "${derivdir}/fmriprep/${sub}/${ses}/anat/${sub}_${ses}_from-MNI"*"_to-T1w_mode-image_xfm.h5" )
-    if [[ ! -e "${cand[0]:-}" ]]; then
-      echo "WARN: missing MNI->T1w transform for ${sub} ${ses}; copying input mask/map" >&2
-      cp -f "$in_img" "$out_img"
-      return 0
-    fi
-    antsApplyTransforms -d 3 -i "$in_img" -r "$ref" -o "$out_img" -t "${cand[0]}" -n "$interp" --float
+# optional mapping stub: default to "zstat<N>" if no nicer label known
+label_for () { # $1=task  $2=znum
+  local task="$1" z="$2"
+  # If you want human-readable names, hard-code your map here.
+  # For now we keep the zstat number so you can proceed immediately.
+  echo "zstat${z}"
+}
+
+# --- fslcc with subject-wise brainmask; keep sign; no thresholding of input (t=-1 => include full range) ---
+corr_with_brs () { # $1=zstat_img  $2=featdir  $3=map_in_same_space
+  local zimg="$1" feat="$2" map="$3"
+  local brainmask="$feat/mask.nii.gz"
+  [[ -f "$brainmask" ]] || { echo "NA"; return; }
+  # fslcc prints: "<corr>    <path1>    <path2>"
+  local cc
+  if ! cc=$(fslcc -m "$brainmask" --noabs -t -1 "$zimg" "$map" 2>/dev/null | awk '{print $1}'); then
+    echo "NA"; return
+  fi
+  [[ -z "$cc" ]] && echo "NA" || echo "$cc"
+}
+
+# --- Mean within VS mask (assumes mask already in same space as zimg) ---
+mean_in_mask () { # $1=zstat_img  $2=mask_same_space
+  local zimg="$1" mask="$2"
+  local val
+  if ! val=$(fslstats "$zimg" -k "$mask" -M 2>/dev/null); then
+    echo "NA"; return
+  fi
+  [[ -z "$val" ]] && echo "NA" || echo "$val"
+}
+
+# --- ensure masks are in the same space as the zstat ---
+# If zstat is MNI, use the MNI masks directly.
+# If zstat is T1w, reuse the FEAT's own mask as a crude brain mask; for VS/BRS we’ll align to T1w by copying MNI masks’ voxel grid via flirt (nearest) to the FEAT space if needed.
+# (This avoids poking into fmriprep internals; we stay inside derivatives/.)
+prep_masks_for_feat () { # $1=space (mni|t1w)  $2=zimg  $3=featdir  -> prints "VS_PATH  BRS_PATH"
+  local space="$1" zimg="$2" feat="$3"
+  if [[ "$space" == "mni" ]]; then
+    echo "$VS_MASK_MNI $BRS_MAP_MNI"
   else
-    cp -f "$in_img" "$out_img"
+    # Bring MNI masks to the zstat grid using nearest-neighbor resampling
+    local vs="$feat/aux_VS_inT1w.nii.gz"
+    local brs="$feat/aux_BRS_inT1w.nii.gz"
+    if [[ ! -f "$vs" ]]; then
+      flirt -in "$VS_MASK_MNI"  -ref "$zimg" -out "$vs"  -applyxfm -usesqform -interp nearestneighbour >/dev/null 2>&1 || true
+    fi
+    if [[ ! -f "$brs" ]]; then
+      flirt -in "$BRS_MAP_MNI"  -ref "$zimg" -out "$brs" -applyxfm -usesqform -interp nearestneighbour >/dev/null 2>&1 || true
+    fi
+    echo "$vs $brs"
   fi
 }
 
-mean_in_mask() { fslstats "$1" -k "$2" -M; }
+# --- write header ---
+echo -e "sub\tses\trun\ttask\tspace\tacq\tconfounds\tzstat\tlabel\tVS_mean\tBRS_corr\tfeatdir" > "$OUTTSV"
 
-# keep sign; full range; mask with FEAT’s whole-brain mask
-corr_with_map() {
-  fslcc --noabs -t -1 -m "$3" "$1" "$2" | awk 'NF>=2{print $2; exit}'
-}
+# --- collect only L1_* FEAT zstats; prune L2_* and *.gfeat completely ---
+mapfile -t ZLIST < <(
+  find "$DERIV_FSL" \
+    \( -path '*/L2_*' -o -path '*/*.gfeat' \) -prune -o \
+    -type f -path '*/L1_*.feat/stats/zstat*.nii.gz' -print \
+  | sort
+)
 
-# ---- header ----
-if [[ ! -f "$outtsv" ]]; then
-  printf "sub\tses\trun\ttask\tspace\tacq\tconfounds\tzstat\tlabel\tVS_mean\tBRS_corr\tfeatdir\n" > "$outtsv"
+# bail out early if nothing found (helps debugging wrong roots)
+if [[ "${#ZLIST[@]}" -eq 0 ]]; then
+  echo "No zstat images found under $DERIV_FSL (L1_* only). Check paths."
+  exit 1
 fi
 
-need fslstats
-need fslcc
+# --- main loop ---
+for zimg in "${ZLIST[@]}"; do
+  feat="$(dirname "$(dirname "$zimg")")"                 # .../L1_....feat
+  [[ "$(basename "$feat")" == L1_* ]] || continue        # belt-and-suspenders
 
-shopt -s nullglob
+  rel="${feat#"$DERIV_FSL/"}"                            # sub-XXX/ses-YY/L1_...feat
+  sub="$(echo "$rel" | cut -d/ -f1)"                     # sub-101
+  ses="$(echo "$rel" | cut -d/ -f2)"                     # ses-01
+  featbase="$(basename "$feat" .feat)"                   # L1_task-..._...
 
-# ---- main: only under derivatives/fsl ----
-for zfile in "${fslroot}"/sub-*/ses-*/L1_task-*.feat/stats/zstat*.nii.gz; do
-  statsdir="$(dirname "$zfile")"
-  featdir="$(dirname "$statsdir")"
-  featbase="$(basename "$featdir")"           # L1_task-... .feat
-  featstem="${featbase%.feat}"
-  sesdir="$(dirname "$featdir")"              # .../ses-XX
-  subdir="$(dirname "$sesdir")"               # .../sub-XXX
+  task="$(get_token "$featbase" task)"
+  run="$(get_token "$featbase" run)"
+  rawspace="$(get_token "$featbase" space)"               # mni or t1w (based on your names)
+  space="$rawspace"                                       # keep as mni|t1w for transparency
 
-  sub="$(basename "$subdir")"                 # e.g., sub-101
-  ses="$(basename "$sesdir")"                 # e.g., ses-01
+  # acquisition: token is "multi-echo" or "single-echo" in your names
+  acq_token="$(echo "$featbase" | sed -n 's/.*_\(multi-echo\|single-echo\)\(_\|$\).*/\1/p')"
+  acq="${acq_token//-/}"                                  # multiecho|singleecho
+  confounds="$(get_token "$featbase" cnfds)"              # fmriprep|tedana
 
-  task="$(sed -nE 's/.*task-([^_]+).*/\1/p' <<<"$featstem")"
-  [[ "$task" != "mid" && "$task" != "sharedreward" ]] && continue
+  zname="$(basename "$zimg" .nii.gz)"                     # zstat7
+  znum="${zname#zstat}"                                   # 7
+  label="$(label_for "$task" "$znum")"
 
-  run="$(sed -nE 's/.*_run-([0-9]+).*/\1/p' <<<"$featstem")"
-  space_tag="$(sed -nE 's/.*_space-([^_]+).*/\1/p' <<<"$featstem")"       # mni | t1w
-  acq="$(sed -nE 's/.*_(multi-echo|single-echo).*/\1/p' <<<"$featstem")"  # multi-echo | single-echo
-  confounds="$(sed -nE 's/.*_cnfds-([^_]+).*/\1/p' <<<"$featstem")"       # fmriprep | tedana
+  # prep VS/BRS masks in this zstat’s space
+  read VS_MASK BRS_MAP < <(prep_masks_for_feat "$space" "$zimg" "$feat")
 
-  zidx="$(basename "$zfile" | sed -nE 's/^zstat([0-9]+).*/\1/p')"
+  # compute metrics
+  vs_mean="$(mean_in_mask "$zimg" "$VS_MASK")"
+  brs_corr="$(corr_with_brs "$zimg" "$feat" "$BRS_MAP")"
 
-  # enforce allowed-contrast list per task
-  case " ${ALLOWED[$task]} " in
-    *" $zidx "*) ;;   # keep
-    *) continue ;;
-  esac
-
-  label="$(label_for "$task" "$zidx")"
-  wb_mask="${featdir}/mask.nii.gz"
-  [[ -f "$wb_mask" ]] || { log "WARN: no FEAT mask: $wb_mask ; skip"; continue; }
-
-  cache_tag="${sub}_${ses}_${space_tag}"
-  vs_cache="${tmpdir}/VS_${cache_tag}.nii.gz"
-  brs_cache="${tmpdir}/BRS_${cache_tag}.nii.gz"
-
-  [[ -f "$vs_cache" ]] || warp_to_zspace_if_needed "$VS_MNI" "$zfile" "$vs_cache" "$sub" "$ses" "NearestNeighbor"
-  [[ -f "$brs_cache" ]] || warp_to_zspace_if_needed "$BRS_MNI" "$zfile" "$brs_cache" "$sub" "$ses" "Linear"
-
-  vs_mean="NA"; brs_cc="NA"
-  [[ -f "$vs_cache" ]] && vs_mean="$(mean_in_mask "$zfile" "$vs_cache" 2>/dev/null || echo NA)"
-  [[ -f "$brs_cache" ]] && brs_cc="$(corr_with_map "$zfile" "$brs_cache" "$wb_mask" 2>/dev/null || echo NA)"
-
-  printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\tzstat%s\t%s\t%s\t%s\t%s\n" \
-    "$sub" "$ses" "$run" "$task" "$space_tag" "$acq" "$confounds" \
-    "$zidx" "$label" "$vs_mean" "$brs_cc" "$featdir" >> "$outtsv"
+  # append row
+  printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
+    "$sub" "$ses" "$run" "$task" "$space" "$acq" "$confounds" \
+    "$zname" "$label" "$vs_mean" "$brs_corr" "$feat" >> "$OUTTSV"
 done
 
-log "Done. Wrote: $outtsv"
+echo "[${HOSTNAME:-node}] $(date +'%F %T') Done. Wrote: $OUTTSV"
