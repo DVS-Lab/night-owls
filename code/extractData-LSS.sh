@@ -1,194 +1,195 @@
 #!/usr/bin/env bash
-# LSS extractor (single-trial). Runs from night-owls/code
 
-set -u -o pipefail
+# ------------------------------------------------------------
+# LSS extractor: VS mean + BRS correlation per trial
+# ------------------------------------------------------------
 
-# --- fixed paths (scripts always live in night-owls/code) ---
+# Always run from the code directory
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-maindir="$(dirname "$scriptdir")"                 # -> night-owls
-fsldir="$maindir/derivatives/fsl"
-fmriprepdir="$maindir/derivatives/fmriprep"
-masksdir="$maindir/masks"
+maindir="$(dirname "$scriptdir")"
+
+deriv_fsl="$maindir/derivatives/fsl"
+deriv_fmriprep="$maindir/derivatives/fmriprep"
+masks_dir="$maindir/masks"
 outdir="$maindir/derivatives/extractions"
 mkdir -p "$outdir"
+outfile="$outdir/extractions_LSS.tsv"
 
-# --- inputs (MNI-space masks/maps only; no transforms when space=MNI152NLin6Asym) ---
-MNI_VS="$masksdir/space-MNI152NLin6Asym_desc-VS-Imanova_mask.nii.gz"
-MNI_BRS="$masksdir/space-MNI152NLin6Asym_desc-BrainRewardSignature_map.nii.gz"
-
-# --- tools check (fail fast with clear message) ---
-for cmd in fslstats fslcc antsApplyTransforms ; do
-  if ! command -v "$cmd" >/dev/null 2>&1 ; then
-    echo "[ERROR] $cmd not found in PATH. Load your FSL/ANTs modules and re-run." >&2
-    exit 1
+# Tools check (fail fast if missing)
+for cmd in fslstats fslcc fslmaths antsApplyTransforms; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "ERROR: $cmd not found in PATH." >&2
+    exit 2
   fi
 done
 
-# --- output file ---
-tsv="$outdir/extractions_LSS.tsv"
-echo -e "sub\tses\trun\ttask\tspace\tacq\tconfounds\ttrial\tzstat\tlabel\tVS_mean\tBRS_corr" > "$tsv"
+# Static ROIs in MNI space
+VS_MNI="$masks_dir/space-MNI152NLin6Asym_desc-VS-Imanova_mask.nii.gz"
+BRS_MNI="$masks_dir/space-MNI152NLin6Asym_desc-BrainRewardSignature_map.nii.gz"
+for f in "$VS_MNI" "$BRS_MNI"; do
+  [[ -f "$f" ]] || { echo "ERROR: Missing mask/map: $f" >&2; exit 2; }
+done
 
-# --- task→expected trial count (single-trial designs) ---
-# If this mapping differs, tell me and I'll flip it.
-declare -A NTRIALS=( [mid]=56 [sharedreward]=54 )
-
-# --- helper: parse key/value from LSS directory base name ---
-# Example base: LSS_task-mid_sub-101_ses-01_run-1_acq-multiecho_space-MNI152NLin6Asym_confounds-tedana_sm-5
-parse_fields() {
-  local base="$1"
-  local k v
-  for kv in ${base//_/ } ; do
-    case "$kv" in
-      task-*)       task="${kv#task-}" ;;
-      sub-*)       subj="${kv#sub-}" ;;
-      ses-*)         ses="${kv#ses-}" ;;
-      run-*)         run="${kv#run-}" ;;
-      acq-*)         acq="${kv#acq-}" ;;
-      space-*)     space="${kv#space-}" ;;
-      confounds-*) confounds="${kv#confounds-}" ;;
-    esac
-  done
+# Trial counts
+trials_for () {  # $1 = task
+  case "$1" in
+    mid) echo 56 ;;
+    sharedreward) echo 54 ;;
+    *) echo 0 ;;
+  esac
 }
 
-# --- helper: warp MNI→T1w once per (sub,ses) and cache results ---
-# Produces: $cache/space-T1w_desc-VS-Imanova_mask.nii.gz  (NN)
-#           $cache/space-T1w_desc-BrainRewardSignature_map.nii.gz  (Linear)
-ensure_T1w_derivs() {
-  local subj="$1" ses="$2"
-  local cache="$outdir/_cache/sub-${subj}_ses-${ses}"
-  local doneflag="$cache/.done"
-  mkdir -p "$cache"
+# Write header
+echo -e "sub\tses\trun\ttask\tspace\tacq\tconfounds\ttrial\tVS_mean\tBRS_corr" > "$outfile"
 
-  if [[ -f "$doneflag" ]]; then
-    echo "$cache"
-    return 0
+# Enumerate (sub,ses) that actually have LSS data (based on trial-01 presence anywhere)
+mapfile -t sess_keys < <(
+  find "$deriv_fsl" -type f -name 'zstat_trial-01.nii.gz' \
+  | sed -E 's|.*sub-([0-9]+)/.*_ses-([0-9]+)_.*|\1 \2|' \
+  | sort -u
+)
+
+total_sess="${#sess_keys[@]}"
+done_sess=0
+
+# Helper: build/reuse a whole-brain mask for this LSS (sub/ses/run/task/acq/space/conf) combo
+feat_mask_for () { # sub ses run task acq space conf
+  local sub="$1" ses="$2" run="$3" task="$4" acq="$5" space="$6" conf="$7"
+
+  # LSS combo directory matches your listing pattern
+  local combo="$deriv_fsl/sub-${sub}/LSS_task-${task}_sub-${sub}_ses-${ses}_run-${run}_acq-${acq}_space-${space}_confounds-${conf}_sm-5"
+
+  # Where we store the auto mask
+  local auto="$combo/wbmask_auto.nii.gz"
+
+  # Choose a reference zstat to define the grid (prefer trial-01; fall back to the first available)
+  local zref="$combo/zstat_trial-01.nii.gz"
+  if [[ ! -f "$zref" ]]; then
+    zref=$(ls "$combo"/zstat_trial-*.nii.gz 2>/dev/null | head -n1)
   fi
 
-  local anatdir="$fmriprepdir/sub-${subj}/ses-${ses}/anat"
-  local xfm="$anatdir/sub-${subj}_ses-${ses}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5"
-
-  # Prefer preproc T1w as reference; fallbacks if needed.
-  local ref=
-  for cand in \
-    "$anatdir/sub-${subj}_ses-${ses}_desc-preproc_T1w.nii.gz" \
-    "$anatdir/sub-${subj}_ses-${ses}_desc-preproc_T1w.nii" \
-    "$anatdir/sub-${subj}_ses-${ses}_T1w.nii.gz" \
-    "$anatdir/sub-${subj}_ses-${ses}_T1w.nii" ; do
-    [[ -f "$cand" ]] && ref="$cand" && break
-  done
-
-  if [[ ! -f "$xfm" || ! -f "$ref" ]]; then
-    # Can't warp for this (sub,ses); leave cache empty and return path anyway.
-    echo "$cache"
-    return 0
+  # If we have a reference, create the mask once; otherwise return blank so caller can handle NA
+  if [[ -n "$zref" && -f "$zref" ]]; then
+    if [[ ! -f "$auto" ]]; then
+      # Binary mask of all nonzero voxels in the zstat grid
+      fslmaths "$zref" -abs -thr 0 -bin "$auto" >/dev/null
+    fi
+    echo "$auto"
+  else
+    echo ""
   fi
-
-  # VS mask (binary) — NN interpolation
-  if [[ -f "$MNI_VS" && ! -f "$cache/space-T1w_desc-VS-Imanova_mask.nii.gz" ]]; then
-    antsApplyTransforms -d 3 -i "$MNI_VS" -r "$ref" -t "$xfm" \
-      -n NearestNeighbor -o "$cache/space-T1w_desc-VS-Imanova_mask.nii.gz" >/dev/null
-  fi
-
-  # BRS map (continuous) — Linear interpolation
-  if [[ -f "$MNI_BRS" && ! -f "$cache/space-T1w_desc-BrainRewardSignature_map.nii.gz" ]]; then
-    antsApplyTransforms -d 3 -i "$MNI_BRS" -r "$ref" -t "$xfm" \
-      -n Linear -o "$cache/space-T1w_desc-BrainRewardSignature_map.nii.gz" >/dev/null
-  fi
-
-  touch "$doneflag"
-  echo "$cache"
 }
 
-# --- collect unique (sub,ses) with any LSS file to drive progress ---
-declare -A SESS_KEYS=()
-while IFS= read -r -d '' f; do
-  d="$(dirname "$f")"
-  b="$(basename "$d")"
-  unset task subj ses run acq space confounds
-  parse_fields "$b"
-  [[ -n "${subj:-}" && -n "${ses:-}" ]] && SESS_KEYS["${subj}-${ses}"]=1
-done < <(find "$fsldir"/sub-*/LSS_task-* -maxdepth 1 -type f -name 'zstat_trial-*.nii.gz' -print0 2>/dev/null)
 
-# Sort session keys
-mapfile -t ALL_SESS <<<"$(printf "%s\n" "${!SESS_KEYS[@]}" | sort -V)"
-total_sessions="${#ALL_SESS[@]}"
-done_sessions=0
+# Helper: ensure MNI->T1w transform (prefer *MNI152NLin6Asym*)
+xfm_MNI_to_T1w () { # sub ses
+  local sub="$1" ses="$2" anatdir="$deriv_fmriprep/sub-${sub}/ses-${ses}/anat"
+  local pref="$anatdir/sub-${sub}_ses-${ses}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5"
+  if [[ -f "$pref" ]]; then
+    echo "$pref"; return
+  fi
+  local any
+  any="$(find "$anatdir" -maxdepth 1 -type f -name "sub-${sub}_ses-${ses}_from-MNI*to-T1w*_xfm.h5" | sort | head -n1)"
+  echo "$any"
+}
 
-# --- main: process by session to report progress cleanly ---
-for sk in "${ALL_SESS[@]}"; do
-  IFS='-' read -r subj ses <<<"$sk"
+# Helper: build or reuse per-combo whole-brain mask
+wbmask_for_combo () { # combo_dir zfile featmask
+  local combo="$1" zfile="$2" featmask="$3"
+  if [[ -n "$featmask" && -f "$featmask" ]]; then
+    echo "$featmask"
+    return
+  fi
+  local auto="$combo/wbmask_auto.nii.gz"
+  if [[ ! -f "$auto" ]]; then
+    fslmaths "$zfile" -abs -thr 0 -bin "$auto" >/dev/null
+  fi
+  echo "$auto"
+}
 
-  # All combo dirs for this (sub,ses)
-  mapfile -t COMBOS < <(
-    find "$fsldir/sub-${subj}/" -maxdepth 1 -type d -name 'LSS_task-*' -printf '%p\n' 2>/dev/null \
-    | awk -v S="$ses" -F'/' '{
-         b=$NF;
-         if (b ~ "_ses-" S "_") print $0;
-       }' \
-    | sort -V
-  )
+# Main loop over sessions
+for key in "${sess_keys[@]}"; do
+  sub="${key%% *}"
+  ses="${key##* }"
 
-  # Prepare T1w-space cached derivatives for this (sub,ses)
-  T1W_CACHE="$(ensure_T1w_derivs "$subj" "$ses")"
-  VS_T1W="$T1W_CACHE/space-T1w_desc-VS-Imanova_mask.nii.gz"
-  BRS_T1W="$T1W_CACHE/space-T1w_desc-BrainRewardSignature_map.nii.gz"
+  # Loop structure fixed and consistent with prior scripts
+  for task in mid sharedreward; do
+    ntrials="$(trials_for "$task")"
+    [[ "$ntrials" -gt 0 ]] || continue
+    for run in 1 2; do
+      for acq in multiecho single; do
+        for space in MNI152NLin6Asym T1w; do
+          conf="tedana"
 
-  for combo in "${COMBOS[@]}"; do
-    b="$(basename "$combo")"
-    unset task run acq space confounds
-    parse_fields "$b"
+          # LSS combo directory (matches your listing)
+          combo="$deriv_fsl/sub-${sub}/LSS_task-${task}_sub-${sub}_ses-${ses}_run-${run}_acq-${acq}_space-${space}_confounds-${conf}_sm-5"
 
-    # Skip if task not in our mapping (rare)
-    [[ -z "${NTRIALS[$task]+x}" ]] && continue
-    ntrials="${NTRIALS[$task]}"
+          # We will still emit rows with NA if the combo/trial file is missing
+          for (( t=1; t<=ntrials; t++ )); do
+            trial=$(printf "%02d" "$t")
+            zfile="$combo/zstat_trial-${trial}.nii.gz"
 
-    for tt in $(seq -w 01 "$ntrials"); do
-      zfile="$combo/zstat_trial-${tt}.nii.gz"
-      trial="${tt}"
-      zstat="1"       # per your note: always zstat1 in LSS
-      label=""        # no contrast label for LSS
+            VS_mean="NA"
+            BRS_corr="NA"
 
-      VS_mean="NA"
-      BRS_corr="NA"
+            if [[ -f "$zfile" ]]; then
+              if [[ "$space" == "MNI152NLin6Asym" ]]; then
+                # No transforms: use MNI masks/maps directly
+                VS_mean=$(fslstats "$zfile" -k "$VS_MNI" -M 2>/dev/null || echo "NA")
 
-      if [[ -f "$zfile" ]]; then
-        # Whole-brain FEAT mask (prefer mask alongside or within any *.feat under combo)
-        wbmask="$(find "$combo" -maxdepth 2 -type f -name 'mask.nii.gz' | head -n1)"
+                # whole-brain mask preference: FEAT mask from matched L1, else auto
+                featmask="$(feat_mask_for "$sub" "$ses" "$run" "$task" "$acq" "$space" "$conf")"
+                wbmask="$(wbmask_for_combo "$combo" "$zfile" "$featmask")"
 
-        if [[ "$space" == "MNI152NLin6Asym" ]]; then
-          # No transforms — use MNI masks directly
-          if [[ -f "$MNI_VS" ]]; then
-            VS_mean="$(fslstats "$zfile" -k "$MNI_VS" -M 2>/dev/null || echo NA)"
-          fi
-          if [[ -f "$MNI_BRS" && -n "$wbmask" ]]; then
-            # Signed correlation over whole brain, full range
-            # fslcc prints one line; last column is the coefficient
-            BRS_corr="$(fslcc --noabs -t -1 -m "$wbmask" -p 6 "$zfile" "$MNI_BRS" 2>/dev/null | awk '{print $NF}' )"
-            [[ -z "$BRS_corr" ]] && BRS_corr="NA"
-          fi
-        else
-          # space=T1w: use pre-warped, ses-aware T1w derivatives if present
-          if [[ -f "$VS_T1W" ]]; then
-            VS_mean="$(fslstats "$zfile" -k "$VS_T1W" -M 2>/dev/null || echo NA)"
-          fi
-          if [[ -f "$BRS_T1W" && -n "$wbmask" ]]; then
-            BRS_corr="$(fslcc --noabs -t -1 -m "$wbmask" -p 6 "$zfile" "$BRS_T1W" 2>/dev/null | awk '{print $NF}')"
-            [[ -z "$BRS_corr" ]] && BRS_corr="NA"
-          fi
-        fi
-      fi
+                # signed correlation, full range
+                BRS_corr=$(fslcc --noabs -t -1 -m "$wbmask" -p 6 "$zfile" "$BRS_MNI" 2>/dev/null | awk '{print $NF}' )
+                [[ -z "$BRS_corr" ]] && BRS_corr="NA"
 
-      printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
-        "$subj" "$ses" "$run" "$task" "$space" "$acq" "$confounds" "$trial" "$zstat" "$label" "$VS_mean" "$BRS_corr" \
-        >> "$tsv"
+              else
+                # T1w: transform VS mask (NN) and BRS map (linear) from MNI -> T1w (zfile grid)
+                xfm="$(xfm_MNI_to_T1w "$sub" "$ses")"
+                if [[ -z "$xfm" || ! -f "$xfm" ]]; then
+                  # If we cannot find a transform, leave NA but keep emitting a row
+                  VS_mean="NA"; BRS_corr="NA"
+                else
+                  # Store transformed masks/maps for QC
+                  t1qc_dir="$maindir/derivatives/masks_T1w/sub-${sub}/ses-${ses}/run-${run}_acq-${acq}"
+                  mkdir -p "$t1qc_dir"
+                  VS_T1="$t1qc_dir/desc-VS-Imanova_mask_space-T1w_run-${run}_acq-${acq}.nii.gz"
+                  BRS_T1="$t1qc_dir/desc-BrainRewardSignature_map_space-T1w_run-${run}_acq-${acq}.nii.gz"
+
+                  if [[ ! -f "$VS_T1" ]]; then
+                    antsApplyTransforms -d 3 -i "$VS_MNI"  -r "$zfile" -o "$VS_T1"  -t "$xfm" -n NearestNeighbor >/dev/null
+                  fi
+                  if [[ ! -f "$BRS_T1" ]]; then
+                    antsApplyTransforms -d 3 -i "$BRS_MNI" -r "$zfile" -o "$BRS_T1" -t "$xfm" >/dev/null
+                  fi
+
+                  VS_mean=$(fslstats "$zfile" -k "$VS_T1" -M 2>/dev/null || echo "NA")
+
+                  featmask="$(feat_mask_for "$sub" "$ses" "$run" "$task" "$acq" "$space" "$conf")"
+                  wbmask="$(wbmask_for_combo "$combo" "$zfile" "$featmask")"
+
+                  BRS_corr=$(fslcc --noabs -t -1 -m "$wbmask" -p 6 "$zfile" "$BRS_T1" 2>/dev/null | awk '{print $NF}' )
+                  [[ -z "$BRS_corr" ]] && BRS_corr="NA"
+                fi
+              fi
+            fi
+
+            # Emit row (no zstat/label columns)
+            printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
+              "$sub" "$ses" "$run" "$task" "$space" "$acq" "$conf" "$trial" "$VS_mean" "$BRS_corr" \
+              >> "$outfile"
+          done
+        done
+      done
     done
   done
 
-  # --- progress echo at session granularity ---
-  done_sessions=$((done_sessions + 1))
-  # integer percent with one decimal
-  pct="$(awk -v d="$done_sessions" -v t="$total_sessions" 'BEGIN{if(t==0){print 100}else{printf("%.1f", (d*100.0)/t)}}')"
-  echo "[`date +'%F %T'`] ${pct}% of sessions have been completed"
+  # Progress echo at the session level
+  done_sess=$((done_sess+1))
+  pct=$(( 100 * done_sess / (total_sess>0?total_sess:1) ))
+  echo "$(date '+[%F %T]') ${pct}%% of sessions have been completed (${done_sess}/${total_sess})."
 done
 
-echo "[`date +'%F %T'`] Done. Wrote: $tsv"
+echo "$(date '+[%F %T]') Done. Wrote: $outfile"
