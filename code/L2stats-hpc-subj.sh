@@ -163,4 +163,7 @@ for task in "${tasks[@]}"; do
             done
         fi
     done
+    done
+    done
+done
 done
