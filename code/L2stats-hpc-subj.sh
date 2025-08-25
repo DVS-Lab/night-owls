@@ -37,7 +37,6 @@ echos=(single-echo multi-echo)
 confounds=(cnfds-fmriprep cnfds-tedana)
 
 for task in "${tasks[@]}"; do
-
     for sub in ${subjects[@]}; do
         for space in "${spaces[@]}"; do
             for echo in "${echos[@]}"; do
@@ -83,12 +82,14 @@ for task in "${tasks[@]}"; do
         NSES=${#all_inputs[@]}
 
         # Set output path for subject-level analysis
-        mkdir ${MAINOUTPUT}/subject-level/
+        mkdir -p ${MAINOUTPUT}/subject-level/
         OUTPUT=${MAINOUTPUT}/subject-level/L2_subj-${sub}_task-${task}_model-${model}_type-${type}_space-${space}_${echo}_${confound}
         
-        # skip if output already exists
+        NCOPES=$([ "$task" = "mid" ] && echo 10 || echo 15)
+
+        # skip if output already exists - need to fix ncope
         if [ -e ${OUTPUT}.gfeat/cope${NCOPES}.feat/cluster_mask_zstat1.nii.gz ]; then
-            echo "SKIP sub-${sub} ${task}: L2 already done" >> $logdir/re-runL2subj.log
+            echo "SKIP sub-${sub} ${task}: L2 already done" >> $logdir/re-runL2subj_sub-${sub}.log.log
             continue
         fi
         
@@ -127,9 +128,10 @@ for task in "${tasks[@]}"; do
         echo feat $OTEMPLATE >>$logdir/cmd_L2_${PBS_JOBID}.txt
 
     done
+    done
+    done
 done
-
-
+done
 
 torque-launch -p "$logdir/chk_L2_${PBS_JOBID}.txt" "$logdir/cmd_L2_${PBS_JOBID}.txt"
 
