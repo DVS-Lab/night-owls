@@ -2,41 +2,45 @@
 
 umask 0000
 
-if [ $# -ne 1 ]; then
-  echo "Usage: $0 <subject_id>   e.g. $0 101"
-  exit 1
-fi
+SUBLIST="sublist.txt"
 
-SUBJ="$1"
+while read -r SUBJ; do
+  [ -z "$SUBJ" ] && continue
 
-for ses in $(seq -w 1 12); do
-  SRC="/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only/"
-  DST="/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/fmriprep/sub-${SUBJ}/ses-${ses}"
+  for ses in $(seq -w 1 12); do
+    SRC="/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only/"
+    DST="/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/fmriprep/sub-${SUBJ}/ses-${ses}"
 
-  # Skip entire session if the main source folder is missing
-  if [ ! -d "${SRC}/ses-${ses}/sub-${SUBJ}" ]; then
-    echo "${ses} not found, skipping ses-${ses}" >&2
-    continue
-  fi
-  mkdir -p "${DST}"
+    # Skip entire session if the main source folder is missing
+    if [ ! -d "${SRC}/ses-${ses}/sub-${SUBJ}" ]; then
+      echo "${ses} not found, skipping ses-${ses}" >&2
+      continue
+    fi
+    mkdir -p "${DST}"
 
-  #Move subject-level anat dir
-  rsync -av "${SRC}/sub-${SUBJ}/anat" "${DST}/"
-  #Move ses-specific xfm and dseg files 
-  rsync -av "${SRC}/sub-${SUBJ}/ses-${ses}/anat/sub-${SUBJ}_ses-${ses}_from-orig_to-T1w_mode-image_xfm.txt" "${DST}/anat/"
-  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/anat/sub-${SUBJ}_space-MNI152NLin6Asym_desc-preproc_dseg.nii.gz" "${DST}/anat/"
+    #Move subject-level anat dir
+    rsync -av "${SRC}/sub-${SUBJ}/anat" "${DST}/"
+    #Move ses-specific xfm and dseg files 
+    rsync -av "${SRC}/sub-${SUBJ}/ses-${ses}/anat/sub-${SUBJ}_ses-${ses}_from-orig_to-T1w_mode-image_xfm.txt" "${DST}/anat/"
+    rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/anat/sub-${SUBJ}_space-MNI152NLin6Asym_desc-preproc_dseg.nii.gz" "${DST}/anat/"
 
-  #Move func and fmap 
-  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/ses-${ses}/func" "${DST}/"
-  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/ses-${ses}/fmap" "${DST}/"
+    #Move func and fmap 
+    rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/ses-${ses}/func" "${DST}/"
+    rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/ses-${ses}/fmap" "${DST}/"
 
 
-  #Move figures
-  rsync -av "${SRC}/sub-${SUBJ}_anat.html" "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/fmriprep/sub-${SUBJ}/"
-  rsync -av "${SRC}/sub-${SUBJ}/figures" "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/fmriprep/sub-${SUBJ}/"
-  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}_ses-${ses}_func.html" "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/fmriprep/sub-${SUBJ}/"
-  rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/figures/" "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/fmriprep/sub-${SUBJ}/figures/"
-done
+    #Move figures
+    rsync -av "${SRC}/sub-${SUBJ}_anat.html" "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/fmriprep/sub-${SUBJ}/"
+    rsync -av "${SRC}/sub-${SUBJ}/figures" "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/fmriprep/sub-${SUBJ}/"
+    rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}_ses-${ses}_func.html" "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/fmriprep/sub-${SUBJ}/"
+    rsync -av "${SRC}/ses-${ses}/sub-${SUBJ}/figures/" "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/fmriprep/sub-${SUBJ}/figures/"
+  done
 
-# Remove subject from old anat-only dir
-find /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only -name "*sub-${SUBJ}*" -print0 | xargs -0 rm -rf --
+  # Remove subject from old anat-only dir
+  find /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only -name "*sub-${SUBJ}*" -print0 | xargs -0 rm -rf --
+
+done < "$SUBLIST"
+
+
+
+

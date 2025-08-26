@@ -24,7 +24,7 @@ set fmri(relative_yn) 0
 set fmri(help_yn) 1
 
 # Run Featwatcher
-set fmri(featwatcher_yn) 0
+set fmri(featwatcher_yn) 1
 
 # Cleanup first-level standard-space images
 set fmri(sscleanup_yn) 0
@@ -36,7 +36,7 @@ set fmri(outputdir) "OUTPUT"
 set fmri(tr) 3
 
 # Total volumes
-set fmri(npts) 12
+set fmri(npts) 11
 
 # Delete volumes
 set fmri(ndelete) 0
@@ -45,7 +45,7 @@ set fmri(ndelete) 0
 set fmri(tagfirst) 1
 
 # Number of first-level analyses
-set fmri(multiple) 12
+set fmri(multiple) 11
 
 # Higher-level input type
 # 1 : Inputs are lower-level FEAT directories
@@ -272,46 +272,43 @@ set fmri(fnirt_config) "T1_2_MNI152_2mm"
 set fmri(ncopeinputs) 0
 
 # 4D AVW data or FEAT directory (1)
-set feat_files(1) ""
+set feat_files(1) "INPUT01"
 
 # 4D AVW data or FEAT directory (2)
-set feat_files(2) ""
+set feat_files(2) "INPUT02"
 
 # 4D AVW data or FEAT directory (3)
-set feat_files(3) ""
+set feat_files(3) "INPUT03"
 
 # 4D AVW data or FEAT directory (4)
-set feat_files(4) ""
+set feat_files(4) "INPUT04"
 
 # 4D AVW data or FEAT directory (5)
-set feat_files(5) ""
+set feat_files(5) "INPUT05"
 
 # 4D AVW data or FEAT directory (6)
-set feat_files(6) ""
+set feat_files(6) "INPUT06"
 
 # 4D AVW data or FEAT directory (7)
-set feat_files(7) ""
+set feat_files(7) "INPUT07"
 
 # 4D AVW data or FEAT directory (8)
-set feat_files(8) ""
+set feat_files(8) "INPUT08"
 
 # 4D AVW data or FEAT directory (9)
-set feat_files(9) ""
+set feat_files(9) "INPUT09"
 
 # 4D AVW data or FEAT directory (10)
-set feat_files(10) ""
+set feat_files(10) "INPUT10"
 
 # 4D AVW data or FEAT directory (11)
-set feat_files(11) ""
-
-# 4D AVW data or FEAT directory (12)
-set feat_files(12) ""
+set feat_files(11) "INPUT11"
 
 # Add confound EVs text file
 set fmri(confoundevs) 0
 
 # EV 1 title
-set fmri(evtitle1) ""
+set fmri(evtitle1) "main"
 
 # Basic waveform shape (EV 1)
 # 0 : Square
@@ -387,11 +384,8 @@ set fmri(evg10.1) 1
 # Higher-level EV value for EV 1 and input 11
 set fmri(evg11.1) 1
 
-# Higher-level EV value for EV 1 and input 12
-set fmri(evg12.1) 1
-
 # EV 2 title
-set fmri(evtitle2) ""
+set fmri(evtitle2) "trend"
 
 # Basic waveform shape (EV 2)
 # 0 : Square
@@ -435,40 +429,37 @@ set fmri(ortho2.1) 0
 set fmri(ortho2.2) 0
 
 # Higher-level EV value for EV 2 and input 1
-set fmri(evg1.2) -5.5
+set fmri(evg1.2) -5
 
 # Higher-level EV value for EV 2 and input 2
-set fmri(evg2.2) -4.5
+set fmri(evg2.2) -4
 
 # Higher-level EV value for EV 2 and input 3
-set fmri(evg3.2) -3.5
+set fmri(evg3.2) -3
 
 # Higher-level EV value for EV 2 and input 4
-set fmri(evg4.2) -2.5
+set fmri(evg4.2) -2
 
 # Higher-level EV value for EV 2 and input 5
-set fmri(evg5.2) -1.5
+set fmri(evg5.2) -1
 
 # Higher-level EV value for EV 2 and input 6
-set fmri(evg6.2) -0.5
+set fmri(evg6.2) 0
 
 # Higher-level EV value for EV 2 and input 7
-set fmri(evg7.2) 0.5
+set fmri(evg7.2) 1
 
 # Higher-level EV value for EV 2 and input 8
-set fmri(evg8.2) 1.5
+set fmri(evg8.2) 2
 
 # Higher-level EV value for EV 2 and input 9
-set fmri(evg9.2) 2.5
+set fmri(evg9.2) 3
 
 # Higher-level EV value for EV 2 and input 10
-set fmri(evg10.2) 3.5
+set fmri(evg10.2) 4
 
 # Higher-level EV value for EV 2 and input 11
-set fmri(evg11.2) 4.5
-
-# Higher-level EV value for EV 2 and input 12
-set fmri(evg12.2) 5.5
+set fmri(evg11.2) 5
 
 # Setup Orthogonalisation at higher level?
 set fmri(level2orth) 0
@@ -506,9 +497,6 @@ set fmri(groupmem.10) 1
 # Group membership for input 11
 set fmri(groupmem.11) 1
 
-# Group membership for input 12
-set fmri(groupmem.12) 1
-
 # Contrast & F-tests mode
 # real : control real EVs
 # orig : control original EVs
@@ -537,7 +525,7 @@ set fmri(conname_real.2) "main_neg"
 set fmri(con_real2.1) -1.0
 
 # Real contrast_real vector 2 element 2
-set fmri(con_real2.2) 0
+set fmri(con_real2.2) 0.0
 
 # Display images for contrast_real 3
 set fmri(conpic_real.3) 1
