@@ -56,8 +56,8 @@ for sub in ${subjects[@]}; do
     fi
 
     ITEMPLATE=${projectdir}/templates/L2_task-${task}_model-${model}_2-runs.fsf
-    INPUT1=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-    INPUT2=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-2_space-${space}_${echo}_${confound}.feat
+    INPUT1=${SESDIR}/L1_sub-${sub}_ses-${ses}_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+    INPUT2=${SESDIR}/L1_sub-${sub}_ses-${ses}_task-${task}_model-${model}_type-${type}_run-2_space-${space}_${echo}_${confound}.feat
     OUTPUT=${SESDIR}/L2_task-${task}_model-${model}_type-${type}_ses-${ses}_space-${space}_${echo}_${confound}
     #NCOPES=30
 

@@ -61,7 +61,7 @@ for task in "${tasks[@]}"; do
             
             # Check each run for this session
             for run in 1 2; do
-                INPUT=${SESDIR}/L1_task-${task}_model-${model}_type-${type}_run-${run}_space-${space}_${echo}_${confound}.feat
+                INPUT=${SESDIR}/L1_sub-${sub}_ses-${ses}_task-${task}_model-${model}_type-${type}_run-${run}_space-${space}_${echo}_${confound}.feat
                 
                 if [ -d "${INPUT}" ]; then
                     all_inputs+=(${INPUT})
