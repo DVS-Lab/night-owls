@@ -31,8 +31,11 @@ fi
 
 NVOLUMES=`fslnvols ${DATA}`
 
-#####confoundev need 1. ask if based confound generated from Matt 2. if statement based on value of ${confounds}
-CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-TedanaPlusConfounds.tsv
+if [ "$confounds" == "tedana" ]; then
+	CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-TedanaPlusConfounds.tsv
+elif [ "$confounds" == "base" ]; then
+	CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-fslConfounds.tsv
+fi
 
 if [ ! -e $CONFOUNDEVS ]; then
 	echo "missing confounds: sub-${sub}_ses-${ses}_run-${run}"
