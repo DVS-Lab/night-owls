@@ -86,12 +86,12 @@ for TASK in "${tasks[@]}"; do #Will need echo-2 loop as well
                     OTEMPLATE=${MAINOUTPUT}/L1_sub-${sub}_task-${TASK}_model-${model}_type-${TYPE}_ses-${ses}_run-${run}_space-${space}_${echo}_${confound}.fsf
                 else
                     echo "invalid parameter for temporal derivatives; it can only be 0 or 1." >> ${logdir}/sub-${sub}_ses-${ses}_re-runL1.log
-                    exit
+                    continue
                 fi
 
                 # check for output and skip existing
                 if [ -e ${OUTPUT}.feat/cluster_mask_zstat1.nii.gz ]; then
-                    exit
+                    continue
                 else
                     echo "missing feat output: $OUTPUT " >> ${logdir}/sub-${sub}_ses-${ses}_re-runL1.log
                     rm -rf ${OUTPUT}.feat
