@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+umask 0000
 # This script will perform Level 1 statistics in FSL.
 
 # ensure paths are correct irrespective from where user runs the script
@@ -22,7 +23,7 @@ confounds=(cnfds-fmriprep cnfds-tedana)
 
 
 
-rm -f $logdir/sub-${sub}_ses-${ses}_re-runL1.log
+#rm -f $logdir/sub-${sub}_ses-${ses}_re-runL1.log
 
 for TASK in "${tasks[@]}"; do #Will need echo-2 loop as well
   for space in "${spaces[@]}"; do
