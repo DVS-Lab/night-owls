@@ -82,6 +82,4 @@ feat $OTEMPLATE
 
 # copy zstat image to common output folder and delete feat output
 cp ${OUTPUT}.feat/stats/zstat1.nii.gz ${zoutdir}/zstat_trial-${trial}.nii.gz
-chmod -R 777 ${zoutdir}
 rm -rf ${OUTPUT}.feat ${OTEMPLATE}
-chmod -R 777 ${MAINOUTPUT}
