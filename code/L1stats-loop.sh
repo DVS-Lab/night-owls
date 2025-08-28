@@ -91,7 +91,7 @@ for TASK in "${tasks[@]}"; do #Will need echo-2 loop as well
 
                 # check for output and skip existing
                 if [ -e ${OUTPUT}.feat/cluster_mask_zstat1.nii.gz ]; then
-                    exit
+                    continue
                 else
                     echo "missing feat output: $OUTPUT " >> ${logdir}/sub-${sub}_ses-${ses}_re-runL1.log
                     rm -rf ${OUTPUT}.feat
