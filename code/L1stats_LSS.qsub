@@ -2,7 +2,7 @@
 #PBS -l walltime=0:30:00
 #PBS -N L1stats_LSS
 #PBS -q normal
-#PBS -l nodes=4:ppn=28
+#PBS -l nodes=8:ppn=28
 #PBS -m n
 #PBS -o /home/tug87422/scratch/smithlab-shared/night-owls/logs/pbs
 #PBS -e /home/tug87422/scratch/smithlab-shared/night-owls/logs/pbs
