@@ -17,6 +17,8 @@ mkdir -p $logdir
 
 all_cmds=()
 
+rm -f $scriptdir/missing-tedanaInput.log
+
 for sub in ${subjects[@]}; do
 	for ses in {01..12}; do
 

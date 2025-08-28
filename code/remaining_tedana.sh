@@ -11,7 +11,7 @@ cd $PBS_O_WORKDIR
 all_cmds=(
     /gpfs/scratch/tug87422/smithlab-shared/night-owls/logs/cmd_tedana_sub-101_ses-10.txt
     /gpfs/scratch/tug87422/smithlab-shared/night-owls/logs/cmd_tedana_sub-104_ses-03.txt
-    /gpfs/scratch/tug87422/smithlab-shared/night-owls/logs/cmd_tedana_sub-104_ses-06.txt
+    #/gpfs/scratch/tug87422/smithlab-shared/night-owls/logs/cmd_tedana_sub-104_ses-06.txt
     /gpfs/scratch/tug87422/smithlab-shared/night-owls/logs/cmd_tedana_sub-105_ses-10.txt
 )
 
