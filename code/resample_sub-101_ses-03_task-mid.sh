@@ -1,84 +1,98 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# --- Paths relative to this script ---
+# --- standard header: paths relative to the code directory ---
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 maindir="$(dirname "$scriptdir")"
 fmriprepdir="${maindir}/derivatives/fmriprep"
 
-# --- One-off entities (edit as needed) ---
+# --- edit these if you want to target another subject/session/task/run ---
 sub=101
 ses=03
 task=mid
-run=2     # run to fix; run-1 provides the reference grid
+run=2        # regrid this run to match run-1's reference grid
 
-# --- Helper: does a 4D file match a 3D reference grid? (dim1-3 + pixdim1-3) ---
-matches_ref_grid () {
-  local ref="$1" src="$2"
-  local r1 r2 r3 s1 s2 s3 rp1 rp2 rp3 sp1 sp2 sp3
-  r1=$(fslval "$ref" dim1); r2=$(fslval "$ref" dim2); r3=$(fslval "$ref" dim3)
-  s1=$(fslval "$src" dim1); s2=$(fslval "$src" dim2); s3=$(fslval "$src" dim3)
-  rp1=$(fslval "$ref" pixdim1); rp2=$(fslval "$ref" pixdim2); rp3=$(fslval "$ref" pixdim3)
-  sp1=$(fslval "$src" pixdim1); sp2=$(fslval "$src" pixdim2); sp3=$(fslval "$src" pixdim3)
-  [[ "$r1" == "$s1" && "$r2" == "$s2" && "$r3" == "$s3" ]] && \
-  awk -v a="$rp1" -v b="$sp1" 'BEGIN{exit ((a-b<0?b-a:a-b)<=1e-6?0:1)}' >/dev/null && \
-  awk -v a="$rp2" -v b="$sp2" 'BEGIN{exit ((a-b<0?b-a:a-b)<=1e-6?0:1)}' >/dev/null && \
-  awk -v a="$rp3" -v b="$sp3" 'BEGIN{exit ((a-b<0?b-a:a-b)<=1e-6?0:1)}' >/dev/null
+# --- small helpers ----------------------------------------------------------
+
+need () { command -v "$1" >/dev/null 2>&1 || { echo "ERROR: $1 not found in PATH"; exit 1; }; }
+need antsApplyTransforms
+need fslval
+need fslstats
+
+# echo and check a file
+must_exist () {
+  local f="$1" msg="${2:-Missing required file}"
+  [[ -f "$f" ]] || { echo "ERROR: $msg → $f"; exit 1; }
 }
 
-# --- Core: regrid a 4D series onto a 3D boldref grid (identity transform) ---
+# regrid $src to $ref with identity transform.
+# - auto-detects 3D vs 4D via dim4
+# - interpolation passed as $3 (default Linear); masks should use NearestNeighbor
 regrid_identity () {
-  local ref3d="$1" src4d="$2" label="$3"
+  local ref="$1" src="$2" label="$3" interp="${4:-Linear}"
 
-  if [[ ! -f "$ref3d" ]]; then echo "[$label] Missing reference: $ref3d"; return 1; fi
-  if [[ ! -f "$src4d" ]]; then echo "[$label] Missing source:    $src4d"; return 0;  fi
+  must_exist "$ref" "Reference missing"
+  must_exist "$src" "Source missing"
 
-  # 1) Skip if already repaired
-  if matches_ref_grid "$ref3d" "$src4d"; then
-    echo "[$label] Already matches grid → $src4d"; return 0
+  local d4
+  d4="$(fslval "$src" dim4 2>/dev/null || echo 1)"
+  local ants_args=(-d 3 --float -i "$src" -r "$ref" -o "${src%.nii.gz}_tmp.nii.gz" -t identity)
+  if [[ "${d4}" -gt 1 ]]; then
+    ants_args=(-d 3 -e 3 --float -i "$src" -r "$ref" -o "${src%.nii.gz}_tmp.nii.gz" -t identity)
   fi
 
-  # 2) Backup original once
-  local backup="${src4d%.nii.gz}_ORIGINAL.nii.gz"
+  # one-time backup
+  local backup="${src%.nii.gz}.pre-resample.nii.gz"
   if [[ ! -f "$backup" ]]; then
-    cp -p "$src4d" "$backup"
-    echo "[$label] Backup created → $backup"
-  else
-    echo "[$label] Backup exists   → $backup"
+    cp -n "$src" "$backup"
+    echo "[$label] Backed up original → $backup"
   fi
 
-  # 3) Resample with identity (write to temp, then replace)
-  local tmp="${src4d%.nii.gz}_tmp.nii.gz"
-  echo "[$label] Resampling (identity) → $src4d"
-  antsApplyTransforms -d 3 -e 3 --float \
-    -i "$backup" \
-    -r "$ref3d" \
-    -o "$tmp" \
-    -n Linear \
-    -t identity
+  echo "[$label] Resampling (identity, interp=${interp})"
+  antsApplyTransforms "${ants_args[@]}" -n "${interp}"
 
-  # 4) Sanity: nonzero output and expected voxel sizes (~2.7,2.7,2.97)
+  # quick sanity check
+  local tmp="${src%.nii.gz}_tmp.nii.gz"
   read -r _min _max < <(fslstats "$tmp" -R)
   if [[ "${_max:-0}" == "0" || "${_max:-0}" == "0.000000" ]]; then
-    echo "[$label] ERROR: Output appears empty (max=0). Keeping original."; rm -f "$tmp"; return 1
+    echo "[$label] ERROR: output looks empty (max=0). Aborting."
+    rm -f "$tmp"
+    exit 1
   fi
-  p1=$(fslval "$tmp" pixdim1); p2=$(fslval "$tmp" pixdim2); p3=$(fslval "$tmp" pixdim3)
-  awk -v a="$p1" -v b="$p2" -v c="$p3" 'BEGIN{
-    dx=(a-2.7); dy=(b-2.7); dz=(c-2.97);
-    if (dx<0) dx=-dx; if (dy<0) dy=-dy; if (dz<0) dz=-dz;
-    if (dx>1e-3 || dy>1e-3 || dz>1e-3) exit 1; else exit 0;
-  }' || echo "[$label] WARNING: pixdims are ($p1,$p2,$p3), expected (~2.7,2.7,2.97)."
 
-  mv -f "$tmp" "$src4d"
-  echo "[$label] Success → $src4d"
+  mv -f "$tmp" "$src"
+  echo "[$label] OK → $src"
 }
 
-# ---------- T1w ----------
-ref_t1w="${fmriprepdir}/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-1_part-mag_space-T1w_boldref.nii.gz"
-src_t1w="${fmriprepdir}/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-T1w_desc-preproc_bold.nii.gz"
-regrid_identity "$ref_t1w" "$src_t1w" "T1w"
+# --- paths ------------------------------------------------------------------
 
-# ---------- MNI152NLin6Asym (no res-2) ----------
-ref_mni="${fmriprepdir}/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-1_part-mag_space-MNI152NLin6Asym_boldref.nii.gz"
-src_mni="${fmriprepdir}/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
-regrid_identity "$ref_mni" "$src_mni" "MNI"
+funcdir="${fmriprepdir}/sub-${sub}/ses-${ses}/func"
+
+# T1w reference is run-1 boldref
+ref_t1w="${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-1_part-mag_space-T1w_boldref.nii.gz"
+# run-X BOLD & MASK (to be regridded to ref_t1w)
+bold_t1w="${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-T1w_desc-preproc_bold.nii.gz"
+mask_t1w="${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-T1w_desc-brain_mask.nii.gz"
+
+# MNI reference is run-1 boldref
+ref_mni="${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-1_part-mag_space-MNI152NLin6Asym_boldref.nii.gz"
+# run-X BOLD & MASK (to be regridded to ref_mni)
+bold_mni="${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+mask_mni="${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-brain_mask.nii.gz"
+
+# --- do it ------------------------------------------------------------------
+
+echo "Subject: ${sub}  Session: ${ses}  Task: ${task}  Run: ${run}"
+echo "Regridding run-${run} to match run-1 in both spaces (T1w & MNI152NLin6Asym)."
+
+# T1w 4D BOLD
+regrid_identity "$ref_t1w" "$bold_t1w" "BOLD T1w run-${run}" "Linear"
+# T1w 3D MASK (nearest neighbor)
+regrid_identity "$ref_t1w" "$mask_t1w" "MASK T1w run-${run}" "NearestNeighbor"
+
+# MNI 4D BOLD
+regrid_identity "$ref_mni" "$bold_mni" "BOLD MNI run-${run}" "Linear"
+# MNI 3D MASK (nearest neighbor)
+regrid_identity "$ref_mni" "$mask_mni" "MASK MNI run-${run}" "NearestNeighbor"
+
+echo "Done."
