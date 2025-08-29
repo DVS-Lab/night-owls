@@ -36,3 +36,15 @@ func/sub-104_ses-06_task-sharedreward_run-2_echo-3_part-mag_bold.nii.gz	1925-05-
 func/sub-104_ses-06_task-sharedreward_run-2_echo-3_part-phase_bold.nii.gz	1925-05-15T19:45:14.645000	tubric	778b3845
 func/sub-104_ses-06_task-sharedreward_run-2_echo-4_part-mag_bold.nii.gz	1925-05-15T19:45:14.645000	tubric	b41455c6
 func/sub-104_ses-06_task-sharedreward_run-2_echo-4_part-phase_bold.nii.gz	1925-05-15T19:45:14.645000	tubric	778b3845
+func/sub-104_ses-06_task-mid_run-2_echo-1_sbref.nii.gz	1925-05-15T19:54:48.817500	tubric	e524a153
+func/sub-104_ses-06_task-mid_run-2_echo-2_sbref.nii.gz	1925-05-15T19:54:48.817500	tubric	e524a153
+func/sub-104_ses-06_task-mid_run-2_echo-3_sbref.nii.gz	1925-05-15T19:54:48.817500	tubric	e524a153
+func/sub-104_ses-06_task-mid_run-2_echo-4_sbref.nii.gz	1925-05-15T19:54:48.817500	tubric	e524a153
+func/sub-104_ses-06_task-mid_run-2_echo-1_part-mag_bold.nii.gz	1925-05-15T19:54:56.892500	tubric	7bec6293
+func/sub-104_ses-06_task-mid_run-2_echo-1_part-phase_bold.nii.gz	1925-05-15T19:54:56.892500	tubric	df5cd049
+func/sub-104_ses-06_task-mid_run-2_echo-2_part-mag_bold.nii.gz	1925-05-15T19:54:56.892500	tubric	7bec6293
+func/sub-104_ses-06_task-mid_run-2_echo-2_part-phase_bold.nii.gz	1925-05-15T19:54:56.892500	tubric	df5cd049
+func/sub-104_ses-06_task-mid_run-2_echo-3_part-mag_bold.nii.gz	1925-05-15T19:54:56.892500	tubric	7bec6293
+func/sub-104_ses-06_task-mid_run-2_echo-3_part-phase_bold.nii.gz	1925-05-15T19:54:56.892500	tubric	df5cd049
+func/sub-104_ses-06_task-mid_run-2_echo-4_part-mag_bold.nii.gz	1925-05-15T19:54:56.892500	tubric	7bec6293
+func/sub-104_ses-06_task-mid_run-2_echo-4_part-phase_bold.nii.gz	1925-05-15T19:54:56.892500	tubric	df5cd049
