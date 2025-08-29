@@ -163,3 +163,7 @@ scratch/
 logs/
 code/.RData
 code/.Rhistory
+
+# Ignore generated outputs
+/logs/
+/derivatives/
