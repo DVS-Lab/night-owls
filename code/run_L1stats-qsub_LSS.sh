@@ -6,7 +6,7 @@ maindir="$(dirname "$scriptdir")"
 
 
 
-for sub in 101 103 104 105; do
+for sub in 101 103 105; do #remove 104 for now
 	for acq in multiecho single; do 	
 		for confounds in tedana base; do  
 			for task in mid sharedreward; do
