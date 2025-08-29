@@ -2,7 +2,7 @@ import json
 import os
 
 # Define paths
-bidsdir = "/ZPOOL/data/projects/multiecho-pilot/bids/"
+bidsdir = "/ZPOOL/data/projects/night-owls/bids/"
 
 # Find all subject directories in the BIDS directory
 subs = [d for d in os.listdir(bidsdir) if os.path.isdir(os.path.join(bidsdir, d)) and d.startswith('sub')]
