@@ -58,15 +58,15 @@ for sub in ${subjects[@]}; do
     ITEMPLATE=${projectdir}/templates/L3_PairedTTest_n${nses}.fsf
 
     if [ "$sub" == "101" ]; then
-        INPUT1=${MAINOUTPUT}/ses-01/L1_sub-${sub}_ses-01_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT2=${MAINOUTPUT}/ses-02/L1_sub-${sub}_ses-02_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT3=${MAINOUTPUT}/ses-03/L1_sub-${sub}_ses-03_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT4=${MAINOUTPUT}/ses-06/L1_sub-${sub}_ses-07_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT5=${MAINOUTPUT}/ses-07/L1_sub-${sub}_ses-07_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT6=${MAINOUTPUT}/ses-08/L1_sub-${sub}_ses-09_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT7=${MAINOUTPUT}/ses-09/L1_sub-${sub}_ses-09_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT8=${MAINOUTPUT}/ses-10/L1_sub-${sub}_ses-10_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT9=${MAINOUTPUT}/ses-11/L1_sub-${sub}_ses-11_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT01=${MAINOUTPUT}/ses-01/L1_sub-${sub}_ses-01_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT02=${MAINOUTPUT}/ses-02/L1_sub-${sub}_ses-02_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT03=${MAINOUTPUT}/ses-03/L1_sub-${sub}_ses-03_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT04=${MAINOUTPUT}/ses-06/L1_sub-${sub}_ses-07_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT05=${MAINOUTPUT}/ses-07/L1_sub-${sub}_ses-07_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT06=${MAINOUTPUT}/ses-08/L1_sub-${sub}_ses-09_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT07=${MAINOUTPUT}/ses-09/L1_sub-${sub}_ses-09_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT08=${MAINOUTPUT}/ses-10/L1_sub-${sub}_ses-10_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT09=${MAINOUTPUT}/ses-11/L1_sub-${sub}_ses-11_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
         INPUT10=${MAINOUTPUT}/ses-01/L1_sub-${sub}_ses-01_task-${task}_model-${model}_type-${type}_run-2_space-${space}_${echo}_${confound}.feat
         INPUT11=${MAINOUTPUT}/ses-02/L1_sub-${sub}_ses-02_task-${task}_model-${model}_type-${type}_run-2_space-${space}_${echo}_${confound}.feat
         INPUT12=${MAINOUTPUT}/ses-03/L1_sub-${sub}_ses-03_task-${task}_model-${model}_type-${type}_run-2_space-${space}_${echo}_${confound}.feat
@@ -77,15 +77,15 @@ for sub in ${subjects[@]}; do
         INPUT17=${MAINOUTPUT}/ses-10/L1_sub-${sub}_ses-10_task-${task}_model-${model}_type-${type}_run-2_space-${space}_${echo}_${confound}.feat
         INPUT18=${MAINOUTPUT}/ses-11/L1_sub-${sub}_ses-11_task-${task}_model-${model}_type-${type}_run-2_space-${space}_${echo}_${confound}.feat
     elif [ "$sub" == "103" ]; then
-        INPUT1=${MAINOUTPUT}/ses-01/L1_sub-${sub}_ses-01_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT2=${MAINOUTPUT}/ses-02/L1_sub-${sub}_ses-02_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT3=${MAINOUTPUT}/ses-03/L1_sub-${sub}_ses-03_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT4=${MAINOUTPUT}/ses-04/L1_sub-${sub}_ses-04_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT5=${MAINOUTPUT}/ses-05/L1_sub-${sub}_ses-05_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT6=${MAINOUTPUT}/ses-06/L1_sub-${sub}_ses-06_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT7=${MAINOUTPUT}/ses-07/L1_sub-${sub}_ses-07_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT8=${MAINOUTPUT}/ses-08/L1_sub-${sub}_ses-08_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT9=${MAINOUTPUT}/ses-09/L1_sub-${sub}_ses-09_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT01=${MAINOUTPUT}/ses-01/L1_sub-${sub}_ses-01_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT02=${MAINOUTPUT}/ses-02/L1_sub-${sub}_ses-02_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT03=${MAINOUTPUT}/ses-03/L1_sub-${sub}_ses-03_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT04=${MAINOUTPUT}/ses-04/L1_sub-${sub}_ses-04_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT05=${MAINOUTPUT}/ses-05/L1_sub-${sub}_ses-05_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT06=${MAINOUTPUT}/ses-06/L1_sub-${sub}_ses-06_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT07=${MAINOUTPUT}/ses-07/L1_sub-${sub}_ses-07_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT08=${MAINOUTPUT}/ses-08/L1_sub-${sub}_ses-08_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT09=${MAINOUTPUT}/ses-09/L1_sub-${sub}_ses-09_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
         INPUT10=${MAINOUTPUT}/ses-10/L1_sub-${sub}_ses-10_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
         INPUT11=${MAINOUTPUT}/ses-11/L1_sub-${sub}_ses-11_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
         INPUT12=${MAINOUTPUT}/ses-01/L1_sub-${sub}_ses-01_task-${task}_model-${model}_type-${type}_run-2_space-${space}_${echo}_${confound}.feat
@@ -100,15 +100,15 @@ for sub in ${subjects[@]}; do
         INPUT21=${MAINOUTPUT}/ses-10/L1_sub-${sub}_ses-10_task-${task}_model-${model}_type-${type}_run-2_space-${space}_${echo}_${confound}.feat
         INPUT22=${MAINOUTPUT}/ses-11/L1_sub-${sub}_ses-11_task-${task}_model-${model}_type-${type}_run-2_space-${space}_${echo}_${confound}.feat
     else 
-        INPUT1=${MAINOUTPUT}/ses-01/L1_sub-${sub}_ses-01_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT2=${MAINOUTPUT}/ses-02/L1_sub-${sub}_ses-02_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT3=${MAINOUTPUT}/ses-03/L1_sub-${sub}_ses-03_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT4=${MAINOUTPUT}/ses-04/L1_sub-${sub}_ses-04_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT5=${MAINOUTPUT}/ses-05/L1_sub-${sub}_ses-05_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT6=${MAINOUTPUT}/ses-06/L1_sub-${sub}_ses-06_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT7=${MAINOUTPUT}/ses-07/L1_sub-${sub}_ses-07_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT8=${MAINOUTPUT}/ses-08/L1_sub-${sub}_ses-08_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
-        INPUT9=${MAINOUTPUT}/ses-09/L1_sub-${sub}_ses-09_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT01=${MAINOUTPUT}/ses-01/L1_sub-${sub}_ses-01_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT02=${MAINOUTPUT}/ses-02/L1_sub-${sub}_ses-02_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT03=${MAINOUTPUT}/ses-03/L1_sub-${sub}_ses-03_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT04=${MAINOUTPUT}/ses-04/L1_sub-${sub}_ses-04_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT05=${MAINOUTPUT}/ses-05/L1_sub-${sub}_ses-05_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT06=${MAINOUTPUT}/ses-06/L1_sub-${sub}_ses-06_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT07=${MAINOUTPUT}/ses-07/L1_sub-${sub}_ses-07_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT08=${MAINOUTPUT}/ses-08/L1_sub-${sub}_ses-08_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
+        INPUT09=${MAINOUTPUT}/ses-09/L1_sub-${sub}_ses-09_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
         INPUT10=${MAINOUTPUT}/ses-10/L1_sub-${sub}_ses-10_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
         INPUT11=${MAINOUTPUT}/ses-11/L1_sub-${sub}_ses-11_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
         INPUT12=${MAINOUTPUT}/ses-12/L1_sub-${sub}_ses-12_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat
@@ -142,15 +142,15 @@ for sub in ${subjects[@]}; do
 
     if [ "$sub" == "101" ]; then
         sed -e 's@OUTPUT@'$OUTPUT'@g' \
-        -e 's@INPUT1@'$INPUT1'@g' \
-        -e 's@INPUT2@'$INPUT2'@g' \
-        -e 's@INPUT3@'$INPUT3'@g' \
-        -e 's@INPUT4@'$INPUT4'@g' \
-        -e 's@INPUT5@'$INPUT5'@g' \
-        -e 's@INPUT6@'$INPUT6'@g' \
-        -e 's@INPUT7@'$INPUT7'@g' \
-        -e 's@INPUT8@'$INPUT8'@g' \
-        -e 's@INPUT9@'$INPUT9'@g' \
+        -e 's@INPUT01@'$INPUT01'@g' \
+        -e 's@INPUT02@'$INPUT02'@g' \
+        -e 's@INPUT03@'$INPUT03'@g' \
+        -e 's@INPUT04@'$INPUT04'@g' \
+        -e 's@INPUT05@'$INPUT05'@g' \
+        -e 's@INPUT06@'$INPUT06'@g' \
+        -e 's@INPUT07@'$INPUT07'@g' \
+        -e 's@INPUT08@'$INPUT08'@g' \
+        -e 's@INPUT09@'$INPUT09'@g' \
         -e 's@INPUT10@'$INPUT10'@g' \
         -e 's@INPUT11@'$INPUT11'@g' \
         -e 's@INPUT12@'$INPUT12'@g' \
@@ -164,15 +164,15 @@ for sub in ${subjects[@]}; do
         echo feat $OTEMPLATE >>$logdir/cmd_L3_sub-${sub}_${PBS_JOBID}.txt
     elif [ "$sub" == "103" ]; then
         sed -e 's@OUTPUT@'$OUTPUT'@g' \
-        -e 's@INPUT1@'$INPUT1'@g' \
-        -e 's@INPUT2@'$INPUT2'@g' \
-        -e 's@INPUT3@'$INPUT3'@g' \
-        -e 's@INPUT4@'$INPUT4'@g' \
-        -e 's@INPUT5@'$INPUT5'@g' \
-        -e 's@INPUT6@'$INPUT6'@g' \
-        -e 's@INPUT7@'$INPUT7'@g' \
-        -e 's@INPUT8@'$INPUT8'@g' \
-        -e 's@INPUT9@'$INPUT9'@g' \
+        -e 's@INPUT01@'$INPUT01'@g' \
+        -e 's@INPUT02@'$INPUT02'@g' \
+        -e 's@INPUT03@'$INPUT03'@g' \
+        -e 's@INPUT04@'$INPUT04'@g' \
+        -e 's@INPUT05@'$INPUT05'@g' \
+        -e 's@INPUT06@'$INPUT06'@g' \
+        -e 's@INPUT07@'$INPUT07'@g' \
+        -e 's@INPUT08@'$INPUT08'@g' \
+        -e 's@INPUT09@'$INPUT09'@g' \
         -e 's@INPUT10@'$INPUT10'@g' \
         -e 's@INPUT11@'$INPUT11'@g' \
         -e 's@INPUT12@'$INPUT12'@g' \
@@ -190,15 +190,15 @@ for sub in ${subjects[@]}; do
         echo feat $OTEMPLATE >>$logdir/cmd_L3_sub-${sub}_${PBS_JOBID}.txt
     else 
         sed -e 's@OUTPUT@'$OUTPUT'@g' \
-        -e 's@INPUT1@'$INPUT1'@g' \
-        -e 's@INPUT2@'$INPUT2'@g' \
-        -e 's@INPUT3@'$INPUT3'@g' \
-        -e 's@INPUT4@'$INPUT4'@g' \
-        -e 's@INPUT5@'$INPUT5'@g' \
-        -e 's@INPUT6@'$INPUT6'@g' \
-        -e 's@INPUT7@'$INPUT7'@g' \
-        -e 's@INPUT8@'$INPUT8'@g' \
-        -e 's@INPUT9@'$INPUT9'@g' \
+        -e 's@INPUT01@'$INPUT01'@g' \
+        -e 's@INPUT02@'$INPUT02'@g' \
+        -e 's@INPUT03@'$INPUT03'@g' \
+        -e 's@INPUT04@'$INPUT04'@g' \
+        -e 's@INPUT05@'$INPUT05'@g' \
+        -e 's@INPUT06@'$INPUT06'@g' \
+        -e 's@INPUT07@'$INPUT07'@g' \
+        -e 's@INPUT08@'$INPUT08'@g' \
+        -e 's@INPUT09@'$INPUT09'@g' \
         -e 's@INPUT10@'$INPUT10'@g' \
         -e 's@INPUT11@'$INPUT11'@g' \
         -e 's@INPUT12@'$INPUT12'@g' \
