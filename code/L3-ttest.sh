@@ -1,7 +1,7 @@
 
 #!/bin/bash
 #PBS -l walltime=12:00:00
-#PBS -N L3stats
+#PBS -N L3stats-ttest
 #PBS -q normal
 #PBS -m ae
 #PBS -M matt.mattoni@temple.edu
@@ -62,7 +62,7 @@ for sub in ${subjects[@]}; do
         INPUT01=${MAINOUTPUT}/ses-01/L1_sub-${sub}_ses-01_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
         INPUT02=${MAINOUTPUT}/ses-02/L1_sub-${sub}_ses-02_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
         INPUT03=${MAINOUTPUT}/ses-03/L1_sub-${sub}_ses-03_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
-        INPUT04=${MAINOUTPUT}/ses-06/L1_sub-${sub}_ses-07_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
+        INPUT04=${MAINOUTPUT}/ses-06/L1_sub-${sub}_ses-06_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
         INPUT05=${MAINOUTPUT}/ses-07/L1_sub-${sub}_ses-07_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
         INPUT06=${MAINOUTPUT}/ses-08/L1_sub-${sub}_ses-09_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
         INPUT07=${MAINOUTPUT}/ses-09/L1_sub-${sub}_ses-09_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
