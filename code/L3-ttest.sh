@@ -64,7 +64,7 @@ for sub in ${subjects[@]}; do
         INPUT03=${MAINOUTPUT}/ses-03/L1_sub-${sub}_ses-03_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
         INPUT04=${MAINOUTPUT}/ses-06/L1_sub-${sub}_ses-06_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
         INPUT05=${MAINOUTPUT}/ses-07/L1_sub-${sub}_ses-07_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
-        INPUT06=${MAINOUTPUT}/ses-08/L1_sub-${sub}_ses-09_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
+        INPUT06=${MAINOUTPUT}/ses-08/L1_sub-${sub}_ses-08_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
         INPUT07=${MAINOUTPUT}/ses-09/L1_sub-${sub}_ses-09_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
         INPUT08=${MAINOUTPUT}/ses-10/L1_sub-${sub}_ses-10_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
         INPUT09=${MAINOUTPUT}/ses-11/L1_sub-${sub}_ses-11_task-${task}_model-${model}_type-${type}_run-1_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
@@ -139,7 +139,7 @@ for sub in ${subjects[@]}; do
     fi
 
     # build and run session FSF
-    OTEMPLATE=${MAINOUTPUT}/L3_task-${task}_ttest_space-${space}_${echo}_${confound}.fsf
+    OTEMPLATE=${MAINOUTPUT}/subject-level/L3_task-${task}_ttest_space-${space}_${echo}_${confound}.fsf
 
     if [ "$sub" == "101" ]; then
         sed -e 's@OUTPUT@'$OUTPUT'@g' \
