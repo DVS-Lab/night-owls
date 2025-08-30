@@ -20,4 +20,8 @@ while [ $counter -lt ${#myArray[@]} ]; do
     qsub -v subjects="${subjects[@]}" "$script"
     echo $subjects $script
 
+    script="L3-trend.sh"
+    qsub -v subjects="${subjects[@]}" "$script"
+    echo $subjects $script
+
 done
