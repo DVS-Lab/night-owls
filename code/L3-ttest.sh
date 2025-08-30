@@ -224,4 +224,4 @@ for sub in ${subjects[@]}; do
 done
 done
 
-torque-launch -p "$logdir/chk_L3_${PBS_JOBID}.txt" "$logdir/cmd_L3_sub-${sub}_${PBS_JOBID}.txt"
+torque-launch -p "$logdir/chk_L3_sub-${sub}_${PBS_JOBID}.txt" "$logdir/cmd_L3_sub-${sub}_${PBS_JOBID}.txt"
