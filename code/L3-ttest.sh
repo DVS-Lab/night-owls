@@ -127,7 +127,7 @@ for sub in ${subjects[@]}; do
         INPUT24=${MAINOUTPUT}/ses-12/L1_sub-${sub}_ses-12_task-${task}_model-${model}_type-${type}_run-2_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
     fi
 
-    OUTPUT=${MAINOUTPUT}/L3_task-${task}_ttest_space-${space}_${echo}_${confound}
+    OUTPUT=${MAINOUTPUT}/subject-level/L3_task-${task}_ttest_space-${space}_${echo}_${confound}
     #NCOPES=30
 
     NCOPES=$([ "$task" = "mid" ] && echo 10 || echo 15)
