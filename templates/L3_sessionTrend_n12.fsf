@@ -272,46 +272,46 @@ set fmri(fnirt_config) "T1_2_MNI152_2mm"
 set fmri(ncopeinputs) 0
 
 # 4D AVW data or FEAT directory (1)
-set feat_files(1) ""
+set feat_files(1) "INPUT01"
 
 # 4D AVW data or FEAT directory (2)
-set feat_files(2) ""
+set feat_files(2) "INPUT02"
 
 # 4D AVW data or FEAT directory (3)
-set feat_files(3) ""
+set feat_files(3) "INPUT03"
 
 # 4D AVW data or FEAT directory (4)
-set feat_files(4) ""
+set feat_files(4) "INPUT04"
 
 # 4D AVW data or FEAT directory (5)
-set feat_files(5) ""
+set feat_files(5) "INPUT05"
 
 # 4D AVW data or FEAT directory (6)
-set feat_files(6) ""
+set feat_files(6) "INPUT06"
 
 # 4D AVW data or FEAT directory (7)
-set feat_files(7) ""
+set feat_files(7) "INPUT07"
 
 # 4D AVW data or FEAT directory (8)
-set feat_files(8) ""
+set feat_files(8) "INPUT08"
 
 # 4D AVW data or FEAT directory (9)
-set feat_files(9) ""
+set feat_files(9) "INPUT09"
 
 # 4D AVW data or FEAT directory (10)
-set feat_files(10) ""
+set feat_files(10) "INPUT10"
 
 # 4D AVW data or FEAT directory (11)
-set feat_files(11) ""
+set feat_files(11) "INPUT11"
 
 # 4D AVW data or FEAT directory (12)
-set feat_files(12) ""
+set feat_files(12) "INPUT12"
 
 # Add confound EVs text file
 set fmri(confoundevs) 0
 
 # EV 1 title
-set fmri(evtitle1) ""
+set fmri(evtitle1) "main"
 
 # Basic waveform shape (EV 1)
 # 0 : Square
@@ -391,7 +391,7 @@ set fmri(evg11.1) 1
 set fmri(evg12.1) 1
 
 # EV 2 title
-set fmri(evtitle2) ""
+set fmri(evtitle2) "trend"
 
 # Basic waveform shape (EV 2)
 # 0 : Square

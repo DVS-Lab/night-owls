@@ -105,7 +105,7 @@ for sub in ${subjects[@]}; do
     NCOPES=$([ "$task" = "mid" ] && echo 10 || echo 15)
 
     # skip if output already exists
-    if [ -e ${OUTPUT}.gfeat/cope${NCOPES}.feat/cope${copen}.feat/cluster_mask_zstat1.nii.gz ]; then
+    if [ -e ${OUTPUT}.gfeat/cope1.feat/cluster_mask_zstat1.nii.gz ]; then
         echo "SKIP sub-${sub} ${task}: L3 already done" >> $logdir/re-runL3_sub-${sub}trend.log
         continue
     fi
