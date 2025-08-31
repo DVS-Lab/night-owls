@@ -40,7 +40,7 @@ for comb in all_combinations:
         # Compute pairwise Spearman similarity
         df = pairwise_similarity(files, similarity_type='spearman')
         # take the mean of all pairwise correlations
-        row[f"sub-{sub}"] = df['similarity'].mean()
+        row[f"sub-{sub}"] = df['similar_coef'].mean()
     results.append(row)
 
 #export
