@@ -16,7 +16,7 @@ deriv_fsl="${DERIV_FSL:-"$maindir/derivatives/fsl"}"
 # --- config ---
 tasks=(mid sharedreward)
 # Set the per-task trial counts (swap if your mapping is reversed)
-declare -A TRIALS=( ["mid"]=54 ["sharedreward"]=56 )
+declare -A TRIALS=( ["mid"]=56 ["sharedreward"]=54 )
 
 acqs=(multiecho single)
 spaces=(MNI152NLin6Asym T1w)
