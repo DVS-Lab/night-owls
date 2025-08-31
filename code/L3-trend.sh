@@ -49,7 +49,7 @@ for sub in ${subjects[@]}; do
     rm -f L3stats_sub-${sub}_trend.o*
     rm -f L3stats_sub-${sub}_trend.e*
 
-    rm -f $logdir/re-runL3_sub-${sub}.log
+    rm -f $logdir/re-runL3_sub-${sub}trend.log
 
     for task in "${tasks[@]}"; do
         for echo in "${echos[@]}"; do
@@ -95,6 +95,10 @@ for sub in ${subjects[@]}; do
         INPUT12=${MAINOUTPUT}/ses-12/L2_task-${task}_model-${model}_type-${type}_ses-12_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope1.nii.gz
     fi
 
+
+    # log INPUT01
+    echo "INPUT01 for sub-${sub}, task-${task}: ${INPUT01}" >> $logdir/re-runL3_sub-${sub}trend.log
+
     OUTPUT=${MAINOUTPUT}/subject-level/L3_task-${task}_trend_space-${space}_${echo}_${confound}
     #NCOPES=30
 
@@ -102,7 +106,7 @@ for sub in ${subjects[@]}; do
 
     # skip if output already exists
     if [ -e ${OUTPUT}.gfeat/cope${NCOPES}.feat/cope${copen}.feat/cluster_mask_zstat1.nii.gz ]; then
-        echo "SKIP sub-${sub} ${task}: L3 already done" >> $logdir/re-runL3_sub-${sub}.log
+        echo "SKIP sub-${sub} ${task}: L3 already done" >> $logdir/re-runL3_sub-${sub}trend.log
         continue
     fi
 
