@@ -59,40 +59,40 @@ for sub in ${subjects[@]}; do
     ITEMPLATE=${projectdir}/templates/L3_sessionTrend_n${nses}.fsf
 
     if [ "$sub" == "101" ]; then
-        INPUT01=${MAINOUTPUT}/ses-01/L2_task-${task}_model-${model}_type-${type}_ses-01_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT02=${MAINOUTPUT}/ses-02/L2_task-${task}_model-${model}_type-${type}_ses-02_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT03=${MAINOUTPUT}/ses-03/L2_task-${task}_model-${model}_type-${type}_ses-03_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT04=${MAINOUTPUT}/ses-06/L2_task-${task}_model-${model}_type-${type}_ses-06_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT05=${MAINOUTPUT}/ses-07/L2_task-${task}_model-${model}_type-${type}_ses-07_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT06=${MAINOUTPUT}/ses-08/L2_task-${task}_model-${model}_type-${type}_ses-08_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT07=${MAINOUTPUT}/ses-09/L2_task-${task}_model-${model}_type-${type}_ses-09_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT08=${MAINOUTPUT}/ses-10/L2_task-${task}_model-${model}_type-${type}_ses-10_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT09=${MAINOUTPUT}/ses-11/L2_task-${task}_model-${model}_type-${type}_ses-11_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT01=${MAINOUTPUT}/ses-01/L2_task-${task}_model-${model}_type-${type}_ses-01_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT02=${MAINOUTPUT}/ses-02/L2_task-${task}_model-${model}_type-${type}_ses-02_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT03=${MAINOUTPUT}/ses-03/L2_task-${task}_model-${model}_type-${type}_ses-03_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT04=${MAINOUTPUT}/ses-06/L2_task-${task}_model-${model}_type-${type}_ses-06_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT05=${MAINOUTPUT}/ses-07/L2_task-${task}_model-${model}_type-${type}_ses-07_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT06=${MAINOUTPUT}/ses-08/L2_task-${task}_model-${model}_type-${type}_ses-08_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT07=${MAINOUTPUT}/ses-09/L2_task-${task}_model-${model}_type-${type}_ses-09_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT08=${MAINOUTPUT}/ses-10/L2_task-${task}_model-${model}_type-${type}_ses-10_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT09=${MAINOUTPUT}/ses-11/L2_task-${task}_model-${model}_type-${type}_ses-11_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
     elif [ "$sub" == "103" ]; then
-        INPUT01=${MAINOUTPUT}/ses-01/L2_task-${task}_model-${model}_type-${type}_ses-01_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT02=${MAINOUTPUT}/ses-02/L2_task-${task}_model-${model}_type-${type}_ses-02_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT03=${MAINOUTPUT}/ses-03/L2_task-${task}_model-${model}_type-${type}_ses-03_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT04=${MAINOUTPUT}/ses-04/L2_task-${task}_model-${model}_type-${type}_ses-04_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT05=${MAINOUTPUT}/ses-05/L2_task-${task}_model-${model}_type-${type}_ses-05_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT06=${MAINOUTPUT}/ses-06/L2_task-${task}_model-${model}_type-${type}_ses-06_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT07=${MAINOUTPUT}/ses-07/L2_task-${task}_model-${model}_type-${type}_ses-07_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT08=${MAINOUTPUT}/ses-08/L2_task-${task}_model-${model}_type-${type}_ses-08_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT09=${MAINOUTPUT}/ses-09/L2_task-${task}_model-${model}_type-${type}_ses-09_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT10=${MAINOUTPUT}/ses-10/L2_task-${task}_model-${model}_type-${type}_ses-10_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT11=${MAINOUTPUT}/ses-11/L2_task-${task}_model-${model}_type-${type}_ses-11_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT01=${MAINOUTPUT}/ses-01/L2_task-${task}_model-${model}_type-${type}_ses-01_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT02=${MAINOUTPUT}/ses-02/L2_task-${task}_model-${model}_type-${type}_ses-02_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT03=${MAINOUTPUT}/ses-03/L2_task-${task}_model-${model}_type-${type}_ses-03_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT04=${MAINOUTPUT}/ses-04/L2_task-${task}_model-${model}_type-${type}_ses-04_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT05=${MAINOUTPUT}/ses-05/L2_task-${task}_model-${model}_type-${type}_ses-05_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT06=${MAINOUTPUT}/ses-06/L2_task-${task}_model-${model}_type-${type}_ses-06_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT07=${MAINOUTPUT}/ses-07/L2_task-${task}_model-${model}_type-${type}_ses-07_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT08=${MAINOUTPUT}/ses-08/L2_task-${task}_model-${model}_type-${type}_ses-08_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT09=${MAINOUTPUT}/ses-09/L2_task-${task}_model-${model}_type-${type}_ses-09_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT10=${MAINOUTPUT}/ses-10/L2_task-${task}_model-${model}_type-${type}_ses-10_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT11=${MAINOUTPUT}/ses-11/L2_task-${task}_model-${model}_type-${type}_ses-11_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
     else 
-        INPUT01=${MAINOUTPUT}/ses-01/L2_task-${task}_model-${model}_type-${type}_ses-01_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT02=${MAINOUTPUT}/ses-02/L2_task-${task}_model-${model}_type-${type}_ses-02_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT03=${MAINOUTPUT}/ses-03/L2_task-${task}_model-${model}_type-${type}_ses-03_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT04=${MAINOUTPUT}/ses-04/L2_task-${task}_model-${model}_type-${type}_ses-04_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT05=${MAINOUTPUT}/ses-05/L2_task-${task}_model-${model}_type-${type}_ses-05_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT06=${MAINOUTPUT}/ses-06/L2_task-${task}_model-${model}_type-${type}_ses-06_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT07=${MAINOUTPUT}/ses-07/L2_task-${task}_model-${model}_type-${type}_ses-07_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT08=${MAINOUTPUT}/ses-08/L2_task-${task}_model-${model}_type-${type}_ses-08_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT09=${MAINOUTPUT}/ses-09/L2_task-${task}_model-${model}_type-${type}_ses-09_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT10=${MAINOUTPUT}/ses-10/L2_task-${task}_model-${model}_type-${type}_ses-10_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT11=${MAINOUTPUT}/ses-11/L2_task-${task}_model-${model}_type-${type}_ses-11_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
-        INPUT12=${MAINOUTPUT}/ses-12/L2_task-${task}_model-${model}_type-${type}_ses-12_space-${space}_${echo}_${confound}.feat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT01=${MAINOUTPUT}/ses-01/L2_task-${task}_model-${model}_type-${type}_ses-01_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT02=${MAINOUTPUT}/ses-02/L2_task-${task}_model-${model}_type-${type}_ses-02_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT03=${MAINOUTPUT}/ses-03/L2_task-${task}_model-${model}_type-${type}_ses-03_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT04=${MAINOUTPUT}/ses-04/L2_task-${task}_model-${model}_type-${type}_ses-04_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT05=${MAINOUTPUT}/ses-05/L2_task-${task}_model-${model}_type-${type}_ses-05_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT06=${MAINOUTPUT}/ses-06/L2_task-${task}_model-${model}_type-${type}_ses-06_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT07=${MAINOUTPUT}/ses-07/L2_task-${task}_model-${model}_type-${type}_ses-07_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT08=${MAINOUTPUT}/ses-08/L2_task-${task}_model-${model}_type-${type}_ses-08_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT09=${MAINOUTPUT}/ses-09/L2_task-${task}_model-${model}_type-${type}_ses-09_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT10=${MAINOUTPUT}/ses-10/L2_task-${task}_model-${model}_type-${type}_ses-10_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT11=${MAINOUTPUT}/ses-11/L2_task-${task}_model-${model}_type-${type}_ses-11_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
+        INPUT12=${MAINOUTPUT}/ses-12/L2_task-${task}_model-${model}_type-${type}_ses-12_space-${space}_${echo}_${confound}.gfeat/cope${copen}.feat/stats/cope${copen}.nii.gz
     fi
 
     OUTPUT=${MAINOUTPUT}/subject-level/L3_task-${task}_trend_space-${space}_${echo}_${confound}
@@ -107,7 +107,7 @@ for sub in ${subjects[@]}; do
     fi
 
     # build and run session FSF
-    OTEMPLATE=${MAINOUTPUT}/L3_task-${task}_trend_space-${space}_${echo}_${confound}.fsf
+    OTEMPLATE=${MAINOUTPUT}/subject-level/L3_task-${task}_trend_space-${space}_${echo}_${confound}.fsf
 
     if [ "$sub" == "101" ]; then
         sed -e 's@OUTPUT@'$OUTPUT'@g' \

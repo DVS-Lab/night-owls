@@ -3,9 +3,6 @@ import pandas as pd
 from pathlib import Path
 from pyrelimri.similarity import pairwise_similarity
 
-# -----------------------------
-# Parameters
-# -----------------------------
 subs = [101, 103, 104, 105]
 tasks = ['mid', 'sharedreward']
 spaces = ['mni', 't1w']
@@ -39,8 +36,10 @@ for comb in all_combinations:
         files = get_files_for_combination(sub, task, space, echo, confound)
         # Compute pairwise Spearman similarity
         df = pairwise_similarity(files, similarity_type='spearman')
-        # take the mean of all pairwise correlations
+        # convert similar_coef to numeric before taking mean
+        df['similar_coef'] = pd.to_numeric(df['similar_coef'], errors='coerce')
         row[f"sub-{sub}"] = df['similar_coef'].mean()
+
     results.append(row)
 
 #export
