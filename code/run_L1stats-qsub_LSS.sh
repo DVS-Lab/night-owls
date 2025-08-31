@@ -13,7 +13,7 @@ declare -A SKIP=(
 )
 
 #for sub in 101 103 104 105; do
-for sub in 104; do
+for sub in 101; do
   for acq in multiecho single; do
     for confounds in tedana base; do
       for task in mid sharedreward; do
