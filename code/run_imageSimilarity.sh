@@ -9,6 +9,7 @@
 projectdir=/gpfs/scratch/tug87422/smithlab-shared/night-owls
 scriptdir=$projectdir/code
 
+cd $PBS_O_WORKDIR
 umask 0000
 
 module load python
