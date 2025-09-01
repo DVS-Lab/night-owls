@@ -16,17 +16,17 @@ runs = [1, 2]
 data_root = Path("/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/fsl")
 
 # find all runs matching combination
-def get_files_for_combination(sub, task, space, echo, confound):
+def get_files_for_combination(sub, task, space, echo, confound, run):  # add run as argument
     files = []
-    for run in runs:
-        cope_n = 7 if (task == 'mid') else 11
-        ses_dirs = sorted(
-            data_root.glob(
-                f"sub-{sub}/ses-*/L1_sub-{sub}_ses-*_task-{task}_model-1_type-act_run-{run}_space-{space}_{echo}_{confound}.feat/stats/cope{cope_n}.nii.gz"
-            )
+    cope_n = 7 if (task == 'mid') else 11
+    ses_dirs = sorted(
+        data_root.glob(
+            f"sub-{sub}/ses-*/L1_sub-{sub}_ses-*_task-{task}_model-1_type-act_run-{run}_space-{space}_{echo}_{confound}.feat/stats/cope{cope_n}.nii.gz"
         )
-        files.extend(ses_dirs)
+    )
+    files.extend(ses_dirs)
     return [str(f) for f in files]
+
 
 # similarity loop
 all_combinations = list(itertools.product(tasks, spaces, echoes, confounds, runs))
@@ -37,7 +37,7 @@ for comb in all_combinations:
     row = {'Combination': f"{task}_{space}_{echo}_{confound}_run{run}"}
 
     for sub in subs:
-        files = get_files_for_combination(sub, task, space, echo, confound)
+        files = get_files_for_combination(sub, task, space, echo, confound, run)
         if len(files) < 2:
             row[f"sub-{sub}"] = ""
         else:
