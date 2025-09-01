@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+
 
 # -------- fixed locations (relative to THIS script), and required tools --------
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
