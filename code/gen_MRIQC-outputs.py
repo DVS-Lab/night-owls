@@ -5,7 +5,7 @@ import pandas as pd
 
 # Hard-coded input and output
 mriqc_path = "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/mriqc"  
-out_file = "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/data-outputs/mriqc_metrics.csv"
+out_file = "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/data-outputs/mriqc/mriqc_metrics.csv"
 
 # Collect all *_bold.json files
 j_files = []
@@ -63,7 +63,7 @@ avg_df["echo"] = "avg"
 # Combine original + averages
 df_final = pd.concat([df, avg_df], ignore_index=True)
 
-# Simple sort by sub → ses → task → run → echo (alphabetical)
+# Simple sort by sub → ses → task → run → echo
 df_final = df_final.sort_values(by=["sub", "ses", "task", "run", "echo"])
 
 # Reorder columns
@@ -75,4 +75,18 @@ df_final[["mean_fd", "tsnr"]] = df_final[["mean_fd", "tsnr"]].round(3)
 
 # Save to CSV
 df_final.to_csv(out_file, index=False)
-print(f"✅ Wrote {len(df_final)} rows (including averages) to {out_file}")
+print(f"✅ Summary CSV saved: {out_file}")
+
+# --- Create per-subject per-task QC files ---
+for (sub, task), group in df_final.groupby(["sub", "task"]):
+    qc_df = group.copy()
+    # Create the row label: sub_ses-run
+    qc_df["row_label"] = qc_df["sub"] + "_" + qc_df["ses"] + "-" + qc_df["run"]
+    qc_df = qc_df[["row_label", "mean_fd", "tsnr"]]
+    
+    qc_file = os.path.join(
+        os.path.dirname(out_file),
+        f"{sub}_{task}_qc.csv"
+    )
+    qc_df.to_csv(qc_file, index=False)
+    print(f"✅ QC CSV saved: {qc_file}")
