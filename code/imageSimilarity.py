@@ -3,6 +3,9 @@ import pandas as pd
 from pathlib import Path
 from pyrelimri.similarity import pairwise_similarity
 
+for f in Path(".").glob("imageSimilarity.e*"):
+    f.unlink(missing_ok=True)
+
 subs = [101, 103, 104, 105]
 tasks = ['mid', 'sharedreward']
 spaces = ['mni', 't1w']

@@ -6,10 +6,12 @@
 #PBS -M matt.mattoni@temple.edu
 #PBS -l nodes=1:ppn=28
 
+projectdir=/gpfs/scratch/tug87422/smithlab-shared/night-owls
+scriptdir=$projectdir/code
 
 cd $PBS_O_WORKDIR
 umask 0000
 
 module load python
 
-python pairwise_icc.py
+python imageSimilarity.py
