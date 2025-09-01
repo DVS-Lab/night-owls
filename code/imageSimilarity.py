@@ -12,19 +12,20 @@ runs = [1, 2]
 
 data_root = Path("/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/fsl")
 
-#find all runs matching combination
+# find all runs matching combination
 def get_files_for_combination(sub, task, space, echo, confound):
     files = []
     for run in runs:
-        # Determine cope number
         cope_n = 7 if (task == 'mid') else 11
-
-        # Find all sessions for this subject
-        ses_dirs = sorted(data_root.glob(f"sub-{sub}/ses-*/L1_sub-{sub}_ses-*_task-{task}_model-1_type-act_run-{run}_space-{space}_{echo}_{confound}.feat/stats/cope{cope_n}.nii.gz"))
+        ses_dirs = sorted(
+            data_root.glob(
+                f"sub-{sub}/ses-*/L1_sub-{sub}_ses-*_task-{task}_model-1_type-act_run-{run}_space-{space}_{echo}_{confound}.feat/stats/cope{cope_n}.nii.gz"
+            )
+        )
         files.extend(ses_dirs)
     return [str(f) for f in files]
 
-#similarity loop
+# similarity loop
 all_combinations = list(itertools.product(tasks, spaces, echoes, confounds, runs))
 results = []
 
@@ -34,14 +35,19 @@ for comb in all_combinations:
 
     for sub in subs:
         files = get_files_for_combination(sub, task, space, echo, confound)
-        # Compute pairwise Spearman similarity
-        df = pairwise_similarity(files, similarity_type='spearman')
-        # convert similar_coef to numeric before taking mean
-        df['similar_coef'] = pd.to_numeric(df['similar_coef'], errors='coerce')
-        row[f"sub-{sub}"] = df['similar_coef'].mean()
+        if len(files) < 2:
+            row[f"sub-{sub}"] = ""
+        else:
+            df = pairwise_similarity(files, similarity_type='spearman')
+            # convert similar_coef to numeric, then keep all values as a list
+            df['similar_coef'] = pd.to_numeric(df['similar_coef'], errors='coerce')
+            row[f"sub-{sub}"] = df['similar_coef'].tolist()  # store all pairwise values
 
     results.append(row)
 
-#export
+# export
 df_out = pd.DataFrame(results)
-df_out.to_csv("/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/data-outputs/pairwise_icc_results.csv", index=False)
+df_out.to_csv(
+    "/gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/data-outputs/pairwise_icc_results.csv",
+    index=False
+)
