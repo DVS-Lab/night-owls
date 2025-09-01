@@ -119,7 +119,7 @@ for key in "${sess_keys[@]}"; do
     for run in 1 2; do
       for acq in multiecho single; do
         for space in MNI152NLin6Asym T1w; do
-          conf="tedana"
+          for conf in base tedana; do
 
           # LSS combo directory (matches your listing)
           combo="$deriv_fsl/sub-${sub}/LSS_task-${task}_sub-${sub}_ses-${ses}_run-${run}_acq-${acq}_space-${space}_confounds-${conf}_sm-5"
@@ -185,6 +185,7 @@ for key in "${sess_keys[@]}"; do
       done
     done
   done
+done
 
   # Progress echo at the session level
   done_sess=$((done_sess+1))
