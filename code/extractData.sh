@@ -139,6 +139,6 @@ while IFS= read -r -d '' zimg; do
   [[ -z "$label" ]] && continue  # only extract requested contrasts
 
   process_one "$zimg" "$featdir" "$sub" "$ses" "$run" "$task" "$space_tag" "$acq" "$confounds" "$znum" "$label" >> "$out"
-done < <(find "$FSL_DERIV" -type f -path "*/L1_task-*/stats/zstat*.nii.gz" -print0)
+done < <(find "$FSL_DERIV" -type f -path "*/L1_*/stats/zstat*.nii.gz" -print0)
 
 echo "[$(date '+%F %T')] Done. Wrote: $out"
