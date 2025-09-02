@@ -7,8 +7,11 @@ maindir="$(dirname "$scriptdir")"
 fmriprepdir="${maindir}/derivatives/fmriprep"
 
 # ---- edit as needed ----
-subs=(101 103 104 105)
-sessions=(01 02 03 04 05 06 07 08 09 10 11 12)
+#subs=(101 103 104 105)
+#sessions=(01 02 03 04 05 06 07 08 09 10 11 12)
+subs=(103)
+sessions=(03)
+
 tasks=(mid sharedreward rest)
 runs=(1 2)
 : "${FORCE:=0}"
