@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DIR="/gpfs/scratch/tug87422/smithlab-shared/night-owls/bids/sub-103/ses-02/func"
+DIR="/ZPOOL/data/projects/night-owls/bids/sub-103/ses-02/func"
 
 cd "$DIR" || { echo "Directory not found"; exit 1; }
 
