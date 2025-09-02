@@ -77,12 +77,17 @@ df_final[["mean_fd", "tsnr"]] = df_final[["mean_fd", "tsnr"]].round(3)
 df_final.to_csv(out_file, index=False)
 print(f"✅ Summary CSV saved: {out_file}")
 
-# --- Create per-subject per-task QC files ---
+# --- Create per-subject per-task QC files (only echo-2) ---
 for (sub, task), group in df_final.groupby(["sub", "task"]):
-    qc_df = group.copy()
+    # Keep only echo-2 rows
+    qc_group = group[group["echo"] == "echo-2"].copy()
+    if qc_group.empty:
+        print(f"⚠️ No echo-2 data for {sub} {task}, skipping QC CSV")
+        continue
+
     # Create the row label: sub_ses-run
-    qc_df["row_label"] = qc_df["sub"] + "_" + qc_df["ses"] + "-" + qc_df["run"]
-    qc_df = qc_df[["row_label", "mean_fd", "tsnr"]]
+    qc_group["row_label"] = qc_group["sub"] + "_" + qc_group["ses"] + "-" + qc_group["run"]
+    qc_df = qc_group[["row_label", "mean_fd", "tsnr"]]
     
     qc_file = os.path.join(
         os.path.dirname(out_file),
