@@ -41,7 +41,7 @@ for comb in all_combinations:
         if len(files) < 2:
             row[f"sub-{sub}"] = ""
         else:
-            df = pairwise_similarity(files, similarity_type='spearman',thresh=0)
+            df = pairwise_similarity(files, similarity_type='spearman')
             # convert similar_coef to numeric, then keep all values as a list
             df['similar_coef'] = pd.to_numeric(df['similar_coef'], errors='coerce')
             row[f"sub-{sub}"] = df['similar_coef'].tolist()  # store all pairwise values
