@@ -103,5 +103,5 @@ feat $OTEMPLATE
 
 # copy zstat image to common output folder and delete feat output
 cp ${OUTPUT}.feat/stats/zstat1.nii.gz ${zoutdir}/zstat_trial-${trial}.nii.gz
-rm -rf ${OUTPUT}.feat ${OTEMPLATE}
+#rm -rf ${OUTPUT}.feat ${OTEMPLATE}
 exit
