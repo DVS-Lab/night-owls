@@ -23,10 +23,12 @@ TYPE=act
 # set inputs and general outputs (should not need to chage across studies in Smith Lab)
 MAINOUTPUT=${maindir}/derivatives/fsl/sub-${sub}
 mkdir -p $MAINOUTPUT
-if [ "${acq}" == single ]; then
+if [ "${acq}" == "multiecho" ]; then
 	DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-${space}_desc-preproc_bold_${sm}mm.nii.gz
-else
+elif [ "${acq}" == "single" ]; then
 	DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold_${sm}mm.nii.gz
+else
+	exit
 fi
 
 NVOLUMES=`fslnvols ${DATA}`
@@ -35,6 +37,8 @@ if [ "$confounds" == "tedana" ]; then
 	CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-TedanaPlusConfounds.tsv
 elif [ "$confounds" == "base" ]; then
 	CONFOUNDEVS=${maindir}/derivatives/fsl/confounds_tedana/sub-${sub}/ses-${ses}/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_desc-fslConfounds.tsv
+else
+	exit
 fi
 
 if [ ! -e $CONFOUNDEVS ]; then
@@ -99,4 +103,5 @@ feat $OTEMPLATE
 
 # copy zstat image to common output folder and delete feat output
 cp ${OUTPUT}.feat/stats/zstat1.nii.gz ${zoutdir}/zstat_trial-${trial}.nii.gz
-rm -rf ${OUTPUT}.feat ${OTEMPLATE}
+#rm -rf ${OUTPUT}.feat ${OTEMPLATE}
+exit
