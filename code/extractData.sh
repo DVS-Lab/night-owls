@@ -115,8 +115,25 @@ out="${OUT_DIR}/extractions_L1stats.tsv"
 echo -e "sub\tses\trun\ttask\tspace\tacq\tconfounds\tzstat\tlabel\tVS_mean\tBRS_corr" > "$out"
 
 shopt -s nullglob
+# --- progress setup (copy your exact find pattern here) ---
+total=$(
+  find "$FSL_DERIV" \
+    -type d \( -name '*.gfeat' -o -name 'subject-level' \) -prune -o \
+    -type f -path '*/L1_*.feat/stats/zstat*.nii.gz' -print0 \
+  | tr -cd '\0' | wc -c
+)
+done_cnt=0
+(( total == 0 )) && echo "[INFO] No zstat files found under $FSL_DERIV" >&2
+
 # ONLY L1_task-… FEATs under derivatives/fsl; ignore everything else
 while IFS= read -r -d '' zimg; do
+  ((done_cnt++))
+  if (( done_cnt % 200 == 0 || done_cnt == total )); then
+    printf '[%s] %d/%d (%.1f%%) processed\n' \
+      "$(date '+%F %T')" "$done_cnt" "$total" \
+      "$(awk "BEGIN{print 100*$done_cnt/$total}")"
+  fi
+
   featdir="$(dirname "$(dirname "$zimg")")"                 # …/L1_task-….feat
   sesdir="$(basename "$(dirname "$featdir")")"              # ses-XX
   subdir="$(basename "$(dirname "$(dirname "$featdir")")")" # sub-XXX
