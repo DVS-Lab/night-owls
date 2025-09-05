@@ -36,7 +36,7 @@ singularity run --cleanenv \
 	--skip-bids-validation \
 	--nthreads 14 \
 	--me-output-echos \
-	--output-spaces anat:res-2 MNI152NLin6Asym:res-2 \
+	--output-spaces anat MNI152NLin6Asym \
   --derivatives /gpfs/scratch/tug87422/smithlab-shared/night-owls/derivatives/anat-only \
 	--bids-filter-file /base/code/fmriprep-anat/fmriprep_config_sub-103_ses-01.json \
 	--fs-no-reconall --fs-license-file /opts/fs_license.txt \
