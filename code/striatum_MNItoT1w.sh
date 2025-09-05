@@ -1,88 +1,101 @@
 #!/usr/bin/env bash
-# Transform the group Striatum mask (MNI152NLin6Asym) into each subject's T1w space
-# and write outputs into night-owls/masks as sub-XXX_space-T1w_desc-StriatumMask_atlas.nii.gz
-
 set -euo pipefail
 
-# --- canonical project roots: all scripts are run from code/ ---
+# ------------------------------------------------------------
+# Striatum atlas (MNI152NLin6Asym) -> subject native T1w space
+# Writes one transformed mask per subject into ./masks
+# ------------------------------------------------------------
+
+# Standard project roots (all scripts run from ./code)
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 maindir="$(dirname "$scriptdir")"
 
-# --- inputs/outputs ---
 fmriprep_dir="${maindir}/derivatives/fmriprep"
-masks_dir="${maindir}/masks"
-atlas_space="MNI152NLin6Asym"
+outdir="${maindir}/masks"
 
-# accept either .nii or .nii.gz for the source atlas mask
-atlas_mask="${masks_dir}/StriatumMask_atlas.nii"
-[[ -f "${atlas_mask}" ]] || atlas_mask="${masks_dir}/StriatumMask_atlas.nii.gz"
+# Atlas in MNI152NLin6Asym space (accept .nii or .nii.gz)
+atlas="${maindir}/masks/StriatumMask_atlas.nii"
+[[ -f "${atlas}" ]] || atlas="${maindir}/masks/StriatumMask_atlas.nii.gz"
 
-if [[ ! -f "${atlas_mask}" ]]; then
-  echo "[FATAL] Missing atlas mask: ${masks_dir}/StriatumMask_atlas.nii[.gz]"
+if [[ ! -f "${atlas}" ]]; then
+  echo "[ERROR] Could not find StriatumMask_atlas (.nii or .nii.gz) in ${maindir}/masks"
   exit 1
 fi
 
-# --- subject discovery ---
-mapfile -t subs < <(find "${fmriprep_dir}" -maxdepth 1 -type d -name "sub-*" -printf "%f\n" | sort)
+# Require ANTs
+if ! command -v antsApplyTransforms >/dev/null 2>&1 ; then
+  echo "[ERROR] antsApplyTransforms not found in PATH."
+  exit 1
+fi
 
-echo "[INFO] Found ${#subs[@]} subjects. Creating T1w-space striatum masks…"
+mkdir -p "${outdir}"
 
-total="${#subs[@]}"
-done_count=0
+# Helper: pick native T1w (exclude any space-MNI* variants). If not found,
+# fall back to the native-space brain mask as the reference grid.
+pick_t1w_ref() {
+  local subj_dir="$1" sub="$2"
+  local ref=""
 
-for sub in "${subs[@]}"; do
-  sid="${sub#sub-}"
+  # Subject-level native T1w
+  ref="$(find "${subj_dir}/anat" -maxdepth 1 -type f -name "${sub}_desc-preproc_T1w.nii.gz" | sort | head -n1)"
 
-  # --- choose subject-level T1w reference (or first session T1w) ---
-  t1w_ref="${fmriprep_dir}/${sub}/anat/${sub}_desc-preproc_T1w.nii.gz"
-  if [[ ! -f "${t1w_ref}" ]]; then
-    # session folder, filename WITHOUT ses tag (your dataset case)
-    t1w_ref=$(find "${fmriprep_dir}/${sub}" -type f -path "*/ses-*/anat/${sub}_desc-preproc_T1w.nii.gz" | sort | head -n1 || true)
-  fi
+  # Session-level native T1w (no space- token)
+  [[ -z "$ref" ]] && ref="$(find "${subj_dir}"/ses-*/anat -type f -name "${sub}_desc-preproc_T1w.nii.gz" | sort | head -n1)"
+  [[ -z "$ref" ]] && ref="$(find "${subj_dir}"/ses-*/anat -type f -name "${sub}_ses-*_desc-preproc_T1w.nii.gz" | sort | head -n1)"
+
+  # Fallback: native-space brain mask as reference grid
+  [[ -z "$ref" ]] && ref="$(find "${subj_dir}/anat" -maxdepth 1 -type f -name "${sub}_desc-brain_mask.nii.gz" | sort | head -n1)"
+  [[ -z "$ref" ]] && ref="$(find "${subj_dir}"/ses-*/anat -type f -name "${sub}_desc-brain_mask.nii.gz" | sort | head -n1)"
+  [[ -z "$ref" ]] && ref="$(find "${subj_dir}"/ses-*/anat -type f -name "${sub}_ses-*_desc-brain_mask.nii.gz" | sort | head -n1)"
+
+  echo "$ref"
+}
+
+# Collect subjects present in fmriprep
+mapfile -t subjects < <(find "${fmriprep_dir}" -maxdepth 1 -type d -name "sub-*" -printf "%f\n" | sort)
+
+echo "[INFO] Found ${#subjects[@]} subjects. Creating T1w-space striatum masks…"
+
+idx=0
+for sub in "${subjects[@]}"; do
+  idx=$((idx+1))
+  subj_dir="${fmriprep_dir}/${sub}"
+
+  # Reference in native T1w space
+  t1w_ref="$(pick_t1w_ref "${subj_dir}" "${sub}")"
   if [[ -z "${t1w_ref}" || ! -f "${t1w_ref}" ]]; then
-    # session folder, filename WITH ses tag (fallback)
-    t1w_ref=$(find "${fmriprep_dir}/${sub}" -type f -path "*/ses-*/anat/${sub}_ses-*_desc-preproc_T1w.nii.gz" | sort | head -n1 || true)
-  fi
-  if [[ -z "${t1w_ref}" || ! -f "${t1w_ref}" ]]; then
-    echo "[WARN] ${sub}: no preproc T1w found; skipping."
+    echo "[WARN] ${sub}: no native T1w (or T1w brain mask) found; skipping."
     continue
   fi
+  echo "       ${sub}: REF -> ${t1w_ref}"
 
-  # --- prefer subject-level MNI->T1w transform, else session-level ---
-  xfm="${fmriprep_dir}/${sub}/anat/${sub}_from-${atlas_space}_to-T1w_mode-image_xfm.h5"
-  if [[ ! -f "${xfm}" ]]; then
-    # session folder, filename WITHOUT ses tag (your dataset case)
-    xfm=$(find "${fmriprep_dir}/${sub}" -type f -path "*/ses-*/anat/${sub}_from-${atlas_space}_to-T1w_mode-image_xfm.h5" | sort | head -n1 || true)
-  fi
+  # Transform: MNI152NLin6Asym -> T1w (prefer subject-level, else session-level)
+  xfm="$(find "${subj_dir}/anat" -maxdepth 1 -type f -name "${sub}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5" | sort | head -n1)"
+  [[ -z "${xfm}" ]] && xfm="$(find "${subj_dir}"/ses-*/anat -type f -name "${sub}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5" | sort | head -n1)"
+  [[ -z "${xfm}" ]] && xfm="$(find "${subj_dir}"/ses-*/anat -type f -name "${sub}_ses-*_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5" | sort | head -n1)"
+
   if [[ -z "${xfm}" || ! -f "${xfm}" ]]; then
-    # session folder, filename WITH ses tag (fallback)
-    xfm=$(find "${fmriprep_dir}/${sub}" -type f -path "*/ses-*/anat/${sub}_ses-*_from-${atlas_space}_to-T1w_mode-image_xfm.h5" | sort | head -n1 || true)
-  fi
-  if [[ -z "${xfm}" || ! -f "${xfm}" ]]; then
-    echo "[WARN] ${sub}: no ${atlas_space}->T1w transform found; skipping."
+    echo "[WARN] ${sub}: no MNI152NLin6Asym→T1w transform found; skipping."
     continue
   fi
+  echo "       ${sub}: XFM -> ${xfm}"
 
-  out_mask="${masks_dir}/sub-${sid}_space-T1w_desc-StriatumMask_atlas.nii.gz"
-  if [[ -f "${out_mask}" ]]; then
-    echo "[INFO] ${sub}: output exists, skipping (${out_mask})."
+  out="${outdir}/${sub}_space-T1w_desc-StriatumMask_atlas.nii.gz"
+
+  # Apply transform (label mask -> use NN interpolation)
+  antsApplyTransforms \
+    -d 3 \
+    -i "${atlas}" \
+    -r "${t1w_ref}" \
+    -t "${xfm}" \
+    -n NearestNeighbor \
+    -o "${out}"
+
+  if [[ -f "${out}" ]]; then
+    echo "[OK]   ${sub}: wrote ${out}"
   else
-    # --- apply transform using ANTs (no FSL flirt; masks use nearest-neighbor) ---
-    antsApplyTransforms \
-      -d 3 \
-      -i "${atlas_mask}" \
-      -r "${t1w_ref}" \
-      -o "${out_mask}" \
-      -t "${xfm}" \
-      -n NearestNeighbor
-
-    echo "[OK]   ${sub}: wrote ${out_mask}"
+    echo "[ERR]  ${sub}: failed to write ${out}"
   fi
-
-  # progress
-  ((done_count++))
-  pct=$(( 100 * done_count / total ))
-  echo "[PROGRESS] ${pct}% (${done_count}/${total})"
 done
 
-echo "[INFO] Completed. Outputs in: ${masks_dir}"
+echo "[INFO] Completed. Outputs in: ${outdir}"
