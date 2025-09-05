@@ -136,7 +136,6 @@ dmypy.json
 .heudiconv
 
 # imaging output
-*.nii.gz
 *.json
 derivatives
 sub-*.html
@@ -165,5 +164,8 @@ code/.RData
 code/.Rhistory
 
 # Ignore generated outputs
-/logs/
-/derivatives/
+logs
+derivatives
+
+# ignore inputs
+bids
