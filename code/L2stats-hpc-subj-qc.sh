@@ -1,7 +1,7 @@
 
 #!/bin/bash
 #PBS -l walltime=4:00:00
-#PBS -N L2stats-subj
+#PBS -N L2stats-subj-qc
 #PBS -q normal
 #PBS -m ae
 #PBS -M matt.mattoni@temple.edu
@@ -128,7 +128,8 @@ for sub in ${subjects[@]}; do
         INPUT24=${MAINOUTPUT}/ses-12/L1_sub-${sub}_ses-12_task-${task}_model-${model}_type-${type}_run-2_space-${space}_${echo}_${confound}.feat/stats/cope${copen}.nii.gz
     fi
 
-    OUTPUT=${MAINOUTPUT}/subject-level/L2_subj-${sub}_task-${task}_model-${model}_type-${type}_space-${space}_${echo}_${confound}_qc
+    OUTPUT=${MAINOUTPUT}/subject-level/L2_subj-${sub}_task-${task}_model-${model}_type-${type}_space-${space}_${echo}_${confound}_qc_svc
+    PREMASK=${projectdir}/templates/sub-${sub}_space-T1w_desc-StriatumMask_atlas.nii.gz
     #NCOPES=30
 
     NCOPES=$([ "$task" = "mid" ] && echo 10 || echo 15)
@@ -162,6 +163,7 @@ for sub in ${subjects[@]}; do
         -e 's@INPUT16@'$INPUT16'@g' \
         -e 's@INPUT17@'$INPUT17'@g' \
         -e 's@INPUT18@'$INPUT18'@g' \
+        -e 's@PREMASK@'$PREMASK'@g' \
         <$ITEMPLATE >$OTEMPLATE
         echo feat $OTEMPLATE >>$logdir/cmd_L2subj_sub-${sub}_${PBS_JOBID}.txt
     elif [ "$sub" == "103" ]; then
@@ -188,6 +190,7 @@ for sub in ${subjects[@]}; do
         -e 's@INPUT20@'$INPUT20'@g' \
         -e 's@INPUT21@'$INPUT21'@g' \
         -e 's@INPUT22@'$INPUT22'@g' \
+        -e 's@PREMASK@'$PREMASK'@g' \
         <$ITEMPLATE >$OTEMPLATE
         echo feat $OTEMPLATE >>$logdir/cmd_L2subj_sub-${sub}_${PBS_JOBID}.txt
     else 
@@ -216,6 +219,7 @@ for sub in ${subjects[@]}; do
         -e 's@INPUT22@'$INPUT22'@g' \
         -e 's@INPUT23@'$INPUT23'@g' \
         -e 's@INPUT24@'$INPUT24'@g' \
+        -e 's@PREMASK@'$PREMASK'@g' \
         <$ITEMPLATE >$OTEMPLATE
         echo feat $OTEMPLATE >>$logdir/cmd_L2subj_sub-${sub}_${PBS_JOBID}.txt
     fi
