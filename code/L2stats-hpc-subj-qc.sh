@@ -129,7 +129,7 @@ for sub in ${subjects[@]}; do
     fi
 
     OUTPUT=${MAINOUTPUT}/subject-level/L2_subj-${sub}_task-${task}_model-${model}_type-${type}_space-${space}_${echo}_${confound}_qc_svc
-    PREMASK=${projectdir}/templates/sub-${sub}_space-T1w_desc-StriatumMask_atlas.nii.gz
+    PREMASK=${projectdir}/masks/sub-${sub}_space-T1w_desc-StriatumMask_atlas.nii.gz
     #NCOPES=30
 
     NCOPES=$([ "$task" = "mid" ] && echo 10 || echo 15)
