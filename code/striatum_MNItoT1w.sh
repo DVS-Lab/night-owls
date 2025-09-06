@@ -3,6 +3,7 @@ set -euo pipefail
 
 # ------------------------------------------------------------
 # Striatum atlas (MNI152NLin6Asym) -> subject native T1w space
+# Reference grid = T1w-space BOLDREF (matches FEAT/EPI resolution)
 # One transformed mask per subject to ./masks
 # ------------------------------------------------------------
 
@@ -31,22 +32,32 @@ mkdir -p "$outdir"
 
 # ---- helpers ------------------------------------------------
 
+# Prefer a T1w-space BOLDREF (EPI in T1w space) so voxel sizes match FEAT outputs
 pick_t1w_ref() {  # $1=subj_dir  $2=sub-XXX
   local subj_dir="$1" sub="$2" ref=""
 
-  # Prefer *native* T1w (no /space-… path parts). Guard directory existence.
-  if [[ -d "${subj_dir}/anat" ]]; then
-    ref="$(find "${subj_dir}/anat" -maxdepth 1 -type f -name "${sub}_desc-preproc_T1w.nii.gz" 2>/dev/null | head -n1 || true)"
-  fi
-  if [[ -z "$ref" ]]; then
-    ref="$(find "${subj_dir}"/ses-*/anat -type f -name "${sub}_desc-preproc_T1w.nii.gz" 2>/dev/null | grep -v '/space-' | head -n1 || true)"
-  fi
-  # Fallback: native brain mask as reference grid
+  # 1) Any func boldref in T1w space (covers part-mag or not)
+  ref="$(find "${subj_dir}"/ses-*/func -type f \
+          -name "${sub}_*_space-T1w_*boldref.nii.gz" 2>/dev/null | head -n1 || true)"
+
+  # 2) Fallback: native (non-space-*) T1w image
   if [[ -z "$ref" && -d "${subj_dir}/anat" ]]; then
-    ref="$(find "${subj_dir}/anat" -maxdepth 1 -type f -name "${sub}_desc-brain_mask.nii.gz" 2>/dev/null | head -n1 || true)"
+    ref="$(find "${subj_dir}/anat" -maxdepth 1 -type f \
+            -name "${sub}_desc-preproc_T1w.nii.gz" 2>/dev/null | head -n1 || true)"
   fi
   if [[ -z "$ref" ]]; then
-    ref="$(find "${subj_dir}"/ses-*/anat -type f -name "${sub}_desc-brain_mask.nii.gz" 2>/dev/null | head -n1 || true)"
+    ref="$(find "${subj_dir}"/ses-*/anat -type f \
+            -name "${sub}_desc-preproc_T1w.nii.gz" 2>/dev/null | grep -v '/space-' | head -n1 || true)"
+  fi
+
+  # 3) Last resort: native brain mask grid
+  if [[ -z "$ref" && -d "${subj_dir}/anat" ]]; then
+    ref="$(find "${subj_dir}/anat" -maxdepth 1 -type f \
+            -name "${sub}_desc-brain_mask.nii.gz" 2>/dev/null | head -n1 || true)"
+  fi
+  if [[ -z "$ref" ]]; then
+    ref="$(find "${subj_dir}"/ses-*/anat -type f \
+            -name "${sub}_desc-brain_mask.nii.gz" 2>/dev/null | head -n1 || true)"
   fi
 
   echo "$ref"
@@ -55,10 +66,12 @@ pick_t1w_ref() {  # $1=subj_dir  $2=sub-XXX
 pick_mni_to_t1w_xfm() {  # $1=subj_dir  $2=sub-XXX
   local subj_dir="$1" sub="$2" xfm=""
   if [[ -d "${subj_dir}/anat" ]]; then
-    xfm="$(find "${subj_dir}/anat" -maxdepth 1 -type f -name "${sub}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5" 2>/dev/null | head -n1 || true)"
+    xfm="$(find "${subj_dir}/anat" -maxdepth 1 -type f \
+            -name "${sub}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5" 2>/dev/null | head -n1 || true)"
   fi
   if [[ -z "$xfm" ]]; then
-    xfm="$(find "${subj_dir}"/ses-*/anat -type f -name "${sub}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5" 2>/dev/null | head -n1 || true)"
+    xfm="$(find "${subj_dir}"/ses-*/anat -type f \
+            -name "${sub}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5" 2>/dev/null | head -n1 || true)"
   fi
   echo "$xfm"
 }
@@ -73,7 +86,7 @@ for sub in "${subjects[@]}"; do
 
   t1w_ref="$(pick_t1w_ref "$subj_dir" "$sub")"
   if [[ -z "$t1w_ref" || ! -f "$t1w_ref" ]]; then
-    echo "[WARN] ${sub}: no native T1w (or native brain mask) found; skipping."
+    echo "[WARN] ${sub}: no suitable T1w-space reference (boldref/T1w) found; skipping."
     continue
   fi
   echo "       ${sub}: REF -> ${t1w_ref}"
