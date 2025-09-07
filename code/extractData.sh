@@ -104,14 +104,14 @@ fi
   # Signed whole-brain spatial corr with BRS (mask to FEAT brainmask)
   local brs_corr="NA"
   if [[ -f "$brs_res" ]]; then
-    brs_corr="$(fslcc -m "$brainmask" --noabs -t -1 "$zimg" "$brs_res" 2>/dev/null | awk '{print $NF}' || echo NA)"
+    brs_corr="$(fslcc -m "$brainmask" --noabs -t -1 -p 6 "$zimg" "$brs_res" 2>/dev/null | awk '{print $NF}' || echo NA)"
   fi
 
   echo -e "${sub}\t${ses}\t${run}\t${task}\t${space_tag}\t${acq}\t${confounds}\t${znum}\t${label}\t${vs_mean}\t${brs_corr}"
 }
 
 # -------- main --------
-out="${OUT_DIR}/extractions_L1stats.tsv"
+out="${OUT_DIR}/extractions_L1stats-revised.tsv"
 echo -e "sub\tses\trun\ttask\tspace\tacq\tconfounds\tzstat\tlabel\tVS_mean\tBRS_corr" > "$out"
 
 shopt -s nullglob
