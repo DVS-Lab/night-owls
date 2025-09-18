@@ -1,6 +1,6 @@
 # Masks Used in This Project
 
-This directory contains two functional masks used for ROI analyses. Both were originally in `space-MNI152NLin6Asym_res-2`, but have been resampled to match the project's standard MNI152NLin6Asym grid (`pixdim: 2.7 × 2.7 × 2.97` mm).
+This directory contains two functional masks used for ROI analyses in the project's standard MNI152NLin6Asym grid (`pixdim: 2.7 × 2.7 × 2.97` mm).
 
 ## Included Masks
 
