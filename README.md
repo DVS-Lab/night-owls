@@ -1,46 +1,69 @@
-# night-owls
-Repository for the Night Owls Scan Club (NOSC) Project under Temple University IRB #24452. NOSC is a mutliband, multi-echo intensively sampled fMRI study of the reward response. 
+# night-owls  
 
-NOSC is described in detail in Mattoni et al., 2025 (cite).
-[Study design summary](stimuli/StudyDesign.png)
+Repository for the Night Owls Scan Club (NOSC) Project under Temple University IRB #24452.  
 
-For data use please cite Mattoni et al., 2025 and (open neuro link)
+NOSC is a multiband, multi-echo, intensively sampled fMRI study of the reward response.  
 
-BIDS data are publicly available at:
-Information of scanning sessions, behavioral data, and outputs of L1 and LSS models described in Mattoni et al., 2025 are available on OSF at: 
+NOSC is described in detail in Mattoni et al., 2025 (cite).  
 
-## Preprocessing
+[Study design summary](stimuli/StudyDesign.png)  
 
-Data were preprocessed in an HPC environment. All preprocessing code is in /code. 
+For data use please cite Mattoni et al., 2025 and (open neuro link).  
 
-Before upload to OpenNeuro, raw DICOMS were BIDS-fied using prepdata.sh and events.tsv files were generated using events_generation.R and convertSharedReward2BIDSevents.m. 
+BIDS data are publicly available at: (link).  
 
-### Field map generation 
+Information on scanning sessions, behavioral data, and outputs of L1 and LSS models (described in Mattoni et al., 2025) are available on OSF at: (link).  
 
-warpkit-hpc.sh generates fieldmap files in /bids/sub-xx/ses-xx from multi-echo data. 
-addIntendedFor_fieldmap-hpc.py edits json files to include IntendedFor fields for the generated fieldmap files. 
+---
 
-### FMRIprep
+## Preprocessing  
 
-fmriprep was run in a 2-step process to create a single anatomical image per subject and avoid processing multiple sessions in parallel. 
+Data were preprocessed in an HPC environment.  
 
-fmriprep-hpc-anat.sh performs anatomical only fmriprep preprocessing using --anat-only and --longitudinal arguments, creating one T1w image for all sessions for each subject. 
-gen_fmriprep-anat.sh creates functional fmriprep commands specific to each session, taking the preprocessed anatomical data as an existing derivative. 
-run_fmriprep_qsub submits all fmriprep commands created in /code/fmriprep-anat/
-fmriprepOrganize.sh puts all generated fmriprep output in BIDS format and removes intermediate files generated in /derivatives/anat-only/
+All preprocessing code is in `/code`.  
 
-### Tedana
-tedana-hpc.sh estimates tedana confounds for fmriprepped data
+Before upload to OpenNeuro:  
+- Raw DICOMS were BIDS-fied using `prepdata.sh`.  
+- `events.tsv` files were generated using `events_generation.R` and `convertSharedReward2BIDSevents.m`.  
 
-## FSL Analyses
+### Field map generation  
 
-gen3colfiles.sh turns events.tsv files into FSL-compatible events files
-MakeConfounds.py adds fmriprep confounds to /derivatives/fsl/confounds_tedana
-genTedanaMultiSes.py adds selected tedana confounds to /derivatives/fsl/confounds_tedana
+- `warpkit-hpc.sh` generates fieldmap files in `/bids/sub-xx/ses-xx` from multi-echo data.  
+- `addIntendedFor_fieldmap-hpc.py` edits `.json` files to include `IntendedFor` fields for the generated fieldmap files.  
 
-L1-stats-loop.sh estimates L1 models for each run using different combinations of: space (MNI vs T1w), echo (echo-2 vs. multi), confounds (base fmriprep vs fmripre + tedana)
-L1statsSingleTrial-${task}.sh runs LSS models for the respective task (mid or sharedreward)
+### FMRIprep  
 
-extractData.sh and extractData-LSS.sh return derivatives used in Mattoni et al., 2025. 
+fMRIPrep was run in a 2-step process to:  
+- Create a single anatomical image per subject.  
+- Avoid processing multiple sessions in parallel.  
 
+Scripts:  
+- `fmriprep-hpc-anat.sh` performs anatomical-only preprocessing (`--anat-only`, `--longitudinal`).  
+  - Creates one T1w image for all sessions per subject.  
+- `gen_fmriprep-anat.sh` creates functional fMRIPrep commands for each session.  
+  - Uses preprocessed anatomical data as an existing derivative.  
+- `run_fmriprep_qsub` submits all fMRIPrep commands created in `/code/fmriprep-anat/`.  
+- `fmriprepOrganize.sh` organizes fMRIPrep output in BIDS format.  
+  - Removes intermediate files from `/derivatives/anat-only/`.  
 
+### Tedana  
+
+- `tedana-hpc.sh` estimates tedana confounds for fMRIPrepped data.  
+
+---
+
+## FSL Analyses  
+
+- `gen3colfiles.sh` converts `events.tsv` files into FSL-compatible events files.  
+- `MakeConfounds.py` adds fMRIPrep confounds to `/derivatives/fsl/confounds_tedana`.  
+- `genTedanaMultiSes.py` adds selected tedana confounds to `/derivatives/fsl/confounds_tedana`.  
+
+Model estimation:  
+- `L1-stats-loop.sh` estimates L1 models for each run using combinations of:  
+  - Space: MNI vs T1w  
+  - Echo: echo-2 vs multi  
+  - Confounds: base fMRIPrep vs fMRIPrep + tedana  
+- `L1statsSingleTrial-${task}.sh` runs LSS models for the respective task (mid or sharedreward).  
+
+Data extraction:  
+- `extractData.sh` and `extractData-LSS.sh` return derivatives used in Mattoni et al., 2025.  
