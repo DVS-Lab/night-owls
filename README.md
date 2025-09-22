@@ -45,6 +45,8 @@ Scripts:
 - `run_fmriprep_qsub` submits all fMRIPrep commands created in `/code/fmriprep-anat/`.  
 - `fmriprepOrganize.sh` organizes fMRIPrep output in BIDS format.  
   - Removes intermediate files from `/derivatives/anat-only/`.  
+- `normEcho2.sh` and `smooth-3dBlurToFWHM` normalize and smooth single and multi-echo data
+  - `resample_sub-101_ses-03_task-mid` resamples one session to account for scanning error
 
 ### Tedana  
 
