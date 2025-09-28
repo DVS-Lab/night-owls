@@ -8,11 +8,11 @@ NOSC is described in detail in Mattoni et al., 2025 (preprint to be posted).
 
 [Study design summary](stimuli/StudyDesign.png)  
 
-For data use please cite Mattoni et al., 2025 and (open neuro link).  
+For data use please cite Mattoni et al., 2025 (currently preprinted at https://www.biorxiv.org/content/10.1101/2025.09.26.678878v1) and the OpenNeuro dataset: https://openneuro.org/datasets/ds006707.  
 
-BIDS data are publicly available at: (link).  
+BIDS data are publicly available at: https://openneuro.org/datasets/ds006707  
 
-Information on scanning sessions, behavioral data, and outputs of L1 and LSS models (described in Mattoni et al., 2025) are available on OSF at: (link).  
+Information on scanning sessions, behavioral data, and outputs of L1 and LSS models (described in Mattoni et al., 2025) are available on OSF at: https://osf.io/df5t9/.  
 
 ---
 
