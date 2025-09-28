@@ -4,7 +4,7 @@ Repository for the Night Owls Scan Club (NOSC) Project under Temple University I
 
 NOSC is a multiband, multi-echo, intensively sampled fMRI study of the reward response.  
 
-NOSC is described in detail in Mattoni et al., 2025 (preprint to be posted).  
+NOSC is described in detail in Mattoni et al., 2025 https://www.biorxiv.org/content/10.1101/2025.09.26.678878v1.  
 
 [Study design summary](stimuli/StudyDesign.png)  
 
