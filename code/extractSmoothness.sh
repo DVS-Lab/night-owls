@@ -1,14 +1,5 @@
 #!/usr/bin/env bash
-# Simplified extractor: compute AFNI smoothness (ACF) from smoothed and unsmoothed fMRIPrep preprocessed BOLD
-# For each FEAT directory under derivatives/fsl, we:
-#   1) locate the corresponding fMRIPrep preproc BOLD (unsmoothed) and the smoothed variant (e.g., *_bold_5mm.nii.gz)
-#   2) run 3dFWHMx -detrend -ACF with the FEAT mask as -mask
-#   3) write outputs into <featdir>/smoothness-<mm>mm.txt (smoothed) and <featdir>/smoothness-0mm.txt (unsmoothed)
-# Notes:
-#   - No zstat extraction is performed anymore.
-#   - We do not assume a particular MB/ME label. We try both 'part-mag' and non-'part-mag' file patterns and pick what exists.
-#   - We prefer sessioned fMRIPrep paths if ses-<id> is discoverable from FEAT path; otherwise we fall back to single-session layout.
-#   - Requires AFNI (3dFWHMx) and FSL (for masks produced by FEAT).
+# Simplified extractor: AFNI 3dFWHMx -ACF smoothness for raw/smoothed fMRIPrep BOLD, per L1 FEAT, both acquisition types.
 
 set -euo pipefail
 
@@ -21,88 +12,182 @@ FMRIPREP_DERIV="${rootdir}/derivatives/fmriprep"
 # -------- tools --------
 command -v 3dFWHMx >/dev/null || { echo "ERROR: 3dFWHMx (AFNI) not found in PATH"; exit 1; }
 
+# -------- aggregation output --------
 OUT_DIR="${rootdir}/derivatives/extractions"
 mkdir -p "${OUT_DIR}"
 TSV="${OUT_DIR}/smoothness_acf.tsv"
 if [[ ! -f "${TSV}" ]]; then
-  echo -e "sub\tses\ttask\trun\tkernel_mm\tacf_a\tacf_b\tacf_c\tfwhm_x\tfwhm_y\tfwhm_z\tfeatdir\timg" > "${TSV}"
+  echo -e "sub\tses\ttask\trun\tacq\tkernel_mm\tacf_a\tacf_b\tacf_c\tfwhm_x\tfwhm_y\tfwhm_z\tfeatdir\timg" > "${TSV}"
 fi
 
-# parse helpers
+# -------- helpers --------
+
+# Parse values from AFNI output and append row to TSV
 append_to_tsv() {
-  local sub="$1" ses="$2" task="$3" run="$4" kernel="$5" featdir="$6" img="$7" txt="$8"
-  # Default NA values
+  local sub="$1" ses="$2" task="$3" run="$4" kernel="$5" featdir="$6" img="$7" txt="$8" acq_in="${9:-}"
+  local acq="${acq_in:-auto}"
   local a="NA" b="NA" c="NA" fx="NA" fy="NA" fz="NA"
 
-  # ACF parameters: try lines containing 'ACF', take last three numeric tokens
+  # ACF parameters: last three numeric tokens on any 'ACF' line
   if grep -qi "ACF" "$txt"; then
     read a b c < <(grep -i "ACF" "$txt" | tail -n1 | grep -Eo "[-+]?[0-9]*\.?[0-9]+" | tail -n3)
   fi
 
-  # FWHM: try lines containing 'FWHM', take last three numeric tokens
+  # FWHM xyz: last three numeric tokens on any 'FWHM' line
   if grep -qi "FWHM" "$txt"; then
     read fx fy fz < <(grep -i "FWHM" "$txt" | tail -n1 | grep -Eo "[-+]?[0-9]*\.?[0-9]+" | tail -n3)
   fi
 
-  echo -e "${sub}\t${ses}\t${task}\t${run}\t${kernel}\t${a}\t${b}\t${c}\t${fx}\t${fy}\t${fz}\t${featdir}\t${img}" >> "${TSV}"
+  echo -e "${sub}\t${ses}\t${task}\t${run}\t${acq}\t${kernel}\t${a}\t${b}\t${c}\t${fx}\t${fy}\t${fz}\t${featdir}\t${img}" >> "${TSV}"
 }
 
+# Pull sub/ses/task/run from FEAT path
+parse_meta_from_path() {
+  local p="$1"
+  local sub="" ses="" task="" run=""
+  if [[ "$p" =~ sub-([A-Za-z0-9]+) ]]; then sub="${BASH_REMATCH[1]}"; fi
+  if [[ "$p" =~ ses-([A-Za-z0-9]+) ]]; then ses="${BASH_REMATCH[1]}"; fi
+  if [[ "$p" =~ task-([^_/]+) ]]; then task="${BASH_REMATCH[1]}"; fi
+  if [[ "$p" =~ run-([0-9]+) ]]; then run="${BASH_REMATCH[1]}"; fi
+  printf "%s\t%s\t%s\t%s\n" "$sub" "$ses" "$task" "$run"
+}
 
-# -------- main --------
+# For a given sub/ses/task/run, emit up to two lines:
+#   "single-echo<TAB>RAW<TAB>SMOOTH"
+#   "multiecho<TAB>RAW<TAB>SMOOTH"
+find_fmriprep_for_run() {
+  local sub="$1" ses="$2" task="$3" run="$4"
+  local base="${FMRIPREP_DERIV}/sub-${sub}"
+  local funcdir=""
+  if [[ -n "$ses" && -d "${base}/ses-${ses}/func" ]]; then
+    funcdir="${base}/ses-${ses}/func"
+  elif [[ -d "${base}/func" ]]; then
+    funcdir="${base}/func"
+  else
+    return 0
+  fi
+  shopt -s nullglob
+
+  # single-echo (no part-mag)
+  local se_raw=(
+    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+    "${funcdir}/sub-${sub}_task-${task}_run-${run}_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_acq-"*"_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+    "${funcdir}/sub-${sub}_task-${task}_run-${run}_acq-"*"_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+  )
+  local se_sm=(
+    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_space-MNI152NLin6Asym_desc-preproc_bold_"*mm.nii.gz"
+    "${funcdir}/sub-${sub}_task-${task}_run-${run}_space-MNI152NLin6Asym_desc-preproc_bold_"*mm.nii.gz"
+    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_acq-"*"_space-MNI152NLin6Asym_desc-preproc_bold_"*mm.nii.gz"
+    "${funcdir}/sub-${sub}_task-${task}_run-${run}_acq-"*"_space-MNI152NLin6Asym_desc-preproc_bold_"*mm.nii.gz"
+  )
+
+  # multiecho (prefer combined part-mag without echo tag; else echo-2; else any echo)
+  local me_raw=(
+    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+    "${funcdir}/sub-${sub}_task-${task}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-2_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+    "${funcdir}/sub-${sub}_task-${task}_run-${run}_echo-2_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-"*"_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+    "${funcdir}/sub-${sub}_task-${task}_run-${run}_echo-"*"_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_acq-"*"_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+    "${funcdir}/sub-${sub}_task-${task}_run-${run}_acq-"*"_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_acq-"*"_echo-"*"_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+    "${funcdir}/sub-${sub}_task-${task}_run-${run}_acq-"*"_echo-"*"_part-mag_space-MNI152NLin6Asym_desc-preproc_bold.nii.gz"
+  )
+  local me_sm=(
+    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_"*mm.nii.gz"
+    "${funcdir}/sub-${sub}_task-${task}_run-${run}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_"*mm.nii.gz"
+    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-2_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_"*mm.nii.gz"
+    "${funcdir}/sub-${sub}_task-${task}_run-${run}_echo-2_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_"*mm.nii.gz"
+    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-"*"_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_"*mm.nii.gz"
+    "${funcdir}/sub-${sub}_task-${task}_run-${run}_echo-"*"_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_"*mm.nii.gz"
+    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_acq-"*"_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_"*mm.nii.gz"
+    "${funcdir}/sub-${sub}_task-${task}_run-${run}_acq-"*"_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_"*mm.nii.gz"
+    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_acq-"*"_echo-"*"_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_"*mm.nii.gz"
+    "${funcdir}/sub-${sub}_task-${task}_run-${run}_acq-"*"_echo-"*"_part-mag_space-MNI152NLin6Asym_desc-preproc_bold_"*mm.nii.gz"
+  )
+
+  local pick_first=""
+  pick_first_file() {
+    pick_first=""
+    for f in "$@"; do
+      if [[ -f "$f" ]]; then pick_first="$f"; break; fi
+    done
+  }
+
+  pick_first_file "${se_raw[@]}"; local se_r="$pick_first"
+  pick_first_file "${se_sm[@]}";  local se_s="$pick_first"
+  if [[ -n "$se_r" ]]; then
+    echo -e "single-echo\t${se_r}\t${se_s}"
+  fi
+
+  pick_first_file "${me_raw[@]}"; local me_r="$pick_first"
+  pick_first_file "${me_sm[@]}";  local me_s="$pick_first"
+  if [[ -n "$me_r" ]]; then
+    echo -e "multiecho\t${me_r}\t${me_s}"
+  fi
+}
+
+# Extract kernel mm from filename
+kernel_from_name() {
+  local f="$1"
+  if [[ "$f" =~ _([0-9]+)mm\.nii\.gz$ ]]; then
+    echo "${BASH_REMATCH[1]}"
+  else
+    echo "sm"
+  fi
+}
+
 # -------- main --------
 echo "[$(date '+%F %T')] Starting smoothness extraction…"
 shopt -s nullglob
 
-# Iterate over FEAT directories (Level-1 results); adjust the find path to match your layout
+# Iterate only L1 FEAT dirs
 while IFS= read -r -d '' featdir; do
-  # Skip if mask is missing
+  # Skip non-L1 or aggregate dirs
+  if [[ "$featdir" == *".gfeat"* || "$featdir" == *"/L2_"* || "$featdir" == *"/cope"* ]]; then
+    continue
+  fi
+
   mask="${featdir}/mask.nii.gz"
   if [[ ! -f "$mask" ]]; then
     echo "WARN: No mask at ${mask}; skipping ${featdir}"
     continue
   fi
 
-  # parse metadata from path
   IFS=$'\t' read -r sub ses task run <<<"$(parse_meta_from_path "$featdir")"
-  if [[ -z "$sub" || -z "$task" ]]; then
-    echo "WARN: Could not parse sub/task from ${featdir}; skipping"
+  if [[ -z "$sub" || -z "$task" || -z "$run" ]]; then
+    echo "WARN: Could not parse sub/task/run from ${featdir}; skipping"
     continue
   fi
 
-  # find fMRIPrep raw+smoothed files
-  IFS=$'\t' read -r raw_img smooth_img <<<"$(find_fmriprep_preproc "$sub" "$ses" "$task")"
-  if [[ -z "$raw_img" ]]; then
-    echo "WARN: No raw preproc image for sub-${sub} ses-${ses} task-${task}; skipping ${featdir}"
-    continue
-  fi
-  if [[ -z "$smooth_img" ]]; then
-    echo "WARN: No smoothed preproc image for sub-${sub} ses-${ses} task-${task}; will compute unsmoothed only"
-  fi
+  # For this run, process both acquisition types discovered
+  while IFS=$'\t' read -r acq raw_img smooth_img; do
+    [[ -z "$raw_img" ]] && continue
 
-  # AFNI writes 3dFWHMx.1D and .png in CWD. Ensure we run inside featdir to keep artifacts local, then delete them.
-  pushd "$featdir" >/dev/null
+    pushd "$featdir" >/dev/null
 
-  # UnsMoothed
-  if [[ -f "$raw_img" ]]; then
-    echo "   [${sub} ${ses} ${task} ${run}] 3dFWHMx (unsmoothed)…"
+    # unsmoothed
+    echo "   [${sub} ${ses} ${task} ${run} | ${acq}] 3dFWHMx (unsmoothed)…"
     rm -f 3dFWHMx.1D 3dFWHMx.1D.png
-    3dFWHMx -detrend -ACF -mask "$mask" -input "$raw_img" > smoothness-0mm.txt
-    append_to_tsv "$sub" "$ses" "$task" "$run" "0" "$featdir" "$raw_img" "smoothness-0mm.txt"
+    3dFWHMx -detrend -ACF -mask "$mask" -input "$raw_img" > "smoothness-0mm_${acq}.txt"
+    append_to_tsv "$sub" "$ses" "$task" "$run" "0" "$featdir" "$raw_img" "smoothness-0mm_${acq}.txt" "$acq"
     rm -f 3dFWHMx.1D 3dFWHMx.1D.png
-  fi
 
-  # Smoothed
-  if [[ -n "$smooth_img" && -f "$smooth_img" ]]; then
-    smmm="$(kernel_from_name "$smooth_img")"
-    echo "   [${sub} ${ses} ${task} ${run}] 3dFWHMx (smoothed ${smmm}mm)…"
-    rm -f 3dFWHMx.1D 3dFWHMx.1D.png
-    3dFWHMx -detrend -ACF -mask "$mask" -input "$smooth_img" > "smoothness-${smmm}mm.txt"
-    append_to_tsv "$sub" "$ses" "$task" "$run" "${smmm}" "$featdir" "$smooth_img" "smoothness-${smmm}mm.txt"
-    rm -f 3dFWHMx.1D 3dFWHMx.1D.png
-  fi
+    # smoothed
+    if [[ -n "$smooth_img" && -f "$smooth_img" ]]; then
+      smmm="$(kernel_from_name "$smooth_img")"
+      echo "   [${sub} ${ses} ${task} ${run} | ${acq}] 3dFWHMx (smoothed ${smmm}mm)…"
+      rm -f 3dFWHMx.1D 3dFWHMx.1D.png
+      3dFWHMx -detrend -ACF -mask "$mask" -input "$smooth_img" > "smoothness-${smmm}mm_${acq}.txt"
+      append_to_tsv "$sub" "$ses" "$task" "$run" "${smmm}" "$featdir" "$smooth_img" "smoothness-${smmm}mm_${acq}.txt" "$acq"
+      rm -f 3dFWHMx.1D 3dFWHMx.1D.png
+    fi
 
-  popd >/dev/null
+    popd >/dev/null
+  done < <(find_fmriprep_for_run "$sub" "$ses" "$task" "$run")
 
-done < <(find "$FSL_DERIV" -type d -name "*.feat" -print0)
+done < <(find "$FSL_DERIV" -type d -path "*/L1_*/*.feat" -print0)
 
 echo "[$(date '+%F %T')] Done."
