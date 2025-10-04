@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Simplified extractor: AFNI 3dFWHMx -ACF smoothness for raw/smoothed fMRIPrep BOLD, per L1 FEAT, both acquisition types.
+# AFNI 3dFWHMx -ACF smoothness for raw/smoothed fMRIPrep BOLD, per L1 FEAT, both acquisition types.
 
 set -euo pipefail
 
@@ -140,10 +140,10 @@ kernel_from_name() {
 }
 
 # -------- main --------
-echo "[$(date '+%F %T')] Starting smoothness extraction…"
+echo "[$(date '+%F %T')] Starting smoothness extraction under: ${FSL_DERIV}"
 shopt -s nullglob
 
-# Iterate only L1 FEAT dirs
+# Iterate only L1 FEAT dirs (FIXED pattern)
 while IFS= read -r -d '' featdir; do
   # Skip non-L1 or aggregate dirs
   if [[ "$featdir" == *".gfeat"* || "$featdir" == *"/L2_"* || "$featdir" == *"/cope"* ]]; then
@@ -157,6 +157,9 @@ while IFS= read -r -d '' featdir; do
   fi
 
   IFS=$'\t' read -r sub ses task run <<<"$(parse_meta_from_path "$featdir")"
+  # PROGRESS echo for each loop:
+  echo ">> FEAT: sub=${sub} ses=${ses} task=${task} run=${run} :: $(basename "$featdir")"
+
   if [[ -z "$sub" || -z "$task" || -z "$run" ]]; then
     echo "WARN: Could not parse sub/task/run from ${featdir}; skipping"
     continue
@@ -166,10 +169,12 @@ while IFS= read -r -d '' featdir; do
   while IFS=$'\t' read -r acq raw_img smooth_img; do
     [[ -z "$raw_img" ]] && continue
 
+    # PROGRESS echo for resolved inputs:
+    echo "   >> acq=${acq} raw=$(basename "$raw_img") smooth=$(basename "${smooth_img:-NONE}")"
+
     pushd "$featdir" >/dev/null
 
     # unsmoothed
-    echo "   [${sub} ${ses} ${task} ${run} | ${acq}] 3dFWHMx (unsmoothed)…"
     rm -f 3dFWHMx.1D 3dFWHMx.1D.png
     3dFWHMx -detrend -ACF -mask "$mask" -input "$raw_img" > "smoothness-0mm_${acq}.txt"
     append_to_tsv "$sub" "$ses" "$task" "$run" "0" "$featdir" "$raw_img" "smoothness-0mm_${acq}.txt" "$acq"
@@ -178,7 +183,6 @@ while IFS= read -r -d '' featdir; do
     # smoothed
     if [[ -n "$smooth_img" && -f "$smooth_img" ]]; then
       smmm="$(kernel_from_name "$smooth_img")"
-      echo "   [${sub} ${ses} ${task} ${run} | ${acq}] 3dFWHMx (smoothed ${smmm}mm)…"
       rm -f 3dFWHMx.1D 3dFWHMx.1D.png
       3dFWHMx -detrend -ACF -mask "$mask" -input "$smooth_img" > "smoothness-${smmm}mm_${acq}.txt"
       append_to_tsv "$sub" "$ses" "$task" "$run" "${smmm}" "$featdir" "$smooth_img" "smoothness-${smmm}mm_${acq}.txt" "$acq"
@@ -188,6 +192,6 @@ while IFS= read -r -d '' featdir; do
     popd >/dev/null
   done < <(find_fmriprep_for_run "$sub" "$ses" "$task" "$run")
 
-done < <(find "$FSL_DERIV" -type d -path "*/L1_*/*.feat" -print0)
+done < <(find "$FSL_DERIV" -type d -path "*/L1_*.feat" -print0)
 
 echo "[$(date '+%F %T')] Done."
