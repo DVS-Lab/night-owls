@@ -126,7 +126,7 @@ if [[ ! -f "${TSV}" ]]; then
   echo -e "sub\tses\ttask\trun\tacq\tkernel_mm\tfwhm_eff" > "${TSV}"
 fi
 
-echo "[${(date +'%F %T')}] Scanning L1 FEATs; writing to ${TSV}"
+echo "[$(date +'%F %T')] Scanning L1 FEATs; writing to ${TSV}"
 
 shopt -s nullglob
 rows=0 feats=0 skipped=0
@@ -184,4 +184,4 @@ do
   done
 done
 
-echo "[${(date +'%F %T')}] Done. FEATs: ${feats}, rows written: ${rows}, skipped: ${skipped}"
+echo "[$(date +'%F %T')] Done. FEATs: ${feats}, rows written: ${rows}, skipped: ${skipped}"
