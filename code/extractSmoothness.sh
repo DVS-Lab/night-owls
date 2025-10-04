@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Extract accurate smoothness (FWHM_eff from 3dFWHMx -acf) for raw/smoothed fMRIPrep BOLD
-# from L1 FEAT directories, for tasks mid and sharedreward only.
+# from L1 FEAT directories, tasks mid/sharedreward only.
+# De-duplicates across FEATs and image paths; MNI-only by default.
 
-set -u  # no -e so a single failure won’t stop everything
+set -u
 set -o pipefail
 
 # ---------------- paths ----------------
@@ -11,8 +12,8 @@ rootdir="$(dirname "$scriptdir")"
 FSL_DERIV="${rootdir}/derivatives/fsl"
 FMRIPREP_DERIV="${rootdir}/derivatives/fmriprep"
 
-# Output TSV lives at <project>/extractions/ (to match your workflow)
-OUT_DIR="${rootdir}/derivatives/extractions"
+# Output TSV at <project>/extractions/
+OUT_DIR="${rootdir}/extractions"
 mkdir -p "${OUT_DIR}"
 TSV="${OUT_DIR}/smoothness_acf.tsv"
 
@@ -20,24 +21,20 @@ TSV="${OUT_DIR}/smoothness_acf.tsv"
 command -v 3dFWHMx >/dev/null || { echo "ERROR: 3dFWHMx (AFNI) not in PATH"; exit 1; }
 
 # ---------------- env toggles ----------
-VERBOSE="${VERBOSE:-0}"  # set VERBOSE=1 for progress lines
+VERBOSE="${VERBOSE:-0}"           # VERBOSE=1 for progress lines
+ONLY_SPACE="${ONLY_SPACE:-MNI}"   # MNI | T1w | ALL
 
-# ---------------- helpers --------------
 log() { [[ "$VERBOSE" == "1" ]] && echo "$*"; }
 
+# ---------------- helpers --------------
 parse_meta_from_path() {
-  # prints: sub \t ses \t task \t run \t space
   local p="$1"
   local sub="" ses="" task="" run="" space=""
   [[ "$p" =~ sub-([A-Za-z0-9]+) ]] && sub="${BASH_REMATCH[1]}"
   [[ "$p" =~ ses-([A-Za-z0-9]+) ]] && ses="${BASH_REMATCH[1]}"
   [[ "$p" =~ task-([^_/]+)      ]] && task="${BASH_REMATCH[1]}"
   [[ "$p" =~ run-([0-9]+)       ]] && run="${BASH_REMATCH[1]}"
-  if [[ "$p" =~ space-([Tt]1[wW]) ]]; then
-    space="T1w"
-  else
-    space="MNI152NLin6Asym"
-  fi
+  if [[ "$p" =~ space-([Tt]1[wW]) ]]; then space="T1w"; else space="MNI152NLin6Asym"; fi
   printf "%s\t%s\t%s\t%s\t%s\n" "$sub" "$ses" "$task" "$run" "$space"
 }
 
@@ -47,13 +44,9 @@ kernel_from_name() {
 }
 
 append_row() {
-  # only FWHM_eff to TSV
   local sub="$1" ses="$2" task="$3" run="$4" acq="$5" kernel="$6" txt="$7"
   local feff="NA"
-  if [[ -s "$txt" ]]; then
-    # 3dFWHMx -acf NULL prints 2 numeric lines; FWHM_eff is field 4 on line 2
-    feff="$(awk 'NR==2{print $4}' "$txt" 2>/dev/null || echo NA)"
-  fi
+  if [[ -s "$txt" ]]; then feff="$(awk 'NR==2{print $4}' "$txt" 2>/dev/null || echo NA)"; fi
   echo -e "${sub}\t${ses}\t${task}\t${run}\t${acq}\t${kernel}\t${feff}" >> "${TSV}"
 }
 
@@ -121,6 +114,24 @@ find_inputs_for_run() {
   if [[ -n "$me_r" ]]; then echo -e "multiecho\t${me_r}\t${me_s}"; fi
 }
 
+process_img() {
+  # De-duplicate by image path + acq + kernel across the whole run
+  local sub="$1" ses="$2" task="$3" run="$4" acq="$5" kernel="$6" img="$7" mask="$8" out_txt="$9"
+  local key="${acq}|${kernel}|${img}"
+  if [[ -n "${DONE_IMG[$key]:-}" ]]; then
+    log "skip duplicate img: ${key}"
+    return 0
+  fi
+  if 3dFWHMx -detrend -acf NULL -mask "$mask" -input "$img" > "$out_txt" 2>/dev/null; then
+    append_row "$sub" "$ses" "$task" "$run" "$acq" "$kernel" "$out_txt"
+    DONE_IMG[$key]=1
+    return 0
+  else
+    log "warn: 3dFWHMx failed for $img"
+    return 1
+  fi
+}
+
 # header
 if [[ ! -f "${TSV}" ]]; then
   echo -e "sub\tses\ttask\trun\tacq\tkernel_mm\tfwhm_eff" > "${TSV}"
@@ -129,59 +140,69 @@ fi
 echo "[$(date +'%F %T')] Scanning L1 FEATs; writing to ${TSV}"
 
 shopt -s nullglob
+declare -A SEEN_RUN
+declare -A DONE_IMG
+
 rows=0 feats=0 skipped=0
 
-# Use shell globs to avoid find() touching L2 or gfeat trees (and spamming Permission denied)
-# Common on your tree: sub-*/ses-*/L1_*.feat plus some L1_*.feat right under sub-*/ses-*
 for pat in \
   "${FSL_DERIV}"/sub-*/ses-*/L1_*.feat \
   "${FSL_DERIV}"/sub-*/L1_*.feat
 do
   for featdir in $pat; do
-    # hard skips
     [[ -d "$featdir" ]] || continue
+
+    # hard skips
     [[ "$featdir" == *"model-LSS"* ]] && continue
     [[ "$featdir" == *"/subject-level/"* ]] && continue
     [[ "$featdir" == *".gfeat"* ]] && continue
     [[ "$featdir" == *"/L2_"* ]] && continue
-
-    # task filter: only mid and sharedreward
     [[ "$featdir" =~ task-(mid|sharedreward) ]] || continue
+
+    # space selection
+    if [[ "$ONLY_SPACE" == "MNI" ]]; then
+      [[ "$featdir" =~ space-[Mm][Nn][Ii] ]] || continue
+    elif [[ "$ONLY_SPACE" == "T1w" ]]; then
+      [[ "$featdir" =~ space-[Tt]1[wW] ]] || continue
+    fi
 
     mask="${featdir}/mask.nii.gz"
     [[ -f "$mask" ]] || { ((skipped++)); log "skip (no mask): $featdir"; continue; }
 
     IFS=$'\t' read -r sub ses task run space <<<"$(parse_meta_from_path "$featdir")"
     [[ -n "$sub" && -n "$task" && -n "$run" ]] || { ((skipped++)); log "skip (parse): $featdir"; continue; }
+
+    # run-level de-duplication: only handle each (sub|ses|task|run|space) once
+    run_key="${sub}|${ses}|${task}|${run}|${space}"
+    if [[ -n "${SEEN_RUN[$run_key]:-}" ]]; then
+      log "skip duplicate FEAT for run: $run_key"
+      continue
+    fi
+    SEEN_RUN[$run_key]=1
     ((feats++))
     log "FEAT: sub=$sub ses=$ses task=$task run=$run space=$space"
 
-    # find raw/smoothed for each acquisition (single-echo, multiecho)
+    # reset per-run image memo
+    DONE_IMG=()
+
+    # find raw/smoothed per acq and process
     while IFS=$'\t' read -r acq raw_img smooth_img; do
       [[ -n "$raw_img" ]] || continue
 
-      # UNSMOOTHED
       out_raw="${featdir}/smoothness-0mm_${acq}.txt"
-      if 3dFWHMx -detrend -acf NULL -mask "$mask" -input "$raw_img" > "$out_raw" 2>/dev/null; then
-        append_row "$sub" "$ses" "$task" "$run" "$acq" "0" "$out_raw"
+      if process_img "$sub" "$ses" "$task" "$run" "$acq" "0" "$raw_img" "$mask" "$out_raw"; then
         ((rows++))
-      else
-        log "warn: 3dFWHMx failed (raw) for $featdir [$acq]"
       fi
 
-      # SMOOTHED (if present)
       if [[ -n "${smooth_img:-}" && -f "$smooth_img" ]]; then
         smmm="$(kernel_from_name "$smooth_img")"
         out_sm="${featdir}/smoothness-${smmm}mm_${acq}.txt"
-        if 3dFWHMx -detrend -acf NULL -mask "$mask" -input "$smooth_img" > "$out_sm" 2>/dev/null; then
-          append_row "$sub" "$ses" "$task" "$run" "$acq" "$smmm" "$out_sm"
+        if process_img "$sub" "$ses" "$task" "$run" "$acq" "$smmm" "$smooth_img" "$mask" "$out_sm"; then
           ((rows++))
-        else
-          log "warn: 3dFWHMx failed (sm) for $featdir [$acq ${smmm}mm]"
         fi
       fi
     done < <(find_inputs_for_run "$sub" "$ses" "$task" "$run" "$space")
   done
 done
 
-echo "[$(date +'%F %T')] Done. FEATs: ${feats}, rows written: ${rows}, skipped: ${skipped}"
+echo "[$(date +'%F %T')] Done. FEATs considered: ${feats}, rows written: ${rows}, skipped: ${skipped}"
