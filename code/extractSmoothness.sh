@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# AFNI 3dFWHMx -acf (ACF model) smoothness for raw/smoothed fMRIPrep BOLD, per L1 FEAT, both acquisition types.
-# Progress is echoed for each FEAT and for each acquisition (single-echo, multiecho).
+# AFNI 3dFWHMx -acf smoothness for raw/smoothed fMRIPrep BOLD, per L1 FEAT, both acquisition types.
+# Minimal progress output; TSV only includes FWHM_eff (gaussian_NEWmodel).
 
 set -euo pipefail
 
@@ -18,28 +18,12 @@ OUT_DIR="${rootdir}/derivatives/extractions"
 mkdir -p "${OUT_DIR}"
 TSV="${OUT_DIR}/smoothness_acf.tsv"
 if [[ ! -f "${TSV}" ]]; then
-  # include acq and fwhm_eff (the gaussian_NEWmodel FWHM)
-  echo -e "sub\tses\ttask\trun\tacq\tkernel_mm\tacf_a\tacf_b\tacf_c\tfwhm_eff\tfwhm_x\tfwhm_y\tfwhm_z\tfeatdir\timg" > "${TSV}"
+  echo -e "sub\tses\ttask\trun\tacq\tkernel_mm\tfwhm_eff" > "${TSV}"
 fi
 
 # -------- helpers --------
 
-# Parse values from 3dFWHMx -acf NULL stdout file ($txt) and append to TSV
-# - line 1: classic FWHM_x FWHM_y FWHM_z FWHM_combined
-# - line 2: a b c FWHM_eff
-append_to_tsv() {
-  local sub="$1" ses="$2" task="$3" run="$4" kernel="$5" featdir="$6" img="$7" txt="$8" acq="$9"
-  local a="NA" b="NA" c="NA" feff="NA" fx="NA" fy="NA" fz="NA"
-  if [[ -s "$txt" ]]; then
-    # classic FWHM line
-    read fx fy fz _ < <(awk 'NR==1{print; exit}' "$txt" 2>/dev/null || echo)
-    # ACF params + effective FWHM
-    read a b c feff < <(awk 'NR==2{print; exit}' "$txt" 2>/dev/null || echo)
-  fi
-  echo -e "${sub}\t${ses}\t${task}\t${run}\t${acq}\t${kernel}\t${a}\t${b}\t${c}\t${feff}\t${fx}\t${fy}\t${fz}\t${featdir}\t${img}" >> "${TSV}"
-}
-
-# Parse sub/ses/task/run/space from FEAT path
+# Parse sub/ses/task/run/space from FEAT path (space = T1w or MNI152NLin6Asym)
 parse_meta_from_path() {
   local p="$1"
   local sub="" ses="" task="" run="" space=""
@@ -50,14 +34,29 @@ parse_meta_from_path() {
   if [[ "$p" =~ space-([Tt]1[wW]) ]]; then
     space="T1w"
   else
-    space="MNI152NLin6Asym"   # default if FEAT name says mni/space-mni
+    space="MNI152NLin6Asym"
   fi
   printf "%s\t%s\t%s\t%s\t%s\n" "$sub" "$ses" "$task" "$run" "$space"
 }
 
+# Extract kernel size from smoothed filename suffix
+kernel_from_name() {
+  local f="$1"
+  if [[ "$f" =~ _([0-9]+)mm\.nii\.gz$ ]]; then echo "${BASH_REMATCH[1]}"; else echo "sm"; fi
+}
+
+# Append a single row (only FWHM_eff) to TSV
+append_to_tsv() {
+  local sub="$1" ses="$2" task="$3" run="$4" acq="$5" kernel="$6" txt="$7"
+  local feff="NA"
+  if [[ -s "$txt" ]]; then
+    feff="$(awk 'NR==2{print $4}' "$txt" 2>/dev/null || echo NA)"
+  fi
+  echo -e "${sub}\t${ses}\t${task}\t${run}\t${acq}\t${kernel}\t${feff}" >> "${TSV}"
+}
+
 # For a given sub/ses/task/run/space, emit up to two lines:
-#   "single-echo<TAB>RAW<TAB>SMOOTH"
-#   "multiecho<TAB>RAW<TAB>SMOOTH"
+# "single-echo<TAB>RAW<TAB>SMOOTH" and "multiecho<TAB>RAW<TAB>SMOOTH"
 find_fmriprep_for_run() {
   local sub="$1" ses="$2" task="$3" run="$4" space="$5"
   local base="${FMRIPREP_DERIV}/sub-${sub}"
@@ -71,7 +70,7 @@ find_fmriprep_for_run() {
   fi
   shopt -s nullglob
 
-  # ------- single-echo (no part-mag) -------
+  # single-echo (no part-mag)
   local se_raw=(
     "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_space-${space}_desc-preproc_bold.nii.gz"
     "${funcdir}/sub-${sub}_task-${task}_run-${run}_space-${space}_desc-preproc_bold.nii.gz"
@@ -85,7 +84,7 @@ find_fmriprep_for_run() {
     "${funcdir}/sub-${sub}_task-${task}_run-${run}_acq-"*"_space-${space}_desc-preproc_bold_"*mm.nii.gz"
   )
 
-  # ------- multiecho (prefer combined part-mag; else echo-2; else any echo) -------
+  # multiecho (prefer combined part-mag; else echo-2; else any echo)
   local me_raw=(
     "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold.nii.gz"
     "${funcdir}/sub-${sub}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold.nii.gz"
@@ -123,49 +122,39 @@ find_fmriprep_for_run() {
   if [[ -n "$me_r" ]]; then echo -e "multiecho\t${me_r}\t${me_s}"; fi
 }
 
-# Kernel from filename suffix
-kernel_from_name() {
-  local f="$1"
-  if [[ "$f" =~ _([0-9]+)mm\.nii\.gz$ ]]; then echo "${BASH_REMATCH[1]}"; else echo "sm"; fi
-}
-
 # -------- main --------
 echo "[$(date '+%F %T')] Starting smoothness extraction under: ${FSL_DERIV}"
 shopt -s nullglob
 
-# Iterate only L1 FEAT dirs (each FEAT supplies the mask and naming context)
+# Only L1 FEATs; explicitly SKIP LSS trial FEATs (model-LSS)
 while IFS= read -r -d '' featdir; do
-  # Skip aggregate dirs just in case
   [[ "$featdir" == *".gfeat"* || "$featdir" == *"/L2_"* || "$featdir" == *"/cope"* ]] && continue
+  [[ "$featdir" == *"model-LSS"* ]] && continue
 
   mask="${featdir}/mask.nii.gz"
   [[ -f "$mask" ]] || { echo "WARN: No mask at ${mask}; skipping ${featdir}"; continue; }
 
   IFS=$'\t' read -r sub ses task run space <<<"$(parse_meta_from_path "$featdir")"
-  echo ">> FEAT: sub=${sub} ses=${ses} task=${task} run=${run} space=${space} :: $(basename "$featdir")"
+  echo "FEAT: sub=${sub} ses=${ses} task=${task} run=${run} space=${space}"
   [[ -n "$sub" && -n "$task" && -n "$run" ]] || { echo "WARN: Could not parse sub/task/run; skipping"; continue; }
 
-  # Resolve raw/smoothed inputs for BOTH acquisition types, space-matched
   while IFS=$'\t' read -r acq raw_img smooth_img; do
     [[ -n "$raw_img" ]] || continue
-    echo "   >> acq=${acq} raw=$(basename "$raw_img") smooth=$(basename "${smooth_img:-NONE}")"
 
-    pushd "$featdir" >/dev/null
+    # UNSMOOTHED (quiet numeric; no plots), suppress AFNI chatter to stderr
+    out_raw="${featdir}/smoothness-0mm_${acq}.txt"
+    3dFWHMx -detrend -acf NULL -mask "$mask" -input "$raw_img" > "$out_raw" 2>/dev/null
+    append_to_tsv "$sub" "$ses" "$task" "$run" "$acq" "0" "$out_raw"
 
-    # UNSMOOTHED: use -acf NULL to suppress 1D/PNG files; stdout is pure numeric (2 lines)
-    3dFWHMx -detrend -acf NULL -mask "$mask" -input "$raw_img" > "smoothness-0mm_${acq}.txt"
-    append_to_tsv "$sub" "$ses" "$task" "$run" "0" "$featdir" "$raw_img" "smoothness-0mm_${acq}.txt" "$acq"
-
-    # SMOOTHED
+    # SMOOTHED (if present)
     if [[ -n "${smooth_img:-}" && -f "$smooth_img" ]]; then
       smmm="$(kernel_from_name "$smooth_img")"
-      3dFWHMx -detrend -acf NULL -mask "$mask" -input "$smooth_img" > "smoothness-${smmm}mm_${acq}.txt"
-      append_to_tsv "$sub" "$ses" "$task" "$run" "${smmm}" "$featdir" "$smooth_img" "smoothness-${smmm}mm_${acq}.txt" "$acq"
+      out_sm="${featdir}/smoothness-${smmm}mm_${acq}.txt"
+      3dFWHMx -detrend -acf NULL -mask "$mask" -input "$smooth_img" > "$out_sm" 2>/dev/null
+      append_to_tsv "$sub" "$ses" "$task" "$run" "$acq" "$smmm" "$out_sm"
     fi
-
-    popd >/dev/null
   done < <(find_fmriprep_for_run "$sub" "$ses" "$task" "$run" "$space")
 
-done < <(find "$FSL_DERIV" -type d -path "*/L1_*.feat" -print0)
+done < <(find "$FSL_DERIV" -type d -path "*/L1_*.feat" -not -name "*model-LSS*" -print0)
 
 echo "[$(date '+%F %T')] Done."
