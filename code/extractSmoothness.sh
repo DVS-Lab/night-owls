@@ -13,7 +13,7 @@ FSL_DERIV="${rootdir}/derivatives/fsl"
 FMRIPREP_DERIV="${rootdir}/derivatives/fmriprep"
 
 # Output TSV at <project>/extractions/
-OUT_DIR="${rootdir}/extractions"
+OUT_DIR="${rootdir}/derivatives/extractions"
 mkdir -p "${OUT_DIR}"
 TSV="${OUT_DIR}/smoothness_acf.tsv"
 
