@@ -186,22 +186,44 @@ do
     DONE_IMG=()
 
     # find raw/smoothed per acq and process
+   
+    # find raw/smoothed per acq and process
     while IFS=$'\t' read -r acq raw_img smooth_img; do
       [[ -n "$raw_img" ]] || continue
 
+      # --- raw (0 mm) ---
       out_raw="${featdir}/smoothness-0mm_${acq}.txt"
       if process_img "$sub" "$ses" "$task" "$run" "$acq" "0" "$raw_img" "$mask" "$out_raw"; then
         ((rows++))
       fi
 
+      # --- smoothed: prefer explicit smooth_img, else look for siblings next to RAW ---
+      declare -a SMOOTH_SET=()
       if [[ -n "${smooth_img:-}" && -f "$smooth_img" ]]; then
-        smmm="$(kernel_from_name "$smooth_img")"
-        out_sm="${featdir}/smoothness-${smmm}mm_${acq}.txt"
-        if process_img "$sub" "$ses" "$task" "$run" "$acq" "$smmm" "$smooth_img" "$mask" "$out_sm"; then
-          ((rows++))
-        fi
+        SMOOTH_SET+=("$smooth_img")
+      else
+        # robust sibling search: sub-XXX..._desc-preproc_bold.nii.gz -> *_desc-preproc_bold_*mm.nii.gz
+        base="${raw_img%_desc-preproc_bold.nii.gz}"
+        shopt -s nullglob
+        for sm in "${base}_desc-preproc_bold_"*mm.nii.gz; do
+          [[ -f "$sm" ]] && SMOOTH_SET+=("$sm")
+        done
+        shopt -u nullglob
+      fi
+
+      # process each smoothed kernel once
+      if [[ ${#SMOOTH_SET[@]} -gt 0 ]]; then
+        for sm in "${SMOOTH_SET[@]}"; do
+          smmm="$(kernel_from_name "$sm")"
+          out_sm="${featdir}/smoothness-${smmm}mm_${acq}.txt"
+          if process_img "$sub" "$ses" "$task" "$run" "$acq" "$smmm" "$sm" "$mask" "$out_sm"; then
+            ((rows++))
+          fi
+        done
       fi
     done < <(find_inputs_for_run "$sub" "$ses" "$task" "$run" "$space")
+
+   
   done
 done
 
