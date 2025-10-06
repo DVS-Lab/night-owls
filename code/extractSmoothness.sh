@@ -1,230 +1,198 @@
 #!/usr/bin/env bash
-# Extract accurate smoothness (FWHM_eff from 3dFWHMx -acf) for raw/smoothed fMRIPrep BOLD
-# from L1 FEAT directories, tasks mid/sharedreward only.
-# De-duplicates across FEATs and image paths; MNI-only by default.
+# Extract ACF-based smoothness (effective FWHM) from fMRIPrep BOLD series
+# for both unsmoothed (0 mm) and smoothed (e.g., 5 mm) images, across
+# multi-echo aggregate and single-echo (echo-2) acquisitions.
+#
+# Usage (env or args):
+#   FSL_ROOT=/path/to/derivatives/fsl \
+#   FMRIPREP_ROOT=/path/to/derivatives/fmriprep \
+#   TSV=./smoothness_acf.tsv \
+#   KERNELS="0 5" \
+#   VERBOSE=0 \
+#   bash extractSmoothness.sh
+#
+# Or provide roots and tsv as args:
+#   bash extractSmoothness.sh /path/to/derivatives/fsl /path/to/derivatives/fmriprep ./smoothness_acf.tsv
+#
+# Output TSV columns:
+#   sub  ses  task  run  acq  kernel_mm  fwhm_eff
+#
+# Notes:
+# - Only L1, MNI-space FEATs are scanned (no L2, no T1w, no gfeat).
+# - acq="multi-echo" selects files WITHOUT an "echo-" token.
+# - acq="single-echo" selects files WITH "echo-2".
+# - We read the accurate combined FWHM (field 4 of the second numeric line from 3dFWHMx -acf).
+# - Duplicates are suppressed by (sub|ses|task|run|acq|kernel_mm).
 
-set -u
-set -o pipefail
+set -euo pipefail
 
-# ---------------- paths ----------------
-scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-rootdir="$(dirname "$scriptdir")"
-FSL_DERIV="${rootdir}/derivatives/fsl"
-FMRIPREP_DERIV="${rootdir}/derivatives/fmriprep"
+# ----------------------------
+# Config / inputs
+# ----------------------------
+FSL_ROOT="${FSL_ROOT:-${1:-}}"
+FMRIPREP_ROOT="${FMRIPREP_ROOT:-${2:-}}"
+TSV="${TSV:-${3:-smoothness_acf.tsv}}"
 
-# Output TSV at <project>/extractions/
-OUT_DIR="${rootdir}/derivatives/extractions"
-mkdir -p "${OUT_DIR}"
-TSV="${OUT_DIR}/smoothness_acf.tsv"
+# Kernels to extract. Default assumes 0 (raw) and 5 mm (smoothed).
+KERNELS="${KERNELS:-0 5}"
 
-# ---------------- tools ----------------
-command -v 3dFWHMx >/dev/null || { echo "ERROR: 3dFWHMx (AFNI) not in PATH"; exit 1; }
+# Verbose progress (0 = quiet, 1 = print per-row OK)
+VERBOSE="${VERBOSE:-0}"
 
-# ---------------- env toggles ----------
-VERBOSE="${VERBOSE:-0}"           # VERBOSE=1 for progress lines
-ONLY_SPACE="${ONLY_SPACE:-MNI}"   # MNI | T1w | ALL
-
-log() { [[ "$VERBOSE" == "1" ]] && echo "$*"; }
-
-# ---------------- helpers --------------
-parse_meta_from_path() {
-  local p="$1"
-  local sub="" ses="" task="" run="" space=""
-  [[ "$p" =~ sub-([A-Za-z0-9]+) ]] && sub="${BASH_REMATCH[1]}"
-  [[ "$p" =~ ses-([A-Za-z0-9]+) ]] && ses="${BASH_REMATCH[1]}"
-  [[ "$p" =~ task-([^_/]+)      ]] && task="${BASH_REMATCH[1]}"
-  [[ "$p" =~ run-([0-9]+)       ]] && run="${BASH_REMATCH[1]}"
-  if [[ "$p" =~ space-([Tt]1[wW]) ]]; then space="T1w"; else space="MNI152NLin6Asym"; fi
-  printf "%s\t%s\t%s\t%s\t%s\n" "$sub" "$ses" "$task" "$run" "$space"
-}
-
-kernel_from_name() {
-  local f="$1"
-  if [[ "$f" =~ _([0-9]+)mm\.nii\.gz$ ]]; then echo "${BASH_REMATCH[1]}"; else echo "sm"; fi
-}
-
-append_row() {
-  local sub="$1" ses="$2" task="$3" run="$4" acq="$5" kernel="$6" txt="$7"
-  local feff="NA"
-  if [[ -s "$txt" ]]; then feff="$(awk 'NR==2{print $4}' "$txt" 2>/dev/null || echo NA)"; fi
-  echo -e "${sub}\t${ses}\t${task}\t${run}\t${acq}\t${kernel}\t${feff}" >> "${TSV}"
-}
-
-find_inputs_for_run() {
-  # emits up to two lines:
-  #   "single-echo<TAB>RAW<TAB>SMOOTH"
-  #   "multiecho<TAB>RAW<TAB>SMOOTH"
-  local sub="$1" ses="$2" task="$3" run="$4" space="$5"
-  local base="${FMRIPREP_DERIV}/sub-${sub}"
-  local funcdir=""
-  if [[ -n "$ses" && -d "${base}/ses-${ses}/func" ]]; then
-    funcdir="${base}/ses-${ses}/func"
-  elif [[ -d "${base}/func" ]]; then
-    funcdir="${base}/func"
-  else
-    return 0
-  fi
-  shopt -s nullglob
-
-  # single-echo (no part-mag)
-  local se_raw=(
-    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_space-${space}_desc-preproc_bold.nii.gz"
-    "${funcdir}/sub-${sub}_task-${task}_run-${run}_space-${space}_desc-preproc_bold.nii.gz"
-    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_acq-"*"_space-${space}_desc-preproc_bold.nii.gz"
-    "${funcdir}/sub-${sub}_task-${task}_run-${run}_acq-"*"_space-${space}_desc-preproc_bold.nii.gz"
-  )
-  local se_sm=(
-    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_space-${space}_desc-preproc_bold_"*mm.nii.gz"
-    "${funcdir}/sub-${sub}_task-${task}_run-${run}_space-${space}_desc-preproc_bold_"*mm.nii.gz"
-    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_acq-"*"_space-${space}_desc-preproc_bold_"*mm.nii.gz"
-    "${funcdir}/sub-${sub}_task-${task}_run-${run}_acq-"*"_space-${space}_desc-preproc_bold_"*mm.nii.gz"
-  )
-
-  # multiecho (prefer combined part-mag; else echo-2; else any echo)
-  local me_raw=(
-    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold.nii.gz"
-    "${funcdir}/sub-${sub}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold.nii.gz"
-    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold.nii.gz"
-    "${funcdir}/sub-${sub}_task-${task}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold.nii.gz"
-    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-"*"_part-mag_space-${space}_desc-preproc_bold.nii.gz"
-    "${funcdir}/sub-${sub}_task-${task}_run-${run}_echo-"*"_part-mag_space-${space}_desc-preproc_bold.nii.gz"
-    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_acq-"*"_part-mag_space-${space}_desc-preproc_bold.nii.gz"
-    "${funcdir}/sub-${sub}_task-${task}_run-${run}_acq-"*"_part-mag_space-${space}_desc-preproc_bold.nii.gz"
-  )
-  local me_sm=(
-    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold_"*mm.nii.gz"
-    "${funcdir}/sub-${sub}_task-${task}_run-${run}_part-mag_space-${space}_desc-preproc_bold_"*mm.nii.gz"
-    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold_"*mm.nii.gz"
-    "${funcdir}/sub-${sub}_task-${task}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold_"*mm.nii.gz"
-    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_echo-"*"_part-mag_space-${space}_desc-preproc_bold_"*mm.nii.gz"
-    "${funcdir}/sub-${sub}_task-${task}_run-${run}_echo-"*"_part-mag_space-${space}_desc-preproc_bold_"*mm.nii.gz"
-    "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_acq-"*"_part-mag_space-${space}_desc-preproc_bold_"*mm.nii.gz"
-    "${funcdir}/sub-${sub}_task-${task}_run-${run}_acq-"*"_part-mag_space-${space}_desc-preproc_bold_"*mm.nii.gz"
-  )
-
-  local pick_first=""
-  pick_first_file() { pick_first=""; for f in "$@"; do [[ -f "$f" ]] && { pick_first="$f"; break; }; done; }
-
-  pick_first_file "${se_raw[@]}"; local se_r="$pick_first"
-  pick_first_file "${se_sm[@]}";  local se_s="$pick_first"
-  if [[ -n "$se_r" ]]; then echo -e "single-echo\t${se_r}\t${se_s}"; fi
-
-  pick_first_file "${me_raw[@]}"; local me_r="$pick_first"
-  pick_first_file "${me_sm[@]}";  local me_s="$pick_first"
-  if [[ -n "$me_r" ]]; then echo -e "multiecho\t${me_r}\t${me_s}"; fi
-}
-
-process_img() {
-  # De-duplicate by image path + acq + kernel across the whole run
-  local sub="$1" ses="$2" task="$3" run="$4" acq="$5" kernel="$6" img="$7" mask="$8" out_txt="$9"
-  local key="${acq}|${kernel}|${img}"
-  if [[ -n "${DONE_IMG[$key]:-}" ]]; then
-    log "skip duplicate img: ${key}"
-    return 0
-  fi
-  if 3dFWHMx -detrend -acf NULL -mask "$mask" -input "$img" > "$out_txt" 2>/dev/null; then
-    append_row "$sub" "$ses" "$task" "$run" "$acq" "$kernel" "$out_txt"
-    DONE_IMG[$key]=1
-    return 0
-  else
-    log "warn: 3dFWHMx failed for $img"
-    return 1
-  fi
-}
-
-# header
-if [[ ! -f "${TSV}" ]]; then
-  echo -e "sub\tses\ttask\trun\tacq\tkernel_mm\tfwhm_eff" > "${TSV}"
+# If roots not set, try to infer ../derivatives/* from current dir
+if [[ -z "${FSL_ROOT}" || -z "${FMRIPREP_ROOT}" ]]; then
+  PARENT="$(cd .. 2>/dev/null && pwd || pwd)"
+  [[ -z "${FSL_ROOT}" ]] && [[ -d "${PARENT}/derivatives/fsl" ]] && FSL_ROOT="${PARENT}/derivatives/fsl"
+  [[ -z "${FMRIPREP_ROOT}" ]] && [[ -d "${PARENT}/derivatives/fmriprep" ]] && FMRIPREP_ROOT="${PARENT}/derivatives/fmriprep"
 fi
 
-echo "[$(date +'%F %T')] Scanning L1 FEATs; writing to ${TSV}"
+# Validate roots
+if [[ ! -d "${FSL_ROOT}" ]]; then
+  echo "ERROR: FSL_ROOT does not exist: ${FSL_ROOT:-<unset>}" >&2
+  exit 1
+fi
+if [[ ! -d "${FMRIPREP_ROOT}" ]]; then
+  echo "ERROR: FMRIPREP_ROOT does not exist: ${FMRIPREP_ROOT:-<unset>}" >&2
+  exit 1
+fi
 
-shopt -s nullglob
-declare -A SEEN_RUN
-declare -A DONE_IMG
+# Check AFNI tool
+if ! command -v 3dFWHMx >/dev/null 2>&1; then
+  echo "ERROR: AFNI's 3dFWHMx not found on PATH." >&2
+  exit 1
+fi
 
-rows=0 feats=0 skipped=0
+ts() { date +'%F %T'; }
 
-for pat in \
-  "${FSL_DERIV}"/sub-*/ses-*/L1_*.feat \
-  "${FSL_DERIV}"/sub-*/L1_*.feat
-do
-  for featdir in $pat; do
-    [[ -d "$featdir" ]] || continue
+# ----------------------------
+# FEAT discovery: L1 + MNI only
+# ----------------------------
+# Examples we want:
+#   .../L1_sub-104_ses-03_task-mid_model-1_type-act_run-1_space-mni_single-echo_cnfds-fmriprep.feat
+# We exclude:
+#   - L2_* and any gfeat
+#   - space-*t1w*
+#   - subject-level trees (often cause permission noise and not per-run FEAT)
+mapfile -t FEATS < <(
+  find "${FSL_ROOT}" -type d -name "L1_*" \
+    -path "*/space-*mni*_*" \
+    -not -path "*/L2_*" \
+    -not -path "*/gfeat/*" \
+    -not -path "*/space-*t1w*/*" \
+    -not -path "*/subject-level/*" \
+    2>/dev/null \
+  | sort -u
+)
 
-    # hard skips
-    [[ "$featdir" == *"model-LSS"* ]] && continue
-    [[ "$featdir" == *"/subject-level/"* ]] && continue
-    [[ "$featdir" == *".gfeat"* ]] && continue
-    [[ "$featdir" == *"/L2_"* ]] && continue
-    [[ "$featdir" =~ task-(mid|sharedreward) ]] || continue
+echo "[${ts}] Scanning L1/MNI FEATs under: ${FSL_ROOT}"
+echo "[${ts}] fMRIPrep root: ${FMRIPREP_ROOT}"
+echo "[${ts}] Writing to: ${TSV}"
 
-    # space selection
-    if [[ "$ONLY_SPACE" == "MNI" ]]; then
-      [[ "$featdir" =~ space-[Mm][Nn][Ii] ]] || continue
-    elif [[ "$ONLY_SPACE" == "T1w" ]]; then
-      [[ "$featdir" =~ space-[Tt]1[wW] ]] || continue
+# ----------------------------
+# Helpers
+# ----------------------------
+
+parse_meta_from_feat() {
+  # Print: sub ses task run acq
+  local featdir="$1" base sub ses task run acq
+  base="$(basename "$featdir")"
+
+  # Extract IDs from anywhere in the name
+  sub="$(sed -n 's/.*sub-\([0-9][0-9]*\).*/\1/p' <<<"$base")"
+  ses="$(sed -n 's/.*ses-\([0-9][0-9]*\).*/\1/p' <<<"$base")"
+  task="$(sed -n 's/.*task-\([^_]*\).*/\1/p' <<<"$base")"
+  run="$(sed -n 's/.*run-\([0-9][0-9]*\).*/\1/p' <<<"$base")"
+
+  # Acquisition encoded in FEAT name
+  if [[ "$base" == *"single-echo"* ]]; then
+    acq="single-echo"
+  elif [[ "$base" == *"multi-echo"* ]]; then
+    acq="multi-echo"
+  else
+    acq=""
+  fi
+
+  echo "$sub" "$ses" "$task" "$run" "$acq"
+}
+
+# Return fMRIPrep BOLD file path for given IDs and kernel (0 = raw, k>0 smoothed)
+fmriprep_func_file() {
+  local sub="$1" ses="$2" task="$3" run="$4" acq="$5" kernel="$6"
+  local space="MNI152NLin6Asym"
+  local funcdir="${FMRIPREP_ROOT}/sub-${sub}/ses-${ses}/func"
+  local tail="_space-${space}_desc-preproc_bold"
+  [[ "$kernel" -gt 0 ]] && tail="${tail}_${kernel}mm"
+  tail="${tail}.nii.gz"
+
+  shopt -s nullglob
+  if [[ "$acq" == "single-echo" ]]; then
+    # Require echo-2
+    for f in "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_*"echo-2"*${tail}"; do
+      [[ -f "$f" ]] && { echo "$f"; shopt -u nullglob; return 0; }
+    done
+  else
+    # multi-echo aggregate → pick a file without any "_echo-" segment
+    for f in "${funcdir}/sub-${sub}_ses-${ses}_task-${task}_run-${run}_*"${tail}"; do
+      [[ "$f" == *"_echo-"* ]] && continue
+      [[ -f "$f" ]] && { echo "$f"; shopt -u nullglob; return 0; }
+    done
+  fi
+  shopt -u nullglob
+
+  echo ""   # not found
+  return 1
+}
+
+# Compute effective FWHM from ACF model (field 4 on 2nd numeric line)
+acf_fwhm_eff() {
+  local mask="$1" img="$2"
+  # -acf NULL avoids writing 3dFWHMx.1D and .png; we parse stdout only.
+  3dFWHMx -acf NULL -detrend -mask "${mask}" -input "${img}" 2>/dev/null \
+    | awk 'NR==2 {print $4}'
+}
+
+# ----------------------------
+# Output header
+# ----------------------------
+if [[ ! -s "${TSV}" ]]; then
+  printf "sub\tses\ttask\trun\tacq\tkernel_mm\tfwhm_eff\n" > "${TSV}"
+fi
+
+# De-dup set
+declare -A seen=()
+
+# ----------------------------
+# Main
+# ----------------------------
+rows=0
+for feat in "${FEATS[@]}"; do
+  # Parse identifiers
+  read -r sub ses task run acq < <(parse_meta_from_feat "$feat")
+  [[ -z "$sub" || -z "$ses" || -z "$task" || -z "$run" || -z "$acq" ]] && continue
+
+  mask="${feat}/mask.nii.gz"
+  [[ ! -f "$mask" ]] && continue
+
+  # For each kernel in KERNELS (e.g., 0 and 5)
+  for k in ${KERNELS}; do
+    key="${sub}|${ses}|${task}|${run}|${acq}|${k}"
+    [[ -n "${seen[$key]:-}" ]] && continue
+
+    img="$(fmriprep_func_file "$sub" "$ses" "$task" "$run" "$acq" "$k")"
+    [[ -z "$img" || ! -f "$img" ]] && continue
+
+    fwhm="$(acf_fwhm_eff "$mask" "$img")"
+    [[ -z "$fwhm" ]] && continue
+
+    printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
+      "$sub" "$ses" "$task" "$run" "$acq" "$k" "$fwhm" >> "${TSV}"
+
+    seen[$key]=1
+    ((rows++))
+    if [[ "${VERBOSE}" == "1" ]]; then
+      echo "OK: sub=${sub} ses=${ses} task=${task} run=${run} acq=${acq} k=${k} -> ${fwhm}"
     fi
-
-    mask="${featdir}/mask.nii.gz"
-    [[ -f "$mask" ]] || { ((skipped++)); log "skip (no mask): $featdir"; continue; }
-
-    IFS=$'\t' read -r sub ses task run space <<<"$(parse_meta_from_path "$featdir")"
-    [[ -n "$sub" && -n "$task" && -n "$run" ]] || { ((skipped++)); log "skip (parse): $featdir"; continue; }
-
-    # run-level de-duplication: only handle each (sub|ses|task|run|space) once
-    run_key="${sub}|${ses}|${task}|${run}|${space}"
-    if [[ -n "${SEEN_RUN[$run_key]:-}" ]]; then
-      log "skip duplicate FEAT for run: $run_key"
-      continue
-    fi
-    SEEN_RUN[$run_key]=1
-    ((feats++))
-    log "FEAT: sub=$sub ses=$ses task=$task run=$run space=$space"
-
-    # reset per-run image memo
-    DONE_IMG=()
-
-    # find raw/smoothed per acq and process
-   
-    # find raw/smoothed per acq and process
-    while IFS=$'\t' read -r acq raw_img smooth_img; do
-      [[ -n "$raw_img" ]] || continue
-
-      # --- raw (0 mm) ---
-      out_raw="${featdir}/smoothness-0mm_${acq}.txt"
-      if process_img "$sub" "$ses" "$task" "$run" "$acq" "0" "$raw_img" "$mask" "$out_raw"; then
-        ((rows++))
-      fi
-
-      # --- smoothed: prefer explicit smooth_img, else look for siblings next to RAW ---
-      declare -a SMOOTH_SET=()
-      if [[ -n "${smooth_img:-}" && -f "$smooth_img" ]]; then
-        SMOOTH_SET+=("$smooth_img")
-      else
-        # robust sibling search: sub-XXX..._desc-preproc_bold.nii.gz -> *_desc-preproc_bold_*mm.nii.gz
-        base="${raw_img%_desc-preproc_bold.nii.gz}"
-        shopt -s nullglob
-        for sm in "${base}_desc-preproc_bold_"*mm.nii.gz; do
-          [[ -f "$sm" ]] && SMOOTH_SET+=("$sm")
-        done
-        shopt -u nullglob
-      fi
-
-      # process each smoothed kernel once
-      if [[ ${#SMOOTH_SET[@]} -gt 0 ]]; then
-        for sm in "${SMOOTH_SET[@]}"; do
-          smmm="$(kernel_from_name "$sm")"
-          out_sm="${featdir}/smoothness-${smmm}mm_${acq}.txt"
-          if process_img "$sub" "$ses" "$task" "$run" "$acq" "$smmm" "$sm" "$mask" "$out_sm"; then
-            ((rows++))
-          fi
-        done
-      fi
-    done < <(find_inputs_for_run "$sub" "$ses" "$task" "$run" "$space")
-
-   
   done
 done
 
-echo "[$(date +'%F %T')] Done. FEATs considered: ${feats}, rows written: ${rows}, skipped: ${skipped}"
+echo "[${ts}] Done. Wrote ${rows} rows to ${TSV}"
