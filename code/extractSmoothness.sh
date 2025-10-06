@@ -140,6 +140,10 @@ ensure_header "$OUT"
 SEEN_KEYS="$(mktemp "${TMPDIR:-/tmp}/seen_keys.XXXXXX")"
 trap 'rm -f "$SEEN_KEYS"' EXIT
 
+# (Re)create output TSV with header on every run
+printf 'sub\tses\ttask\trun\tacq\tkernel_mm\tfwhm_eff\n' > "$OUT" || { echo "ERR: cannot write $OUT" >&2; exit 2; }
+
+
 # Find L1 FEATs in MNI space only; skip group-level or T1w/other spaces
 # We filter paths like:
 #   .../derivatives/fsl/sub-XXX/ses-YY/L1_*space-mni*_*.feat
