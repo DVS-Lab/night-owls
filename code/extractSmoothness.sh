@@ -39,7 +39,7 @@ VERBOSE="${VERBOSE:-0}"
 if [ -z "${FSL_ROOT}" ] || [ -z "${FMRIPREP_ROOT}" ]; then
   PARENT="$(cd .. 2>/dev/null && pwd || pwd)"
   [ -z "${FSL_ROOT}" ] && [ -d "${PARENT}/derivatives/fsl" ] && FSL_ROOT="${PARENT}/derivatives/fsl"
-  [ -z "${FMRIPREP_ROOT}" ] && [ -d "${PARENT}/derivatives/fmriprep" ] && FMRIPREP_ROOT="${PARENT}/derivatives/fmriprep}"
+  [ -z "${FMRIPREP_ROOT}" ] && [ -d "${PARENT}/derivatives/fmriprep" ] && FMRIPREP_ROOT="${PARENT}/derivatives/fmriprep"
 fi
 
 # Validate roots
