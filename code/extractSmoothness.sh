@@ -1,173 +1,148 @@
 #!/usr/bin/env bash
 # extractSmoothness.sh
-# - Anchors paths to repo's code/ directory
-# - Scans L1, MNI-space FEATs (model-1, type-act) only
-# - For each run, measures FWHM_eff (gaussian_NEWmodel) from AFNI 3dFWHMx (-acf)
-# - Handles both acquisitions:
-#     * multiecho   -> fMRIPrep: ..._space-MNI152NLin6Asym_desc-preproc_bold[_<k>mm].nii.gz
-#     * singleecho  -> prefer ..._echo-2_part-mag_space-MNI152NLin6Asym_..., else ..._part-mag_space-...
-# - Outputs TSV: sub  ses  task  run  acq  kernel_mm  fwhm_eff
+# Compute ACF-based effective FWHM (gaussian_NEWmodel) from AFNI 3dFWHMx
+# for both multiecho-combined and single-echo (echo-2) images, at kernels 0 and 5 mm.
+# Writes a TSV: sub  ses  task  run  acq  kernel_mm  fwhm_eff  img
+# Run with bash (not sh).
 
-set -e
-# Avoid -u here; some envs export unbound vars and we don't want a hard crash.
+set -Eeuo pipefail
 
-# ---------- Roots anchored to this script ----------
-scriptdir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-projdir="$(dirname "$scriptdir")"    # project root containing {code,derivatives}
+# ---------- tiny utils ----------
+ts() { date +'%F %T'; }
 
-FSL_ROOT="${projdir}/derivatives/fsl"
-FMRIPREP_ROOT="${projdir}/derivatives/fmriprep"
-OUT="${projdir}/derivatives/extractions/smoothness_acf.tsv"
+in_list() {
+  local needle=$1; shift
+  for x in "$@"; do [[ "$x" == "$needle" ]] && return 0; done
+  return 1
+}
 
-mkdir -p "$(dirname "$OUT")"
+ok_row() {
+  echo "OK   sub=$sub ses=$ses task=$task run=$run acq=$acq k=$k fwhm_eff=$fwhm_eff img=$img"
+}
 
-# ---------- Config ----------
-# kernels to evaluate (0 = unsmoothed, 5 = smoothed 5mm)
+skip_row() {
+  echo "SKIP sub=${sub:-NA} ses=${ses:-NA} task=${task:-NA} run=${run:-NA} acq=${acq:-NA} k=${k:-NA} :: $1"
+}
+
+# ---------- locate project roots relative to this code file ----------
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+FSL_ROOT="${FSL_ROOT:-$PROJECT_ROOT/derivatives/fsl}"
+FMRIPREP_ROOT="${FMRIPREP_ROOT:-$PROJECT_ROOT/derivatives/fmriprep}"
+OUT_DIR="${OUT_DIR:-$PROJECT_ROOT/derivatives/extractions}"
+OUT="${OUT:-$OUT_DIR/smoothness_acf.tsv}"
+
+# ---------- knobs ----------
+# Only keep these tasks:
+TASK_ALLOW=("mid" "sharedreward")
+# Smoothing kernels to evaluate:
 KERNELS=("0" "5")
 
-# Only these tasks
-TASK_ALLOW="mid sharedreward"
-
-# ---------- Helpers ----------
-in_list() {
-  # usage: in_list "needle" "hay hay2 ..."
-  local x="$1"; shift
-  for t in $*; do [[ "$x" == "$t" ]] && return 0; done
-  return 1
-}
-
-# Pick fMRIPrep image for given acq/k (prefer the most specific candidate).
-pick_fmriprep_img() {
-  local sub="$1" ses="$2" task="$3" run="$4" acq="$5" k="$6"
-  local dir="${FMRIPREP_ROOT}/sub-${sub}/ses-${ses}/func"
-  local base="sub-${sub}_ses-${ses}_task-${task}_run-${run}_"
-  local sm_sfx
-  if [[ "$k" == "0" ]]; then
-    sm_sfx="desc-preproc_bold.nii.gz"
-  else
-    sm_sfx="desc-preproc_bold_${k}mm.nii.gz"
-  fi
-
-  local cands=()
-  if [[ "$acq" == "singleecho" ]]; then
-    cands+=( "${dir}/${base}echo-2_part-mag_space-MNI152NLin6Asym_${sm_sfx}" )
-    cands+=( "${dir}/${base}part-mag_space-MNI152NLin6Asym_${sm_sfx}" )
-  else
-    # multiecho (tedana-denoised lives without part-mag/echo tag in fMRIPrep outputs)
-    cands+=( "${dir}/${base}space-MNI152NLin6Asym_${sm_sfx}" )
-    # fallback, in case some runs were exported with part-mag label
-    cands+=( "${dir}/${base}part-mag_space-MNI152NLin6Asym_${sm_sfx}" )
-  fi
-
-  for p in "${cands[@]}"; do
-    [[ -r "$p" ]] && { echo "$p"; return 0; }
-  done
-  return 1
-}
-
-# Extract FWHM_eff (4th number of the 2nd numeric line from -acf)
-measure_fwhm_eff() {
-  local mask="$1" img="$2"
-  # Quick grid check to avoid AFNI fatal
-  if ! 3dinfo -same_grid "$mask" "$img" >/dev/null 2>&1; then
-    echo "GRID_MISMATCH"
-    return 0
-  fi
-  local eff
-  # -acf prints two numeric lines (classic FWHM; then a b c FWHM_eff)
-  if ! eff="$(3dFWHMx -detrend -acf -mask "$mask" -input "$img" 2>/dev/null | awk 'NR==2{print $4; exit}')" ; then
-    echo "FAIL"
-    return 0
-  fi
-  [[ -z "$eff" ]] && eff="FAIL"
-  echo "$eff"
-}
-
-# ---------- Write header (fresh each run) ----------
-printf "sub\tses\ttask\trun\tacq\tkernel_mm\tfwhm_eff\n" > "$OUT"
-
-echo "[$(date +'%F %T')] Starting smoothness extraction"
+# ---------- start ----------
+echo "[$(ts)] Starting smoothness extraction"
 echo "FSL_ROOT=$FSL_ROOT"
 echo "FMRIPREP_ROOT=$FMRIPREP_ROOT"
 echo "OUT=$OUT"
+echo "KERNELS=${KERNELS[*]}"
 
-# ---------- Scan only L1, model-1, type-act, MNI-space FEATs ----------
-# This avoids L2 and trial-level LSS FEATs and excludes T1w FEATs.
-# Example match:
-#   L1_sub-104_ses-03_task-mid_model-1_type-act_run-1_space-mni_single-echo_cnfds-fmriprep.feat
-#   L1_sub-104_ses-03_task-mid_model-1_type-act_run-1_space-mni_multi-echo_cnfds-tedana.feat
-declare -A seen  # key=sub|ses|task|run|acq to dedupe per run/acq
+mkdir -p "$OUT_DIR"
+# header (now includes 'img' as final column)
+printf 'sub\tses\ttask\trun\tacq\tkernel_mm\tfwhm_eff\timg\n' > "$OUT"
 
-while IFS= read -r -d '' feat; do
-  # Derive fields from FEAT path robustly
-  bn="$(basename "$feat")"
+# ---------- collect L1 feat directories in MNI space (skip T1w, L2, gfeat) ----------
+# We only need the FEAT to grab the run-specific mask and basic BIDS fields.
+mapfile -t FEATS < <(
+  find "$FSL_ROOT" -type d -name '*.feat' -ipath '*/L1_*' \
+    ! -ipath '*/L2_*' ! -ipath '*/subject-level/*' ! -ipath '*/group-level/*' \
+    ! -ipath '*/*.gfeat/*' ! -iname '*space-t1w*' \
+    \( -iname '*space-mni*' -o -iname '*space-mni152*' \) 2>/dev/null \
+  | sort -u
+)
 
-  # Skip any FEATs that are not "space-mni"
-  [[ "$bn" =~ space-mni ]] || continue
+declare -A seen
 
-  # Parse sub/ses/task/run (order can vary in some names, so match each independently)
-  [[ "$bn" =~ sub-([a-zA-Z0-9]+) ]] && sub="${BASH_REMATCH[1]}" || sub=""
-  [[ "$bn" =~ ses-([0-9]+)        ]] && ses="${BASH_REMATCH[1]}" || ses=""
-  [[ "$bn" =~ task-([a-zA-Z0-9]+) ]] && task="${BASH_REMATCH[1]}" || task=""
-  [[ "$bn" =~ run-([0-9]+)        ]] && run="${BASH_REMATCH[1]}" || run=""
+# ---------- main loop ----------
+for feat in "${FEATS[@]}"; do
+  name="$(basename "$feat")"
 
-  # Acquisition
-  if [[ "$bn" =~ single-echo ]]; then
-    acq="singleecho"
-  elif [[ "$bn" =~ multi-echo ]]; then
-    acq="multiecho"
-  else
-    # Unlabeled (rare) -> infer multi-echo as safer default for tedana FEATs
-    acq="multiecho"
-  fi
-
-  # Validate required fields
-  if [[ -z "$sub" || -z "$ses" || -z "$task" || -z "$run" ]]; then
-    # keep quiet; malformed FEAT directory
-    continue
-  fi
-  # Only desired tasks
-  in_list "$task" "$TASK_ALLOW" || continue
-
-  key="${sub}|${ses}|${task}|${run}|${acq}"
-  # Process each run/acq exactly once (we will loop kernels inside)
-  if [[ -n "${seen[$key]:-}" ]]; then
-    continue
-  fi
-  seen[$key]=1
-
-  mask="${feat}/mask.nii.gz"
-  if [[ ! -r "$mask" ]]; then
-    echo "WARN skip sub=${sub} ses=${ses} task=${task} run=${run} acq=${acq} (missing mask)"
-    continue
-  fi
-
-  # For each kernel (0 = unsmoothed; 5 = smoothed)
-  for k in "${KERNELS[@]}"; do
-    img="$(pick_fmriprep_img "$sub" "$ses" "$task" "$run" "$acq" "$k" || true)"
-    if [[ -z "$img" ]]; then
-      # Do not spam; keep a single concise line
-      echo "WARN miss sub=${sub} ses=${ses} task=${task} run=${run} acq=${acq} k=${k} (no fMRIPrep file)"
-      continue
-    fi
-
-    eff="$(measure_fwhm_eff "$mask" "$img")"
-    case "$eff" in
-      FAIL)
-        echo "WARN skip sub=${sub} ses=${ses} task=${task} run=${run} acq=${acq} k=${k} (3dFWHMx failed)"
-        continue
-        ;;
-      GRID_MISMATCH)
-        echo "WARN grid mismatch sub=${sub} ses=${ses} task=${task} run=${run} acq=${acq} k=${k}"
-        continue
-        ;;
-      *)
-        # Append one clean TSV row
-        printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n" "$sub" "$ses" "$task" "$run" "$acq" "$k" "$eff" >> "$OUT"
+  # parse sub/ses/task/run from the FEAT name (order can vary)
+  sub=""; ses=""; task=""; run=""
+  IFS='_' read -r -a toks <<< "${name%.feat}"
+  for tok in "${toks[@]}"; do
+    case "$tok" in
+      sub-*)  sub="${tok#sub-}" ;;
+      ses-*)  ses="${tok#ses-}" ;;
+      task-*) task="${tok#task-}" ;;
+      run-*)  run="${tok#run-}" ;;
+      space-*)
+        # safety: skip any T1w FEAT that slipped through
+        [[ "${tok,,}" == *"t1w"* ]] && { skip_row "space=T1w (skip) :: $feat"; continue 2; }
         ;;
     esac
   done
 
-done < <(find "$FSL_ROOT" -type d -name "L1_*_model-1_*_space-mni_*_cnfds-*.feat" -print0)
+  # Validate required fields
+  if [[ -z "$sub" || -z "$ses" || -z "$task" || -z "$run" ]]; then
+    skip_row "malformed FEAT name; cannot parse sub/ses/task/run :: $feat"
+    continue
+  fi
 
-echo "[$(date +'%F %T')] Done."
+  # Only desired tasks
+  in_list "$task" "${TASK_ALLOW[@]}" || { skip_row "task '$task' not in allowlist ${TASK_ALLOW[*]}"; continue; }
+
+  mask="$feat/mask.nii.gz"
+  [[ -f "$mask" ]] || { skip_row "missing mask: $mask"; continue; }
+
+  # We'll process each run x acquisition (multiecho + singleecho) exactly once here;
+  # kernels loop inside.
+  for acq in multiecho singleecho; do
+    key="${sub}|${ses}|${task}|${run}|${acq}"
+    if [[ -n "${seen[$key]:-}" ]]; then
+      skip_row "duplicate key (already processed) $key"
+      continue
+    fi
+    seen[$key]=1
+
+    # Build base BIDS stem
+    stem="${FMRIPREP_ROOT}/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${task}_run-${run}"
+
+    # Loop kernels: derive filename suffix, check existence, compute FWHM
+    for k in "${KERNELS[@]}"; do
+      if [[ "$k" == "0" ]]; then
+        sm_suffix=""
+      else
+        sm_suffix="_${k}mm"
+      fi
+
+      if [[ "$acq" == "singleecho" ]]; then
+        img="${stem}_echo-2_part-mag_space-MNI152NLin6Asym_desc-preproc_bold${sm_suffix}.nii.gz"
+      else
+        # multiecho-combined (no echo-2 tag)
+        img="${stem}_part-mag_space-MNI152NLin6Asym_desc-preproc_bold${sm_suffix}.nii.gz"
+      fi
+
+      [[ -f "$img" ]] || { skip_row "missing image: $img"; continue; }
+
+      # Run 3dFWHMx (quiet files), parse last numeric line last field (effective FWHM)
+      if ! out="$(3dFWHMx -detrend -acf NULL -mask "$mask" -input "$img" 2>&1)"; then
+        skip_row "3dFWHMx failed"
+        continue
+      fi
+
+      # Pull the last numeric line, last column (effective FWHM from ACF fit)
+      fwhm_eff="$(grep -E '^[[:space:]]*[0-9.+-Ee]+' <<<"$out" | tail -n 1 | awk '{print $NF}')"
+
+      if [[ -z "${fwhm_eff:-}" ]]; then
+        skip_row "could not parse fwhm_eff from 3dFWHMx output"
+        continue
+      fi
+
+      ok_row
+      printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$sub" "$ses" "$task" "$run" "$acq" "$k" "$fwhm_eff" "$img" >> "$OUT"
+    done
+  done
+done
+
+echo "[$(ts)] Done. Wrote: $OUT"
