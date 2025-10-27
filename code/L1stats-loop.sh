@@ -90,12 +90,12 @@ for TASK in "${tasks[@]}"; do #Will need echo-2 loop as well
                 fi
 
                 # check for output and skip existing
-                if [ -e ${OUTPUT}.feat/cluster_mask_zstat1.nii.gz ]; then
-                    continue
-                else
-                    echo "missing feat output: $OUTPUT " >> ${logdir}/sub-${sub}_ses-${ses}_re-runL1.log
-                    rm -rf ${OUTPUT}.feat
-                fi
+                #if [ -e ${OUTPUT}.feat/cluster_mask_zstat1.nii.gz ]; then
+                #    continue
+                #else
+                #    echo "missing feat output: $OUTPUT " >> ${logdir}/sub-${sub}_ses-${ses}_re-runL1.log
+                #    rm -rf ${OUTPUT}.feat
+                #fi
                 
                 
                 # create template and run analyses
@@ -148,7 +148,7 @@ for TASK in "${tasks[@]}"; do #Will need echo-2 loop as well
                 rm -rf ${OUTPUT}.feat/stats/res4d.nii.gz
                 rm -rf ${OUTPUT}.feat/stats/corrections.nii.gz
                 rm -rf ${OUTPUT}.feat/stats/threshac1.nii.gz
-                rm -rf ${OUTPUT}.feat/filtered_func_data.nii.gz
+                #rm -rf ${OUTPUT}.feat/filtered_func_data.nii.gz
             done
         done
     done
