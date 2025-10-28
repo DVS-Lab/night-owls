@@ -272,7 +272,7 @@ def add_to_acc(acc: Dict[str, np.ndarray], r: np.ndarray, n: np.ndarray, nR: int
         acc['sum_R'] += r * nR
         acc['cnt_R'] += (r == r) * nR
     if nN > 0 and not np.any(np.isnan(n)):
-        acc['sum_N'] += n * n
+        acc['sum_N'] += n * nN
         acc['cnt_N'] += (n == n) * nN
 
 
@@ -338,7 +338,7 @@ def main():
             plot_twocond(tvec_ref, R_subj, N_subj, f"VS — subject {sub} (all sessions/runs)", PEAK_LAGS, png_path, total_R, total_N)
             # Summary
             (avg_dir / f"subject-{sub}_summary.txt").write_text(
-                f"Trials included — Reward: {total_R}, Neutral: {total_N}
+                f"Trials included — Reward: {total_R}, Neutral: {total_N} (cue-aligned)
 "
             )
             print(f"Subject {sub}: aggregated Reward n={total_R}, Neutral n={total_N}")
