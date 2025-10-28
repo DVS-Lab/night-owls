@@ -286,8 +286,7 @@ def process_feat(feat_dir: Path, vs_mask: Path) -> Dict[str, object]:
     # Trial retention log
     log_path = outdir / '_log.txt'
     with open(log_path, 'a') as lf:
-        lf.write(f"{feat_base}: R kept={nR_keep}, dropped={nR_drop}; N kept={nN_keep}, dropped={nN_drop}
-")
+        lf.write(f"{feat_base}: R kept={nR_keep}, dropped={nR_drop}; N kept={nN_keep}, dropped={nN_drop}\n")
     print(f"{feat_base}: R kept={nR_keep}, dropped={nR_drop}; N kept={nN_keep}, dropped={nN_drop}")
 
     # Stats
