@@ -337,11 +337,10 @@ def main():
             png_path = avg_dir / f"subject-{sub}_vs_timecourse.png"
             plot_twocond(tvec_ref, R_subj, N_subj, f"VS — subject {sub} (all sessions/runs)", PEAK_LAGS, png_path, total_R, total_N)
             # Summary
-            (avg_dir / f"subject-{sub}_summary.txt").write_text(
-                f"Trials included — Reward: {total_R}, Neutral: {total_N} (cue-aligned)
-"
-            )
-            print(f"Subject {sub}: aggregated Reward n={total_R}, Neutral n={total_N}")
+summary_path = avg_dir / f"subject-{sub}_summary.txt"
+summary_text = f"Trials included — Reward: {total_R}, Neutral: {total_N} (cue-aligned)"
+summary_path.write_text(summary_text)
+print(f"Subject {sub}: aggregated Reward n={total_R}, Neutral n={total_N}")
         else:
             print(f"Subject {sub}: nothing processed (all sessions missing or skipped)")
 
