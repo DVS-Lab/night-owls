@@ -7,7 +7,7 @@ maindir="$(dirname "$scriptdir")"
 
 
 # study-specific inputs
-sm=5 # check templates to ensure no additional smoothing is being applied
+sm=0 # check templates to ensure no additional smoothing is being applied
 sub=$1
 ses=`zeropad $2 2`
 TASK=mid
