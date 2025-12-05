@@ -7,7 +7,7 @@ maindir="$(dirname "$scriptdir")"
 
 
 # study-specific inputs
-sm=5 # check templates to ensure no additional smoothing is being applied
+sm=0 # check templates to ensure no additional smoothing is being applied
 sub=$1
 ses=`zeropad $2 2`
 TASK=sharedreward
@@ -24,9 +24,9 @@ TYPE=act
 MAINOUTPUT=${maindir}/derivatives/fsl/sub-${sub}
 mkdir -p $MAINOUTPUT
 if [ "${acq}" == "multiecho" ]; then
-	DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-${space}_desc-preproc_bold_${sm}mm.nii.gz
+	DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_part-mag_space-${space}_desc-preproc_bold.nii.gz
 elif [ "${acq}" == "single" ]; then
-	DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold_${sm}mm.nii.gz
+	DATA=${maindir}/derivatives/fmriprep/sub-${sub}/ses-${ses}/func/sub-${sub}_ses-${ses}_task-${TASK}_run-${run}_echo-2_part-mag_space-${space}_desc-preproc_bold.nii.gz
 else
 	exit
 fi
