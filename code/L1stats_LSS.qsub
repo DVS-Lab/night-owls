@@ -51,7 +51,7 @@ else
 	t=56
 fi
 
-for space in MNI152NLin6Asym T1w; do
+for space in MNI152NLin6Asym; do
 	for run in 1 2; do
 		for trial in `seq $t`; do
 			if [ "${acq}" == single ]; then		

@@ -19,7 +19,7 @@ tasks=(mid sharedreward)
 declare -A TRIALS=( ["mid"]=56 ["sharedreward"]=54 )
 
 acqs=(multiecho single)
-spaces=(MNI152NLin6Asym T1w)
+spaces=(MNI152NLin6Asym)
 confounds=(base tedana)
 
 subs=(101 103 104 105)
