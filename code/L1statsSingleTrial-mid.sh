@@ -62,13 +62,18 @@ fi
 # set output based in whether it is activation or ppi
 OUTPUT=${MAINOUTPUT}/L1_task-${TASK}_model-${MODEL}-type-${TYPE}_sub-${sub}_ses-${ses}_run-${run}_sm-${sm}_trial-${trial}_acq-${acq}_space-${space}_confounds-${confounds}
 
+
 # check for output and skip existing
-if [ -e ${zoutdir}/zstat_trial-${trial}.nii.gz ]; then
-	exit
+if [ -e "${zoutdir}/zstat_trial-${trial}.nii.gz" ] && \
+   [ -e "${zoutdir}/cope_trial-${trial}.nii.gz" ] && \
+   [ -e "${zoutdir}/varcope_trial-${trial}.nii.gz" ]; then
+   	
+    exit
 else
-	echo "running: $OUTPUT " >> ${maindir}/re-runL1-LSS-${TASK}.log
-	rm -rf ${OUTPUT}.feat
+    echo "running: $OUTPUT " >> "${maindir}/re-runL1-LSS-${TASK}.log"
+    rm -rf "${OUTPUT}.feat"
 fi
+
 
 # create template and run analyses
 ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${MODEL}_type-${TYPE}.fsf
