@@ -84,8 +84,11 @@ sed -e 's@OUTPUT@'$OUTPUT'@g' \
 feat $OTEMPLATE 
 
 
-# copy zstat image to common output folder and delete feat output
+# copy zstat, cope, and varcope image to common output folder and delete feat output
 cp ${OUTPUT}.feat/stats/zstat1.nii.gz ${zoutdir}/zstat_trial-${trial}.nii.gz
+cp ${OUTPUT}.feat/stats/cope1.nii.gz ${zoutdir}/cope_trial-${trial}.nii.gz
+cp ${OUTPUT}.feat/stats/varcope1.nii.gz ${zoutdir}/varcope_trial-${trial}.nii.gz
+
 rm -rf ${OUTPUT}.feat ${OTEMPLATE}
 exit
 
