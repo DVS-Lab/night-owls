@@ -63,7 +63,7 @@ for task in "${tasks[@]}"; do
           for ses in "${sessions[@]}"; do
             [[ -n "${SKIP[$sub:$ses]:-}" ]] && continue
             for run in $(seq 1 "$runs_per_session"); do
-              echo "$deriv_fsl"/sub-"$sub"/LSS_task-"$task"_sub-"$sub"_ses-"$ses"_run-"$run"_acq-"$acq"_space-"$space"_confounds-"$conf"_sm-0
+              #echo "$deriv_fsl"/sub-"$sub"/LSS_task-"$task"_sub-"$sub"_ses-"$ses"_run-"$run"_acq-"$acq"_space-"$space"_confounds-"$conf"_sm-0
 
               files=( "$deriv_fsl"/sub-"$sub"/LSS_task-"$task"_sub-"$sub"_ses-"$ses"_run-"$run"_acq-"$acq"_space-"$space"_confounds-"$conf"_sm-0/zstat_trial-*.nii.gz )
               nfound=${#files[@]}
