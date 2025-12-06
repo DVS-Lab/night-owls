@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Fast LSS completion counter (glob-based)
 # Counts trial files like:
-#   sub-101/LSS_task-mid_sub-101_ses-01_run-1_acq-single_space-T1w_confounds-tedana_sm-5/zstat_trial-01.nii.gz
+#   sub-101/LSS_task-mid_sub-101_ses-01_run-1_acq-single_space-T1w_confounds-tedana_sm-0/zstat_trial-01.nii.gz
 
 set -euo pipefail
 shopt -s nullglob
@@ -39,7 +39,7 @@ valid_runs=0
 for sub in "${subs[@]}"; do
   for ses in "${sessions[@]}"; do
     [[ -n "${SKIP[$sub:$ses]:-}" ]] && continue
-    (( valid_runs += runs_per_session ))
+    : $(( valid_runs += runs_per_session ))
   done
 done
 
@@ -67,7 +67,7 @@ for task in "${tasks[@]}"; do
 
               files=( "$deriv_fsl"/sub-"$sub"/LSS_task-"$task"_sub-"$sub"_ses-"$ses"_run-"$run"_acq-"$acq"_space-"$space"_confounds-"$conf"_sm-0/zstat_trial-*.nii.gz )
               nfound=${#files[@]}
-              (( found_total += nfound ))
+              : $(( found_total += nfound ))
 
               # Mark this (task,sub,ses,run) if ANY variant is incomplete
               if (( nfound < ntrials )); then
