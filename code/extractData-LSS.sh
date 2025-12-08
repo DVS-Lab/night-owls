@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 
 # ------------------------------------------------------------
-# LSS extractor:
+# LSS extractor (MNI-only):
 #   - NAcc means (zstat/cope/varcope)
 #   - BRS_Cortical_3pt1 means (zstat/cope/varcope)
 #   - BRS correlation (zstat vs BRS map)
+#   - Last column: expected zstat path (sanity check)
 # ------------------------------------------------------------
 
 # Always run from the code directory
@@ -12,7 +13,6 @@ scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 maindir="$(dirname "$scriptdir")"
 
 deriv_fsl="$maindir/derivatives/fsl"
-deriv_fmriprep="$maindir/derivatives/fmriprep"
 maskdir="$maindir/masks"
 outdir="$maindir/derivatives/extractions"
 mkdir -p "$outdir"
@@ -22,14 +22,14 @@ outfile="$outdir/extractions_LSS.tsv"
 SM_TAG="0"
 
 # Tools check (fail fast if missing)
-for cmd in fslstats fslcc fslmaths antsApplyTransforms; do
+for cmd in fslstats fslcc fslmaths; do
   if ! command -v "$cmd" >/dev/null 2>&1; then
     echo "ERROR: $cmd not found in PATH." >&2
     exit 2
   fi
 done
 
-# Static ROIs / maps in MNI space
+# MNI masks/maps
 NAcc_MNI="$maskdir/space-MNI152NLin6Asym_desc-NAcc_mask.nii.gz"
 CORT_MNI="$maskdir/BRS_Cortical_3pt1.nii.gz"
 BRS_MNI="$maskdir/space-MNI152NLin6Asym_desc-BrainRewardSignature_map.nii.gz"
@@ -48,12 +48,15 @@ trials_for () {  # $1 = task
 }
 
 # Write header
-echo -e "sub\tses\trun\ttask\tspace\tacq\tconfounds\ttrial\tNAcc_zstat_mean\tNAcc_cope_mean\tNAcc_varcope_mean\tBRS_Cort_zstat_mean\tBRS_Cort_cope_mean\tBRS_Cort_varcope_mean\tBRS_corr" \
+echo -e "sub\tses\trun\ttask\tspace\tacq\tconfounds\ttrial\tNAcc_zstat_mean\tNAcc_cope_mean\tNAcc_varcope_mean\tBRS_Cort_zstat_mean\tBRS_Cort_cope_mean\tBRS_Cort_varcope_mean\tBRS_corr\tinput_zstat" \
   > "$outfile"
 
-# Enumerate (sub,ses) that actually have LSS data (based on trial-01 presence anywhere)
+# Enumerate (sub,ses) that actually have LSS data (based on trial-01 presence)
+# Prune subject-level to avoid permission noise
 mapfile -t sess_keys < <(
-  find "$deriv_fsl" -type f -name 'zstat_trial-01.nii.gz' \
+  find "$deriv_fsl" \
+    -path "*/subject-level/*" -prune -o \
+    -type f -name 'zstat_trial-01.nii.gz' -print 2>/dev/null \
   | sed -E 's|.*sub-([0-9]+)/.*_ses-([0-9]+)_.*|\1 \2|' \
   | sort -u
 )
@@ -61,12 +64,11 @@ mapfile -t sess_keys < <(
 total_sess="${#sess_keys[@]}"
 done_sess=0
 
-# Helper: build/reuse a whole-brain mask for this LSS (sub/ses/run/task/acq/space/conf) combo
+# Helper: build/reuse a whole-brain mask for this combo
 feat_mask_for () { # sub ses run task acq space conf
   local sub="$1" ses="$2" run="$3" task="$4" acq="$5" space="$6" conf="$7"
 
   local combo="$deriv_fsl/sub-${sub}/LSS_task-${task}_sub-${sub}_ses-${ses}_run-${run}_acq-${acq}_space-${space}_confounds-${conf}_sm-${SM_TAG}"
-
   local auto="$combo/wbmask_auto.nii.gz"
 
   local zref="$combo/zstat_trial-01.nii.gz"
@@ -84,19 +86,6 @@ feat_mask_for () { # sub ses run task acq space conf
   fi
 }
 
-# Helper: ensure MNI->T1w transform (prefer *MNI152NLin6Asym*)
-xfm_MNI_to_T1w () { # sub ses
-  local sub="$1" ses="$2" anatdir="$deriv_fmriprep/sub-${sub}/ses-${ses}/anat"
-  local pref="$anatdir/sub-${sub}_ses-${ses}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5"
-  if [[ -f "$pref" ]]; then
-    echo "$pref"; return
-  fi
-  local any
-  any="$(find "$anatdir" -maxdepth 1 -type f -name "sub-${sub}_ses-${ses}_from-MNI*to-T1w*_xfm.h5" | sort | head -n1)"
-  echo "$any"
-}
-
-# Helper: build or reuse per-combo whole-brain mask
 wbmask_for_combo () { # combo_dir zfile featmask
   local combo="$1" zfile="$2" featmask="$3"
   if [[ -n "$featmask" && -f "$featmask" ]]; then
@@ -110,16 +99,6 @@ wbmask_for_combo () { # combo_dir zfile featmask
   echo "$auto"
 }
 
-# Pick an existing stat file to use as a reference grid for transforms
-pick_ref_file () { # z cope varcope
-  local z="$1" c="$2" v="$3"
-  if [[ -f "$z" ]]; then echo "$z"
-  elif [[ -f "$c" ]]; then echo "$c"
-  elif [[ -f "$v" ]]; then echo "$v"
-  else echo ""
-  fi
-}
-
 # Main loop over sessions
 for key in "${sess_keys[@]}"; do
   sub="${key%% *}"
@@ -131,93 +110,55 @@ for key in "${sess_keys[@]}"; do
 
     for run in 1 2; do
       for acq in multiecho single; do
-        for space in MNI152NLin6Asym T1w; do
-          for conf in base tedana; do
+        for conf in base tedana; do
 
-            combo="$deriv_fsl/sub-${sub}/LSS_task-${task}_sub-${sub}_ses-${ses}_run-${run}_acq-${acq}_space-${space}_confounds-${conf}_sm-${SM_TAG}"
+          space="MNI152NLin6Asym"
 
-            for (( t=1; t<=ntrials; t++ )); do
-              trial=$(printf "%02d" "$t")
+          combo="$deriv_fsl/sub-${sub}/LSS_task-${task}_sub-${sub}_ses-${ses}_run-${run}_acq-${acq}_space-${space}_confounds-${conf}_sm-${SM_TAG}"
 
-              zfile="$combo/zstat_trial-${trial}.nii.gz"
-              copefile="$combo/cope_trial-${trial}.nii.gz"
-              varcopefile="$combo/varcope_trial-${trial}.nii.gz"
+          for (( t=1; t<=ntrials; t++ )); do
+            trial=$(printf "%02d" "$t")
 
-              NAcc_z="NA"; NAcc_c="NA"; NAcc_v="NA"
-              Cort_z="NA"; Cort_c="NA"; Cort_v="NA"
-              BRS_corr="NA"
+            zfile="$combo/zstat_trial-${trial}.nii.gz"
+            copefile="$combo/cope_trial-${trial}.nii.gz"
+            varcopefile="$combo/varcope_trial-${trial}.nii.gz"
 
-              if [[ "$space" == "MNI152NLin6Asym" ]]; then
+            # Default outputs
+            NAcc_z="NA"; NAcc_c="NA"; NAcc_v="NA"
+            Cort_z="NA"; Cort_c="NA"; Cort_v="NA"
+            BRS_corr="NA"
 
-                [[ -f "$zfile" ]] && NAcc_z=$(fslstats "$zfile" -k "$NAcc_MNI" -M 2>/dev/null || echo "NA")
-                [[ -f "$copefile" ]] && NAcc_c=$(fslstats "$copefile" -k "$NAcc_MNI" -M 2>/dev/null || echo "NA")
-                [[ -f "$varcopefile" ]] && NAcc_v=$(fslstats "$varcopefile" -k "$NAcc_MNI" -M 2>/dev/null || echo "NA")
+            # ROI means (compute each stat if present)
+            [[ -f "$zfile" ]]      && NAcc_z=$(fslstats "$zfile"      -k "$NAcc_MNI" -M 2>/dev/null || echo "NA")
+            [[ -f "$copefile" ]]   && NAcc_c=$(fslstats "$copefile"   -k "$NAcc_MNI" -M 2>/dev/null || echo "NA")
+            [[ -f "$varcopefile" ]]&& NAcc_v=$(fslstats "$varcopefile"-k "$NAcc_MNI" -M 2>/dev/null || echo "NA")
 
-                [[ -f "$zfile" ]] && Cort_z=$(fslstats "$zfile" -k "$CORT_MNI" -M 2>/dev/null || echo "NA")
-                [[ -f "$copefile" ]] && Cort_c=$(fslstats "$copefile" -k "$CORT_MNI" -M 2>/dev/null || echo "NA")
-                [[ -f "$varcopefile" ]] && Cort_v=$(fslstats "$varcopefile" -k "$CORT_MNI" -M 2>/dev/null || echo "NA")
+            [[ -f "$zfile" ]]      && Cort_z=$(fslstats "$zfile"      -k "$CORT_MNI" -M 2>/dev/null || echo "NA")
+            [[ -f "$copefile" ]]   && Cort_c=$(fslstats "$copefile"   -k "$CORT_MNI" -M 2>/dev/null || echo "NA")
+            [[ -f "$varcopefile" ]]&& Cort_v=$(fslstats "$varcopefile"-k "$CORT_MNI" -M 2>/dev/null || echo "NA")
 
-                if [[ -f "$zfile" ]]; then
-                  featmask="$(feat_mask_for "$sub" "$ses" "$run" "$task" "$acq" "$space" "$conf")"
-                  wbmask="$(wbmask_for_combo "$combo" "$zfile" "$featmask")"
-                  BRS_corr=$(fslcc --noabs -t -1 -m "$wbmask" -p 6 "$zfile" "$BRS_MNI" 2>/dev/null | awk '{print $NF}')
-                  [[ -z "$BRS_corr" ]] && BRS_corr="NA"
-                fi
+            # BRS correlation uses zstat (as before conceptually)
+            if [[ -f "$zfile" ]]; then
+              featmask="$(feat_mask_for "$sub" "$ses" "$run" "$task" "$acq" "$space" "$conf")"
+              wbmask="$(wbmask_for_combo "$combo" "$zfile" "$featmask")"
+              BRS_corr=$(fslcc --noabs -t -1 -m "$wbmask" -p 6 "$zfile" "$BRS_MNI" 2>/dev/null | awk '{print $NF}')
+              [[ -z "$BRS_corr" ]] && BRS_corr="NA"
+            fi
 
-              else
-                # T1w: transform masks/maps from MNI -> T1w using the stat grid as reference
-                refimg="$(pick_ref_file "$zfile" "$copefile" "$varcopefile")"
-                xfm="$(xfm_MNI_to_T1w "$sub" "$ses")"
-
-                if [[ -n "$refimg" && -f "$refimg" && -n "$xfm" && -f "$xfm" ]]; then
-
-                  t1qc_dir="$maindir/derivatives/masks_T1w/sub-${sub}/ses-${ses}/run-${run}_acq-${acq}"
-                  mkdir -p "$t1qc_dir"
-
-                  NAcc_T1="$t1qc_dir/desc-NAcc_mask_space-T1w_run-${run}_acq-${acq}.nii.gz"
-                  Cort_T1="$t1qc_dir/desc-BRS_Cortical_3pt1_mask_space-T1w_run-${run}_acq-${acq}.nii.gz"
-                  BRS_T1="$t1qc_dir/desc-BrainRewardSignature_map_space-T1w_run-${run}_acq-${acq}.nii.gz"
-
-                  if [[ ! -f "$NAcc_T1" ]]; then
-                    antsApplyTransforms -d 3 -i "$NAcc_MNI" -r "$refimg" -o "$NAcc_T1" -t "$xfm" -n NearestNeighbor >/dev/null
-                  fi
-                  if [[ ! -f "$Cort_T1" ]]; then
-                    antsApplyTransforms -d 3 -i "$CORT_MNI" -r "$refimg" -o "$Cort_T1" -t "$xfm" -n NearestNeighbor >/dev/null
-                  fi
-                  if [[ ! -f "$BRS_T1" ]]; then
-                    antsApplyTransforms -d 3 -i "$BRS_MNI" -r "$refimg" -o "$BRS_T1" -t "$xfm" >/dev/null
-                  fi
-
-                  [[ -f "$zfile" ]] && NAcc_z=$(fslstats "$zfile" -k "$NAcc_T1" -M 2>/dev/null || echo "NA")
-                  [[ -f "$copefile" ]] && NAcc_c=$(fslstats "$copefile" -k "$NAcc_T1" -M 2>/dev/null || echo "NA")
-                  [[ -f "$varcopefile" ]] && NAcc_v=$(fslstats "$varcopefile" -k "$NAcc_T1" -M 2>/dev/null || echo "NA")
-
-                  [[ -f "$zfile" ]] && Cort_z=$(fslstats "$zfile" -k "$Cort_T1" -M 2>/dev/null || echo "NA")
-                  [[ -f "$copefile" ]] && Cort_c=$(fslstats "$copefile" -k "$Cort_T1" -M 2>/dev/null || echo "NA")
-                  [[ -f "$varcopefile" ]] && Cort_v=$(fslstats "$varcopefile" -k "$Cort_T1" -M 2>/dev/null || echo "NA")
-
-                  if [[ -f "$zfile" ]]; then
-                    featmask="$(feat_mask_for "$sub" "$ses" "$run" "$task" "$acq" "$space" "$conf")"
-                    wbmask="$(wbmask_for_combo "$combo" "$zfile" "$featmask")"
-                    BRS_corr=$(fslcc --noabs -t -1 -m "$wbmask" -p 6 "$zfile" "$BRS_T1" 2>/dev/null | awk '{print $NF}')
-                    [[ -z "$BRS_corr" ]] && BRS_corr="NA"
-                  fi
-                fi
-              fi
-
-              printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
-                "$sub" "$ses" "$run" "$task" "$space" "$acq" "$conf" "$trial" \
-                "$NAcc_z" "$NAcc_c" "$NAcc_v" \
-                "$Cort_z" "$Cort_c" "$Cort_v" \
-                "$BRS_corr" \
-                >> "$outfile"
-            done
+            # Emit row (input_zstat is last column)
+            printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
+              "$sub" "$ses" "$run" "$task" "$space" "$acq" "$conf" "$trial" \
+              "$NAcc_z" "$NAcc_c" "$NAcc_v" \
+              "$Cort_z" "$Cort_c" "$Cort_v" \
+              "$BRS_corr" "$zfile" \
+              >> "$outfile"
           done
         done
       done
     done
   done
 
+  # Progress echo at the session level (same idea as your original)
   done_sess=$((done_sess+1))
   pct=$(( 100 * done_sess / (total_sess>0?total_sess:1) ))
   echo "$(date '+[%F %T]') ${pct}%% of sessions have been completed (${done_sess}/${total_sess})."
