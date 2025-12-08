@@ -22,9 +22,13 @@ echo "Using study MNI grid: ${REF_MNI}"
 # Inputs (as you listed)
 BRS="${maskdir}/BrainRewardSignature_2mm.nii"   # continuous
 VS="${maskdir}/VS-Imanova_2mm.nii"              # binary
+NACC="${maskdir}/NAcc.nii.gz"              # binary
+
 
 [[ -f "$BRS" ]] || echo "WARN: missing ${BRS}"
 [[ -f "$VS"  ]] || echo "WARN: missing ${VS}"
+[[ -f "$NACC"  ]] || echo "WARN: missing ${NACC}"
+
 
 # Helper
 resample () { # src, ref, out, interp
@@ -55,6 +59,24 @@ if [[ -f "$VS" ]]; then
   fi
 fi
 
+
+# NAcc (binary) → NN by default, or Linear+threshold if LINEAR_ALL=1
+if [[ -f "$NACC" ]]; then
+  out_nacc="${maskdir}/space-MNI152NLin6Asym_desc-NAcc_mask.nii.gz"
+  if [[ "$LINEAR_ALL" == "1" ]]; then
+    echo "Resampling NAcc → $(basename "$out_vs") (Linear + threshold ${THR})"
+    tmp="${out_nacc%.nii.gz}_tmp.nii.gz"
+    resample "$NACC" "$REF_MNI" "$tmp" Linear
+    # binarize after interpolation
+    fslmaths "$tmp" -thr "$THR" -bin "$out_nacc"
+    rm -f "$tmp"
+  else
+    echo "Resampling NAcc → $(basename "$out_nacc") (NearestNeighbor)"
+    resample "$NACC" "$REF_MNI" "$out_nacc" NearestNeighbor
+  fi
+fi
+
+
 # Quick sanity checks (only if outputs exist)
 check_nonempty () {
   local f="$1"
@@ -66,5 +88,6 @@ check_nonempty () {
 }
 check_nonempty "${out_brs:-/dev/null}"
 check_nonempty "${out_vs:-/dev/null}"
+check_nonempty "${out_nacc:-/dev/null}"
 
 echo "Done."
