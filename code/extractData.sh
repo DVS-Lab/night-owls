@@ -1,23 +1,30 @@
 #!/usr/bin/env bash
 
+set -euo pipefail
+shopt -s nullglob
 
 # -------- fixed locations (relative to THIS script), and required tools --------
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 rootdir="$(dirname "$scriptdir")"                 # project root (…/night-owls)
 FSL_DERIV="${rootdir}/derivatives/fsl"
-FMRIPREP_DERIV="${rootdir}/derivatives/fmriprep"
 MASKS_DIR="${rootdir}/masks"
 OUT_DIR="${rootdir}/derivatives/extractions"
 
+# Maps/masks (MNI-only in this updated script)
 BRS_MNI="${MASKS_DIR}/space-MNI152NLin6Asym_desc-BrainRewardSignature_map.nii.gz"
-VS_MNI="${MASKS_DIR}/space-MNI152NLin6Asym_desc-VS-Imanova_mask.nii.gz"
+NAcc_MNI="${MASKS_DIR}/space-MNI152NLin6Asym_desc-NAcc_mask.nii.gz"
+CORT_MNI="${MASKS_DIR}/BRS_Cortical_3pt1.nii.gz"
 
-command -v antsApplyTransforms >/dev/null || { echo "ERROR: antsApplyTransforms not found in PATH"; exit 1; }
 command -v fslstats >/dev/null || { echo "ERROR: fslstats not found in PATH"; exit 1; }
 command -v fslcc >/dev/null    || { echo "ERROR: fslcc not found in PATH"; exit 1; }
+command -v fslmaths >/dev/null || { echo "ERROR: fslmaths not found in PATH"; exit 1; }
 
 [[ -d "$FSL_DERIV" ]] || { echo "ERROR: Can't find ${FSL_DERIV}"; exit 1; }
 mkdir -p "$OUT_DIR"
+
+[[ -f "$BRS_MNI" ]]  || { echo "ERROR: Missing BRS map: $BRS_MNI"; exit 1; }
+[[ -f "$NAcc_MNI" ]] || { echo "ERROR: Missing NAcc mask: $NAcc_MNI"; exit 1; }
+[[ -f "$CORT_MNI" ]] || { echo "ERROR: Missing cortical mask: $CORT_MNI"; exit 1; }
 
 # -------- contrast label maps (from your screenshots) --------
 contrast_label() {
@@ -48,74 +55,42 @@ contrast_label() {
   esac
 }
 
-# -------- warp/resample helper (NO FLIRT) --------
-# Resample a MNI-space mask/map to the exact grid of a target zstat image.
-# - If zstat is in MNI space: identity into zstat grid (no transform).
-# - If zstat is in T1w space: apply fMRIPrep MNI→T1w H5 (ses-specific if present).
-mni_to_target() {
-  local sub="$1" ses="$2" target_img="$3" src_mni="$4" out_img="$5"
-
-  # detect target space from FEAT name or header path (we pass space separately to avoid header reads)
-  local space_hint="$6"  # "mni" or "t1w"
-  if [[ "$space_hint" == "mni" ]]; then
-    antsApplyTransforms -d 3 -i "$src_mni" -r "$target_img" -n Linear -o "$out_img"
-  else
-    local anat="${FMRIPREP_DERIV}/sub-${sub}/ses-${ses}/anat"
-    local h5=""
-    for cand in \
-      "${anat}/sub-${sub}_ses-${ses}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5" \
-      "${anat}/sub-${sub}_from-MNI152NLin6Asym_to-T1w_mode-image_xfm.h5" \
-      "${anat}/sub-${sub}_ses-${ses}_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5" \
-      "${anat}/sub-${sub}_from-MNI152NLin2009cAsym_to-T1w_mode-image_xfm.h5"
-    do
-      [[ -f "$cand" ]] && { h5="$cand"; break; }
-    done
-    [[ -z "$h5" ]] && { echo "WARN: no MNI→T1w transform for sub-${sub} ses-${ses}; skipping $target_img" >&2; return 1; }
-    antsApplyTransforms -d 3 -i "$src_mni" -r "$target_img" -t "$h5" -n Linear -o "$out_img"
-  fi
-}
-
-# -------- per-image processing --------
+# -------- per-contrast processing (MNI-only) --------
 process_one() {
-  local zimg="$1" featdir="$2" sub="$3" ses="$4" run="$5" task="$6" space_tag="$7" acq="$8" confounds="$9" znum="${10}" label="${11}"
+  local zimg="$1" copeimg="$2" varcopeimg="$3" featdir="$4" \
+        sub="$5" ses="$6" run="$7" task="$8" acq="$9" confounds="${10}" \
+        znum="${11}" label="${12}"
 
   local brainmask="${featdir}/mask.nii.gz"
   [[ -f "$brainmask" ]] || { echo "WARN: missing FEAT mask: $brainmask — skipping"; return; }
 
-  local tmp; tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' RETURN
+  # ROI means
+  local NAcc_z="NA" NAcc_c="NA" NAcc_v="NA"
+  local Cort_z="NA" Cort_c="NA" Cort_v="NA"
 
+  [[ -f "$zimg" ]]       && NAcc_z="$(fslstats "$zimg"       -k "$NAcc_MNI" -M 2>/dev/null || echo NA)"
+  [[ -f "$copeimg" ]]    && NAcc_c="$(fslstats "$copeimg"    -k "$NAcc_MNI" -M 2>/dev/null || echo NA)"
+  [[ -f "$varcopeimg" ]] && NAcc_v="$(fslstats "$varcopeimg" -k "$NAcc_MNI" -M 2>/dev/null || echo NA)"
 
-if [[ "$space_tag" == "mni" ]]; then
-  brs_res="$BRS_MNI"   # use MNI map as-is
-  vs_res="$VS_MNI"
-else
-  brs_res="$tmp/brs_in_T1w.nii.gz"   # define outputs first
-  vs_res="$tmp/vs_in_T1w.nii.gz"
-  mni_to_target "$sub" "$ses" "$zimg" "$BRS_MNI" "$brs_res" "t1w" || return
-  mni_to_target "$sub" "$ses" "$zimg" "$VS_MNI"  "$vs_res"  "t1w" || return
-fi
+  [[ -f "$zimg" ]]       && Cort_z="$(fslstats "$zimg"       -k "$CORT_MNI" -M 2>/dev/null || echo NA)"
+  [[ -f "$copeimg" ]]    && Cort_c="$(fslstats "$copeimg"    -k "$CORT_MNI" -M 2>/dev/null || echo NA)"
+  [[ -f "$varcopeimg" ]] && Cort_v="$(fslstats "$varcopeimg" -k "$CORT_MNI" -M 2>/dev/null || echo NA)"
 
-
-
-  # VS mean
-  local vs_mean="NA"
-  [[ -f "$vs_res" ]] && vs_mean="$(fslstats "$zimg" -k "$vs_res" -M 2>/dev/null || echo NA)"
-
-  # Signed whole-brain spatial corr with BRS (mask to FEAT brainmask)
+  # Signed whole-brain spatial corr with BRS (mask to FEAT brainmask), using zstat
   local brs_corr="NA"
-  if [[ -f "$brs_res" ]]; then
-    brs_corr="$(fslcc -m "$brainmask" --noabs -t -1 -p 6 "$zimg" "$brs_res" 2>/dev/null | awk '{print $NF}' || echo NA)"
+  if [[ -f "$zimg" ]]; then
+    brs_corr="$(fslcc -m "$brainmask" --noabs -t -1 -p 6 "$zimg" "$BRS_MNI" 2>/dev/null | awk '{print $NF}' || echo NA)"
   fi
 
-  echo -e "${sub}\t${ses}\t${run}\t${task}\t${space_tag}\t${acq}\t${confounds}\t${znum}\t${label}\t${vs_mean}\t${brs_corr}"
+  echo -e "${sub}\t${ses}\t${run}\t${task}\tmni\t${acq}\t${confounds}\t${znum}\t${label}\t${NAcc_z}\t${NAcc_c}\t${NAcc_v}\t${Cort_z}\t${Cort_c}\t${Cort_v}\t${brs_corr}"
 }
 
 # -------- main --------
 out="${OUT_DIR}/extractions_L1stats-revised.tsv"
-echo -e "sub\tses\trun\ttask\tspace\tacq\tconfounds\tzstat\tlabel\tVS_mean\tBRS_corr" > "$out"
+echo -e "sub\tses\trun\ttask\tspace\tacq\tconfounds\tzstat\tlabel\tNAcc_zstat_mean\tNAcc_cope_mean\tNAcc_varcope_mean\tBRS_Cort_zstat_mean\tBRS_Cort_cope_mean\tBRS_Cort_varcope_mean\tBRS_corr" \
+  > "$out"
 
-shopt -s nullglob
-# --- progress setup (copy your exact find pattern here) ---
+# --- progress setup (prune group/subject-level trees) ---
 total=$(
   find "$FSL_DERIV" \
     -type d \( -name '*.gfeat' -o -name 'subject-level' \) -prune -o \
@@ -148,14 +123,29 @@ while IFS= read -r -d '' zimg; do
   confounds="$(sed -E 's/^.*_cnfds-([^_]+).*$/\1/' <<<"$fbase")"
   znum="$(basename "$zimg" | sed -E 's/^zstat([0-9]+).*$/\1/')"
 
-  # normalize tags used in output and in mni_to_target's space hint
+  # normalize tags used in output
   space_tag="t1w"; [[ "$space_raw" =~ ^(mni|MNI) ]] && space_tag="mni"
   acq="single"; [[ "$acq_raw" == "multi-echo" ]] && acq="multiecho"
+
+  # --- ignore T1w entirely ---
+  [[ "$space_tag" == "mni" ]] || continue
 
   label="$(contrast_label "$task" "$znum")"
   [[ -z "$label" ]] && continue  # only extract requested contrasts
 
-  process_one "$zimg" "$featdir" "$sub" "$ses" "$run" "$task" "$space_tag" "$acq" "$confounds" "$znum" "$label" >> "$out"
+  # --- derive cope/varcope paths for matching index ---
+  statsdir="$(dirname "$zimg")"
+  copeimg="${statsdir}/cope${znum}.nii.gz"
+  varcopeimg="${statsdir}/varcope${znum}.nii.gz"
+
+  if [[ ! -f "$copeimg" || ! -f "$varcopeimg" ]]; then
+    echo "WARN: missing cope/varcope for $zimg (expected $copeimg and $varcopeimg)" >&2
+  fi
+
+  process_one "$zimg" "$copeimg" "$varcopeimg" "$featdir" \
+    "$sub" "$ses" "$run" "$task" "$acq" "$confounds" "$znum" "$label" \
+    >> "$out"
+
 done < <(find "$FSL_DERIV" -type f -path "*/L1_*/stats/zstat*.nii.gz" -print0)
 
 echo "[$(date '+%F %T')] Done. Wrote: $out"
