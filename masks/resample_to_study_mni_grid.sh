@@ -16,7 +16,7 @@ fi
 echo "Using study MNI grid: ${REF_MNI}"
 
 # Behavior knobs
-: "${LINEAR_ALL:=1}"         # 0 = NN for VS, Linear for BRS; 1 = Linear for both (+threshold VS)
+: "${LINEAR_ALL:=0}"         # 0 = NN for VS, Linear for BRS; 1 = Linear for both (+threshold VS)
 : "${THR:=0.5}"              # threshold for VS when LINEAR_ALL=1
 
 # Inputs (as you listed)
