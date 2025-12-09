@@ -1,31 +1,50 @@
 #!/usr/bin/env bash
 set -euo pipefail
+IFS=$'\n\t'
 
-# -------------------- fixed project-relative paths --------------------
+# -------------------- helpers --------------------
+die()  { echo "ERROR: $*" >&2; exit 1; }
+warn() { echo "WARN:  $*" >&2; }
+
+need_cmd() {
+  command -v "$1" >/dev/null 2>&1 || die "Required command not found in PATH: $1"
+}
+
+# -------------------- fixed locations (relative to THIS script) --------------------
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-rootdir="$(dirname "$scriptdir")"                 # project root
+rootdir="$(dirname "$scriptdir")"                 # project root (…/night-owls)
+
 FSL_DERIV="${rootdir}/derivatives/fsl"
 maskdir="${rootdir}/masks"
 OUT_DIR="${rootdir}/derivatives/extractions"
 
-# -------------------- MNI masks/maps (as provided) --------------------
+# -------------------- your exact MNI masks/maps --------------------
 NAcc_MNI="$maskdir/space-MNI152NLin6Asym_desc-NAcc_mask.nii.gz"
 CORT_MNI="$maskdir/BRS_Cortical_3pt1.nii.gz"
 BRS_MNI="$maskdir/space-MNI152NLin6Asym_desc-BrainRewardSignature_map.nii.gz"
 
-# -------------------- required tools --------------------
-command -v fslstats >/dev/null || { echo "ERROR: fslstats not found in PATH"; exit 1; }
-command -v fslcc    >/dev/null || { echo "ERROR: fslcc not found in PATH"; exit 1; }
+# -------------------- tool checks --------------------
+need_cmd fslstats
+need_cmd fslcc
+need_cmd find
+need_cmd awk
+need_cmd sed
+need_cmd date
+need_cmd wc
+need_cmd tr
 
-# -------------------- validate fixed paths --------------------
-[[ -d "$FSL_DERIV" ]] || { echo "ERROR: Can't find FSL derivatives dir: $FSL_DERIV"; exit 1; }
-[[ -f "$NAcc_MNI" ]]  || { echo "ERROR: Missing NAcc mask: $NAcc_MNI"; exit 1; }
-[[ -f "$CORT_MNI" ]]  || { echo "ERROR: Missing cortical mask: $CORT_MNI"; exit 1; }
-[[ -f "$BRS_MNI" ]]   || { echo "ERROR: Missing BRS map: $BRS_MNI"; exit 1; }
+# -------------------- sanity checks --------------------
+[[ -d "$FSL_DERIV" ]] || die "Can't find FSL derivatives directory: $FSL_DERIV"
+[[ -d "$maskdir"   ]] || die "Can't find masks directory: $maskdir"
+
+[[ -f "$NAcc_MNI" ]] || die "NAcc MNI mask not found: $NAcc_MNI"
+[[ -f "$CORT_MNI" ]] || die "Cortical MNI mask not found: $CORT_MNI"
+[[ -f "$BRS_MNI"  ]] || die "BRS MNI map not found: $BRS_MNI"
 
 mkdir -p "$OUT_DIR"
 
 # -------------------- contrast label maps --------------------
+# Keeps your task-aware labels, but NEVER filters rows to empty.
 contrast_label() {
   local task="$1" z="$2"
   case "$task" in
@@ -56,54 +75,102 @@ contrast_label() {
   esac
 }
 
-# -------------------- tag extraction from FEAT basename --------------------
-# Example basename (no .feat):
-# L1_sub-105_ses-12_task-sharedreward_model-1_type-act_run-1_space-mni_single-echo_cnfds-fmriprep_unsmoothed
-get_tag() {
-  local key="$1" str="$2"
-  if [[ "$str" =~ _${key}-([^_]+) ]]; then
+# -------------------- tag parsing --------------------
+extract_tag() {
+  local key="$1" base="$2"
+  if [[ "$base" =~ _${key}-([^_]+) ]]; then
     echo "${BASH_REMATCH[1]}"
   else
     echo "NA"
   fi
 }
 
-# -------------------- per-contrast processing --------------------
+# -------------------- per-contrast extraction --------------------
 process_one() {
-  local zimg="$1" copeimg="$2" varcopeimg="$3" featdir="$4" \
-        sub="$5" ses="$6" run="$7" task="$8" acq="$9" confounds="${10}" \
-        znum="${11}" label="${12}"
+  local zimg="$1"
 
-  local brainmask="${featdir}/mask.nii.gz"
-  [[ -f "$brainmask" ]] || { echo "WARN: missing FEAT mask: $brainmask — skipping" >&2; return; }
+  local statsdir featdir sesdir subdir sub ses fbase
+  statsdir="$(dirname "$zimg")"
+  featdir="$(dirname "$statsdir")"
+  sesdir="$(basename "$(dirname "$featdir")")"
+  subdir="$(basename "$(dirname "$(dirname "$featdir")")")"
 
-  local NAcc_z="NA" NAcc_c="NA" NAcc_v="NA"
-  local Cort_z="NA" Cort_c="NA" Cort_v="NA"
+  sub="${subdir#sub-}"
+  ses="${sesdir#ses-}"
 
-  [[ -f "$zimg" ]]       && NAcc_z="$(fslstats "$zimg"       -k "$NAcc_MNI" -M 2>/dev/null || echo NA)"
-  [[ -f "$copeimg" ]]    && NAcc_c="$(fslstats "$copeimg"    -k "$NAcc_MNI" -M 2>/dev/null || echo NA)"
-  [[ -f "$varcopeimg" ]] && NAcc_v="$(fslstats "$varcopeimg" -k "$NAcc_MNI" -M 2>/dev/null || echo NA)"
+  fbase="$(basename "$featdir")"
+  fbase="${fbase%.feat}"
 
-  [[ -f "$zimg" ]]       && Cort_z="$(fslstats "$zimg"       -k "$CORT_MNI" -M 2>/dev/null || echo NA)"
-  [[ -f "$copeimg" ]]    && Cort_c="$(fslstats "$copeimg"    -k "$CORT_MNI" -M 2>/dev/null || echo NA)"
-  [[ -f "$varcopeimg" ]] && Cort_v="$(fslstats "$varcopeimg" -k "$CORT_MNI" -M 2>/dev/null || echo NA)"
+  local task run space_raw acq_raw confounds znum
+  task="$(extract_tag "task" "$fbase")"
+  run="$(extract_tag "run" "$fbase")"
+  space_raw="$(extract_tag "space" "$fbase")"
 
-  local brs_corr="NA"
-  if [[ -f "$zimg" ]]; then
-    brs_corr="$(fslcc -m "$brainmask" --noabs -t -1 -p 6 "$zimg" "$BRS_MNI" 2>/dev/null | awk '{print $NF}' || echo NA)"
+  if [[ "$fbase" =~ _(multi-echo|single-echo)_ ]]; then
+    acq_raw="${BASH_REMATCH[1]}"
+  else
+    acq_raw="NA"
   fi
 
-  echo -e "${sub}\t${ses}\t${run}\t${task}\tmni\t${acq}\t${confounds}\t${znum}\t${label}\t${NAcc_z}\t${NAcc_c}\t${NAcc_v}\t${Cort_z}\t${Cort_c}\t${Cort_v}\t${brs_corr}"
+  confounds="$(extract_tag "cnfds" "$fbase")"
+  znum="$(basename "$zimg" | sed -E 's/^zstat([0-9]+).*$/\1/')"
+
+  # normalize tags
+  local space_tag="t1w"
+  [[ "$space_raw" =~ ^(mni|MNI) ]] && space_tag="mni"
+
+  local acq="NA"
+  [[ "$acq_raw" == "single-echo" ]] && acq="single"
+  [[ "$acq_raw" == "multi-echo"  ]] && acq="multiecho"
+
+  # If everything is truly MNI, we should not be seeing non-MNI here.
+  if [[ "$space_tag" != "mni" ]]; then
+    warn "Skipping non-MNI image (no resampling requested): $zimg"
+    return 0
+  fi
+
+  local label
+  label="$(contrast_label "$task" "$znum")"
+  [[ -n "$label" ]] || label="z${znum}"
+
+  # corresponding cope/varcope
+  local copeimg="${statsdir}/cope${znum}.nii.gz"
+  local varcopeimg="${statsdir}/varcope${znum}.nii.gz"
+
+  [[ -f "$copeimg"    ]] || warn "Missing cope for $zimg (expected $copeimg)"
+  [[ -f "$varcopeimg" ]] || warn "Missing varcope for $zimg (expected $varcopeimg)"
+
+  # --- zstat metrics ---
+  local nacc_z="NA" cort_z="NA" brs_corr="NA"
+  nacc_z="$(fslstats "$zimg" -k "$NAcc_MNI" -M 2>/dev/null || echo NA)"
+  cort_z="$(fslstats "$zimg" -k "$CORT_MNI" -M 2>/dev/null || echo NA)"
+  brs_corr="$(fslcc -m "$CORT_MNI" --noabs -t -1 -p 6 "$zimg" "$BRS_MNI" 2>/dev/null | awk '{print $NF}' || echo NA)"
+
+  # --- cope metrics ---
+  local nacc_c="NA" cort_c="NA"
+  if [[ -f "$copeimg" ]]; then
+    nacc_c="$(fslstats "$copeimg" -k "$NAcc_MNI" -M 2>/dev/null || echo NA)"
+    cort_c="$(fslstats "$copeimg" -k "$CORT_MNI" -M 2>/dev/null || echo NA)"
+  fi
+
+  # --- varcope metrics ---
+  local nacc_v="NA" cort_v="NA"
+  if [[ -f "$varcopeimg" ]]; then
+    nacc_v="$(fslstats "$varcopeimg" -k "$NAcc_MNI" -M 2>/dev/null || echo NA)"
+    cort_v="$(fslstats "$varcopeimg" -k "$CORT_MNI" -M 2>/dev/null || echo NA)"
+  fi
+
+  echo -e "${sub}\t${ses}\t${run}\t${task}\t${space_tag}\t${acq}\t${confounds}\t${znum}\t${label}\t${nacc_z}\t${cort_z}\t${brs_corr}\t${nacc_c}\t${cort_c}\t${nacc_v}\t${cort_v}"
 }
 
 # -------------------- main --------------------
-out="${OUT_DIR}/extractions_L1stats-revised.tsv"
-echo -e "sub\tses\trun\ttask\tspace\tacq\tconfounds\tzstat\tlabel\tNAcc_zstat_mean\tNAcc_cope_mean\tNAcc_varcope_mean\tBRS_Cort_zstat_mean\tBRS_Cort_cope_mean\tBRS_Cort_varcope_mean\tBRS_corr" \
-  > "$out"
+out="${OUT_DIR}/extractions_L1_unsmoothed_z_cope_varcope.tsv"
+echo -e "sub\tses\trun\ttask\tspace\tacq\tconfounds\tzstat\tlabel\tNAcc_mean_z\tCORT_mean_z\tBRS_corr_z\tNAcc_mean_cope\tCORT_mean_cope\tNAcc_mean_varcope\tCORT_mean_varcope" > "$out"
 
-# Strictly target UNSMOOTHED L1 FEATs
-ZPATH="*/L1_*unsmoothed.feat/stats/zstat*.nii.gz"
+# Precision path: your specific unsmoothed L1 FEATs
+ZPATH="${FSL_DERIV}/sub-*/ses-*/L1_*_unsmoothed.feat/stats/zstat*.nii.gz"
 
+# quick count
 total=$(
   find "$FSL_DERIV" \
     -type d \( -name '*.gfeat' -o -name 'subject-level' \) -prune -o \
@@ -112,9 +179,11 @@ total=$(
 )
 
 if (( total == 0 )); then
-  echo "[WARN] No zstat files matched." >&2
-  echo "[WARN] FSL_DERIV = $FSL_DERIV" >&2
-  echo "[WARN] Pattern   = $ZPATH" >&2
+  warn "No zstat files matched:"
+  warn "  $ZPATH"
+  warn "Example expected pattern:"
+  warn "  ${FSL_DERIV}/sub-*/ses-*/L1_*_unsmoothed.feat/stats/zstat*.nii.gz"
+  exit 0
 fi
 
 done_cnt=0
@@ -122,61 +191,13 @@ done_cnt=0
 while IFS= read -r -d '' zimg; do
   ((done_cnt++))
 
-  featdir="$(dirname "$(dirname "$zimg")")"                 # …/L1_...unsmoothed.feat
-  sesdir="$(basename "$(dirname "$featdir")")"              # ses-XX
-  subdir="$(basename "$(dirname "$(dirname "$featdir")")")" # sub-XXX
-
-  sub="${subdir#sub-}"
-  ses="${sesdir#ses-}"
-
-  fbase="$(basename "$featdir")"
-  fbase="${fbase%.feat}"
-
-  task="$(get_tag task "$fbase")"
-  run="$(get_tag run "$fbase")"
-  space_raw="$(get_tag space "$fbase")"
-
-  # acquisition + confounds tags from your naming convention
-  # (these are not key-value tags in the same way, so we parse lightly)
-  acq_raw="NA"
-  if [[ "$fbase" == *_multi-echo_* ]]; then
-    acq_raw="multi-echo"
-  elif [[ "$fbase" == *_single-echo_* ]]; then
-    acq_raw="single-echo"
+  if (( done_cnt % 200 == 0 || done_cnt == total )); then
+    printf '[%s] %d/%d (%.1f%%) processed\n' \
+      "$(date '+%F %T')" "$done_cnt" "$total" \
+      "$(awk "BEGIN{print 100*$done_cnt/$total}")" >&2
   fi
 
-  confounds="NA"
-  if [[ "$fbase" =~ _cnfds-([^_]+) ]]; then
-    confounds="${BASH_REMATCH[1]}"
-  fi
-
-  znum="$(basename "$zimg" | sed -E 's/^zstat([0-9]+).*$/\1/')"
-
-  # normalize tags used in output
-  space_tag="t1w"
-  [[ "$space_raw" =~ ^(mni|MNI)$ ]] && space_tag="mni"
-
-  acq="single"
-  [[ "$acq_raw" == "multi-echo" ]] && acq="multiecho"
-
-  # ignore non-MNI
-  [[ "$space_tag" == "mni" ]] || continue
-
-  label="$(contrast_label "$task" "$znum")"
-  [[ -n "$label" ]] || continue
-
-  statsdir="$(dirname "$zimg")"
-  copeimg="${statsdir}/cope${znum}.nii.gz"
-  varcopeimg="${statsdir}/varcope${znum}.nii.gz"
-
-  if [[ ! -f "$copeimg" || ! -f "$varcopeimg" ]]; then
-    echo "WARN: missing cope/varcope for $zimg (expected $copeimg and $varcopeimg)" >&2
-  fi
-
-  process_one "$zimg" "$copeimg" "$varcopeimg" "$featdir" \
-    "$sub" "$ses" "$run" "$task" "$acq" "$confounds" "$znum" "$label" \
-    >> "$out"
-
+  process_one "$zimg" >> "$out"
 done < <(
   find "$FSL_DERIV" \
     -type d \( -name '*.gfeat' -o -name 'subject-level' \) -prune -o \
