@@ -112,25 +112,34 @@ process_one() {
 }
 
 # -------- main --------
-out="${OUT_DIR}/extractions_L1stats-revised.tsv"
+out="${OUT_DIR}/extractions_L1stats-revised_smoothed.tsv"
 echo -e "sub\tses\trun\ttask\tspace\tacq\tconfounds\tzstat\tlabel\tNAcc_zstat_mean\tNAcc_cope_mean\tNAcc_varcope_mean\tBRS_Cort_zstat_mean\tBRS_Cort_cope_mean\tBRS_Cort_varcope_mean\tBRS_corr" \
   > "$out"
 
-# Tight, permission-safe discovery: ONLY L1_*unsmoothed.feat under sub-*/ses-*
-zfiles=( "$FSL_DERIV"/sub-*/ses-*/L1_*unsmoothed.feat/stats/zstat*.nii.gz )
+# Tight, permission-safe discovery: ONLY L1_*{fmriprep,tedana}.feat under sub-*/ses-*
+zfiles=(
+  "$FSL_DERIV"/sub-*/ses-*/L1_*fmriprep.feat/stats/zstat*.nii.gz
+  "$FSL_DERIV"/sub-*/ses-*/L1_*tedana.feat/stats/zstat*.nii.gz
+)
 
 if (( ${#zfiles[@]} == 0 )); then
   echo "WARN: No files found." >&2
-  echo "Tried pattern:" >&2
-  echo "  $FSL_DERIV/sub-*/ses-*/L1_*unsmoothed.feat/stats/zstat*.nii.gz" >&2
-  echo "Check that you're running from the expected project tree and that L1 unsmoothed FEATs exist." >&2
+  echo "Tried patterns:" >&2
+  echo "  $FSL_DERIV/sub-*/ses-*/L1_*fmriprep.feat/stats/zstat*.nii.gz" >&2
+  echo "  $FSL_DERIV/sub-*/ses-*/L1_*tedana.feat/stats/zstat*.nii.gz" >&2
+  echo "Check that you're running from the expected project tree and that L1 FEATs exist." >&2
   echo "Wrote header only to: $out" >&2
   exit 0
 fi
 
 for zimg in "${zfiles[@]}"; do
-  featdir="$(dirname "$(dirname "$zimg")")"  # …/L1_...unsmoothed.feat
-  [[ "$featdir" == *unsmoothed.feat ]] || continue
+  featdir="$(dirname "$(dirname "$zimg")")"  # …/L1_...{fmriprep|tedana}.feat
+
+  # Guard: ensure we only process desired FEAT dirs
+  case "$featdir" in
+    *fmriprep.feat|*tedana.feat) : ;;
+    *) continue ;;
+  esac
 
   sesdir="$(basename "$(dirname "$featdir")")"
   subdir="$(basename "$(dirname "$(dirname "$featdir")")")"
