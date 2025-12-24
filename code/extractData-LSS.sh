@@ -16,10 +16,10 @@ deriv_fsl="$maindir/derivatives/fsl"
 maskdir="$maindir/masks"
 outdir="$maindir/derivatives/extractions"
 mkdir -p "$outdir"
-outfile="$outdir/extractions_LSS.tsv"
+outfile="$outdir/extractions_LSS_smoothed.tsv"
 
 # Match your new output naming
-SM_TAG="0"
+SM_TAG="5"
 
 # Tools check (fail fast if missing)
 for cmd in fslstats fslcc fslmaths; do
