@@ -64,7 +64,7 @@ OUT_TC_DIR = ROOT_DIR / "derivatives" / "extractions" / "timecourses"
 SUMMARY_DIR= ROOT_DIR / "derivatives" / "extractions"
 EV_BASE    = FSL_DERIV / "EVFiles"  # EVs are arranged by sub/ses/task/run below
 
-VS_MNI     = MASKS_DIR / "space-MNI152NLin6Asym_desc-VS-Imanova_mask.nii.gz"
+VS_MNI     = MASKS_DIR / "space-MNI152NLin6Asym_desc-NAcc_mask.nii.gz"
 
 # Input list of FEAT directories (one per line, absolute). You provided this.
 FEAT_LIST_PATH = SCRIPT_DIR / "feat_paths.txt"
@@ -619,20 +619,15 @@ def main():
         "FB_POS_REWARD_Z","FB_NEG_REWARD_Z","FB_POS_NEUTRAL_Z","FB_NEG_NEUTRAL_Z",
         "N_ANT_REWARD","N_ANT_NEUTRAL","N_FB_POS_REWARD","N_FB_NEG_REWARD","N_FB_POS_NEUTRAL","N_FB_NEG_NEUTRAL"
     ]
-    tsv_path = SUMMARY_DIR / "summary_at_4thTR.tsv"
-    csv_path = SUMMARY_DIR / "summary_at_4thTR.csv"
+    tsv_path = SUMMARY_DIR / "summary_at_4thTR_mid-smoothed.tsv"
 
     with open(tsv_path, 'w') as f:
         f.write("\t".join(header) + "\n")
         for row in rows_for_tp:
             f.write("\t".join(row) + "\n")
 
-    with open(csv_path, 'w') as f:
-        f.write(','.join(header) + "\n")
-        for row in rows_for_tp:
-            f.write(','.join(row) + "\n")
 
-    print(f"Done. Outputs in: {OUT_TC_DIR}\n  - Discrete summaries: {tsv_path} and {csv_path}")
+    print(f"Done. Outputs in: {OUT_TC_DIR}\n  - Discrete summaries: {tsv_path}")
 
 
 if __name__ == "__main__":
