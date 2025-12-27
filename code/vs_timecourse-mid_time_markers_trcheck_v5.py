@@ -40,7 +40,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT_DIR   = SCRIPT_DIR.parent
 FSL_DERIV  = ROOT_DIR / "derivatives" / "fsl"
 MASKS_DIR  = ROOT_DIR / "masks"
-OUT_TC_DIR = ROOT_DIR / "derivatives" / "extractions" / "timecourses"
+OUT_TC_DIR = ROOT_DIR / "derivatives" / "extractions" / "timecourses-confounds-mid-redo"
 SUMMARY_DIR = ROOT_DIR / "derivatives" / "extractions"
 
 # Keep your existing conventions from the original script
