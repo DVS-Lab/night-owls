@@ -41,7 +41,7 @@ ROOT_DIR   = SCRIPT_DIR.parent
 FSL_DERIV  = ROOT_DIR / "derivatives" / "fsl"
 MASKS_DIR  = ROOT_DIR / "masks"
 
-OUT_TC_DIR  = ROOT_DIR / "derivatives" / "extractions" / "timecourses-mid-unsmoothed"
+OUT_TC_DIR  = ROOT_DIR / "derivatives" / "extractions" / "timecourses-mid-unsmoothed-iti"
 SUMMARY_DIR = ROOT_DIR / "derivatives" / "extractions"
 
 EV_BASE = FSL_DERIV / "EVFiles"
@@ -748,7 +748,7 @@ def main() -> None:
             f.write("\t".join(row) + "\n")
 
     print(f"Done.\n  Plots: {OUT_TC_DIR}\n  Summaries: {out_tsv}")
-    print("Subject-level ITI-bin plots are saved under: derivatives/extractions/timecourses-mid-unsmoothed/subjects/")
+    print("Subject-level ITI-bin plots are saved under: derivatives/extractions/timecourses-mid-unsmoothed-iti/subjects/")
 
 
 if __name__ == "__main__":
