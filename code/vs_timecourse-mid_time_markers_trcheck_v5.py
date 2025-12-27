@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-VS time-course extraction, plotting, and *time-based* summaries (seconds everywhere)
+VS time-course extraction, plotting, and *time-based* summaries (seconds everywhere) — v5.1
 -------------------------------------------------------------------------------
 Why this version exists
 - Avoids "Nth TR" thinking in summaries and QC markers.
@@ -40,7 +40,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT_DIR   = SCRIPT_DIR.parent
 FSL_DERIV  = ROOT_DIR / "derivatives" / "fsl"
 MASKS_DIR  = ROOT_DIR / "masks"
-OUT_TC_DIR = ROOT_DIR / "derivatives" / "extractions" / "timecourses-confounds-mid-redo"
+OUT_TC_DIR = ROOT_DIR / "derivatives" / "extractions" / "timecourses"
 SUMMARY_DIR = ROOT_DIR / "derivatives" / "extractions"
 
 # Keep your existing conventions from the original script
@@ -360,15 +360,15 @@ def process_one_feat(feat: Path, time_axis: np.ndarray) -> RunResult | None:
     isi_s = np.concatenate([ant_R_dur, ant_N_dur]) - CUE_DUR_S
     isi_s = isi_s[np.isfinite(isi_s)]
 
-    # Feedback (pooled by valence for plotting)
-    fb_pos = np.sort(np.concatenate([
-        load_ev_onsets(ev_dir / "_feedback_positive_reward.txt"),
-        load_ev_onsets(ev_dir / "_feedback_positive_neutral.txt"),
-    ]))
-    fb_neg = np.sort(np.concatenate([
-        load_ev_onsets(ev_dir / "_feedback_negative_reward.txt"),
-        load_ev_onsets(ev_dir / "_feedback_negative_neutral.txt"),
-    ]))
+    # Feedback EVs (keep separate types for point-estimates; also pool by valence for plotting)
+    fb_PR = load_ev_onsets(ev_dir / "_feedback_positive_reward.txt")
+    fb_NR = load_ev_onsets(ev_dir / "_feedback_negative_reward.txt")
+    fb_PN = load_ev_onsets(ev_dir / "_feedback_positive_neutral.txt")
+    fb_NN = load_ev_onsets(ev_dir / "_feedback_negative_neutral.txt")
+
+    # Pooled by valence for plotting
+    fb_pos = np.sort(np.concatenate([fb_PR, fb_PN]))
+    fb_neg = np.sort(np.concatenate([fb_NR, fb_NN]))
 
     # Feedback timing diagnostic: for each cue-offset, find the first subsequent feedback onset
     cueoffs = np.sort(np.concatenate([ant_R, ant_N]))
