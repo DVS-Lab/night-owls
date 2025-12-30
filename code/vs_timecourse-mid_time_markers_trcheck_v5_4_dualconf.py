@@ -49,7 +49,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Optional
 
 import numpy as np
 import nibabel as nib
@@ -60,7 +60,7 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT_DIR   = SCRIPT_DIR.parent
 FSL_DERIV  = ROOT_DIR / "derivatives" / "fsl"
 MASKS_DIR  = ROOT_DIR / "masks"
-OUT_TC_DIR = ROOT_DIR / "derivatives" / "extractions" / "timecourses-mid-unsmoothed"
+OUT_TC_DIR = ROOT_DIR / "derivatives" / "extractions" / "timecourses-mid-unsmoothed-new"
 SUMMARY_DIR= ROOT_DIR / "derivatives" / "extractions"
 EV_BASE    = FSL_DERIV / "EVFiles"  # EVs are arranged by sub/ses/task/run below
 
@@ -104,15 +104,19 @@ class RunResult:
     tp_means_psc: Dict[str, float | None]
     tp_means_z:   Dict[str, float | None]
     tp_counts:    Dict[str, int]
+    # Optional nuisance-regressed curves (same format as above).
+    # When confounds_used==0 these dicts are empty and plotting falls back to raw curves only.
+    confounds_used: int = 0
+    n_confounds: int = 0
+    ant_psc_conf: Dict[str, Tuple[np.ndarray, np.ndarray, int]] = None  # type: ignore[assignment]
+    ant_z_conf:   Dict[str, Tuple[np.ndarray, np.ndarray, int]] = None  # type: ignore[assignment]
+    fb_psc_conf:  Dict[str, Tuple[np.ndarray, np.ndarray, int]] = None  # type: ignore[assignment]
+    fb_z_conf:    Dict[str, Tuple[np.ndarray, np.ndarray, int]] = None  # type: ignore[assignment]
 
-    # Optional confound-regressed versions (same structure as above).
-    # Populated only when confoundevs.txt exists AND matches the fMRI time series length.
-    ant_psc_cr: Dict[str, Tuple[np.ndarray, np.ndarray, int]] | None = None
-    ant_z_cr:   Dict[str, Tuple[np.ndarray, np.ndarray, int]] | None = None
-    fb_psc_cr:  Dict[str, Tuple[np.ndarray, np.ndarray, int]] | None = None
-    fb_z_cr:    Dict[str, Tuple[np.ndarray, np.ndarray, int]] | None = None
-    confounds_applied: bool = False
-
+    # Timing markers (seconds; relative to the event used for extraction/plotting).
+    cue_dur_s: float = 0.75  # cue display duration (used to mark cue-onset at -cue_dur_s)
+    isi_median_s: float = float('nan')   # median target-onset relative to event (from ANT EV durations)
+    fb_delay_median_s: float = float('nan')  # median feedback-onset relative to event (paired as next FB after ANT onset)
 
 # ------------------------------ Helper functions ------------------------------
 
@@ -178,59 +182,95 @@ def load_vs_timeseries(feat: Path) -> Tuple[np.ndarray, float]:
     return vs_ts.astype(float), tr
 
 
+# --------------------------- Optional confound regression ----------------------
 
-def load_confound_evs(feat: Path, n_tp: int) -> np.ndarray | None:
-    """Load FEAT confounds (confoundevs.txt) if available and well-formed.
+def find_confoundevs_file(feat: Path) -> Optional[Path]:
+    """Return confoundevs.txt if present inside a FEAT directory."""
+    cand = feat / "confoundevs.txt"
+    return cand if cand.exists() else None
 
-    Returns
-    -------
-    conf : (n_tp, n_conf) array or None
-        None if file missing/empty or if row-count doesn't match n_tp.
-    """
-    f = feat / "confoundevs.txt"
-    if not f.exists():
-        return None
+
+def load_confound_matrix(conf_path: Path, T: int) -> Optional[np.ndarray]:
+    """Load confound matrix (T x K). Returns None if missing/mismatched."""
     try:
-        conf = np.loadtxt(f)
-    except Exception:
+        X = np.loadtxt(conf_path)
+    except Exception as e:
+        print(f"[WARN] Could not read confounds: {conf_path} ({e})")
         return None
 
-    if conf.size == 0:
+    if X.ndim == 1:
+        X = X.reshape(-1, 1)
+
+    if X.shape[0] != T:
+        print(f"[WARN] Confound rows != timeseries length for {conf_path}: {X.shape[0]} vs {T}. Skipping conf-reg.")
         return None
 
-    conf = np.atleast_2d(conf)
-    # If loadtxt returns shape (n_conf,) for single-row files, fix to (1, n_conf)
-    if conf.shape[0] == 1 and n_tp != 1 and conf.shape[1] == n_tp:
-        conf = conf.T
-
-    if conf.shape[0] != n_tp:
-        print(f"[WARN] confoundevs rows ({conf.shape[0]}) != n_tp ({n_tp}) in: {f}")
+    # Drop constant columns (std==0) to avoid rank issues.
+    keep = np.nanstd(X, axis=0) > 0
+    if keep.ndim == 0:
+        keep = np.array([bool(keep)])
+    X = X[:, keep]
+    if X.shape[1] == 0:
         return None
-
-    # Replace NaNs/Infs defensively
-    conf = np.nan_to_num(conf, nan=0.0, posinf=0.0, neginf=0.0)
-    return conf
+    return X
 
 
-def regress_out_confounds(ts: np.ndarray, conf: np.ndarray) -> np.ndarray:
-    """Regress confounds (plus intercept) from a 1D time series and preserve its mean."""
-    y = np.asarray(ts, dtype=float)
-    if y.ndim != 1:
-        raise ValueError("ts must be 1D")
-    if conf.ndim != 2 or conf.shape[0] != y.size:
-        raise ValueError("confounds must be (n_tp, n_conf)")
+def regress_out(y: np.ndarray, X: np.ndarray) -> np.ndarray:
+    """Regress X (plus intercept) out of y and return cleaned y preserving mean."""
+    if X is None or X.size == 0:
+        return y
 
-    # Design matrix: intercept + confounds
-    X = np.column_stack([np.ones(y.size), conf])
+    # Add intercept
+    X_ = np.column_stack([X, np.ones(X.shape[0])])
+    try:
+        beta, *_ = np.linalg.lstsq(X_, y, rcond=None)
+        y_hat = X_ @ beta
+        resid = y - y_hat
+        return resid + np.nanmean(y)
+    except Exception as e:
+        print(f"[WARN] Confound regression failed: {e}. Returning raw y.")
+        return y
 
-    # Least-squares fit
-    beta, *_ = np.linalg.lstsq(X, y, rcond=None)
-    y_hat = X @ beta
-    resid = y - y_hat
 
-    # Add back original mean for interpretability (keeps PSC scale comparable)
-    mu = np.nanmean(y)
-    return resid + mu
+# --------------------------- EV timing helpers (markers) -----------------------
+
+def load_ev_3col(path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Load an EV file with onset, duration, amplitude."""
+    if not path.exists():
+        return np.array([]), np.array([]), np.array([])
+    arr = np.loadtxt(path)
+    if arr.ndim == 1:
+        arr = arr.reshape(1, -1)
+    if arr.shape[1] < 3:
+        raise ValueError(f"EV file does not have 3 columns: {path}")
+    return arr[:, 0], arr[:, 1], arr[:, 2]
+
+
+def median_isi_from_ant_evs(antR_path: Path, antN_path: Path) -> float:
+    """Median target-onset relative to ANT event, based on EV durations."""
+    _, dR, _ = load_ev_3col(antR_path)
+    _, dN, _ = load_ev_3col(antN_path)
+    d = np.concatenate([dR, dN]) if (dR.size or dN.size) else np.array([])
+    return float(np.nanmedian(d)) if d.size else float("nan")
+
+
+def median_fb_delay_from_evs(ant_onsets: np.ndarray, fb_onsets: np.ndarray) -> float:
+    """Median feedback-onset delay relative to ANT event (paired as next FB after ANT onset)."""
+    if ant_onsets.size == 0 or fb_onsets.size == 0:
+        return float("nan")
+    fb_onsets = np.sort(fb_onsets)
+    ant_onsets = np.sort(ant_onsets)
+
+    delays = []
+    for t in ant_onsets:
+        j = np.searchsorted(fb_onsets, t, side="right")
+        if j < fb_onsets.size:
+            dt = fb_onsets[j] - t
+            if dt >= 0:
+                delays.append(dt)
+    if not delays:
+        return float("nan")
+    return float(np.nanmedian(np.array(delays)))
 
 
 def to_psc(ts: np.ndarray) -> np.ndarray:
@@ -286,92 +326,72 @@ def fourth_tr_indices(onsets: np.ndarray, tr: float, n_vols: int) -> np.ndarray:
     return idx[(idx >= 0) & (idx < n_vols)]
 
 
-def plot_two_conditions(time_axis: np.ndarray,
-                        condA: Tuple[np.ndarray, np.ndarray, int], labelA: str,
-                        condB: Tuple[np.ndarray, np.ndarray, int], labelB: str,
-                        title: str, ylabel: str, out_png: Path) -> None:
+def plot_two_conditions(
+    time_axis: np.ndarray,
+    condA: Tuple[np.ndarray, np.ndarray, int], labelA: str,
+    condB: Tuple[np.ndarray, np.ndarray, int], labelB: str,
+    title: str,
+    ylabel: str,
+    out_png: Path,
+    vlines: Optional[List[Tuple[float, str]]] = None,
+    overlayA: Optional[Tuple[np.ndarray, np.ndarray, int]] = None,
+    overlayB: Optional[Tuple[np.ndarray, np.ndarray, int]] = None,
+    overlay_label: str = "conf-reg",
+) -> None:
+    """Plot two conditions, optionally overlaying nuisance-regressed curves as dashed lines."""
     mA, sA, nA = condA
     mB, sB, nB = condB
+
     fig, ax = plt.subplots(figsize=(8, 4.8))
+
+    # Handle empty inputs gracefully (write a diagnostic plot instead of crashing).
+    if mA is None or mB is None or len(mA) == 0 or len(mB) == 0:
+        ax.text(0.5, 0.5, "No data to plot (empty condition curves).", ha="center", va="center", transform=ax.transAxes)
+        ax.set_title(title)
+        ax.set_xlabel("Time from event (s)")
+        ax.set_ylabel(ylabel)
+        out_png.parent.mkdir(parents=True, exist_ok=True)
+        fig.tight_layout()
+        fig.savefig(out_png)
+        plt.close(fig)
+        return
+
     ax.plot(time_axis, mA, label=f"{labelA} (n={nA})")
     ax.fill_between(time_axis, mA - sA, mA + sA, alpha=0.25)
     ax.plot(time_axis, mB, label=f"{labelB} (n={nB})")
     ax.fill_between(time_axis, mB - sB, mB + sB, alpha=0.25)
-    for v in VERT_LINES:
-        ax.axvline(v, ls=":", lw=1)
+
+    # Optional overlays (dashed, no shading to keep legible)
+    if overlayA is not None and overlayB is not None:
+        oA, _, onA = overlayA
+        oB, _, onB = overlayB
+        if oA is not None and oB is not None and len(oA) == len(time_axis) and len(oB) == len(time_axis):
+            ax.plot(time_axis, oA, ls="--", lw=1.5, label=f"{labelA} ({overlay_label}; n={onA})")
+            ax.plot(time_axis, oB, ls="--", lw=1.5, label=f"{labelB} ({overlay_label}; n={onB})")
+
+    # Vertical markers
+    if vlines is None:
+        # fall back to the original defaults
+        for v in VERT_LINES:
+            ax.axvline(v, ls=":", lw=1)
+    else:
+        for x, lab in vlines:
+            ax.axvline(x, ls=":", lw=1)
+            if lab:
+                # put label near the top of the axis
+                y_top = ax.get_ylim()[1]
+                ax.text(x, y_top, f" {lab}", rotation=90, va="bottom", ha="left", fontsize=8)
+
     ax.set_xlabel("Time from event (s)")
     ax.set_ylabel(ylabel)
     ax.set_title(title)
     ax.legend(loc="best")
+
     out_png.parent.mkdir(parents=True, exist_ok=True)
     fig.tight_layout()
     fig.savefig(out_png)
     plt.close(fig)
 
-
-def plot_two_conditions_dualconf(
-    time_axis: np.ndarray,
-    rawA: Tuple[np.ndarray, np.ndarray, int], labelA: str,
-    rawB: Tuple[np.ndarray, np.ndarray, int], labelB: str,
-    crA: Tuple[np.ndarray, np.ndarray, int] | None,
-    crB: Tuple[np.ndarray, np.ndarray, int] | None,
-    title: str,
-    ylabel: str,
-    out_png: Path,
-    vlines: List[float] | None = None,
-):
-    """Plot raw (solid + band) and confound-regressed (dashed) overlays for two conditions.
-
-    If crA/crB is None, this falls back to the raw-only visualization.
-    """
-    out_png.parent.mkdir(parents=True, exist_ok=True)
-
-    mA, seA, nA = rawA
-    mB, seB, nB = rawB
-
-    # If either condition is empty, make a minimal plot (prevents hard crashes in edge cases)
-    if mA.size == 0 or mB.size == 0:
-        fig, ax = plt.subplots(figsize=(8, 5))
-        ax.set_title(title)
-        ax.set_xlabel("Time from event (s)")
-        ax.set_ylabel(ylabel)
-        ax.text(0.5, 0.5, "No trials for one or both conditions", ha="center", va="center", transform=ax.transAxes)
-        if vlines:
-            for x in vlines:
-                ax.axvline(x, linestyle=":", alpha=0.6)
-        fig.tight_layout()
-        fig.savefig(out_png, dpi=150)
-        plt.close(fig)
-        return
-
-    fig, ax = plt.subplots(figsize=(8, 5))
-
-    # Raw (solid + band)
-    (lineA,) = ax.plot(time_axis, mA, label=f"{labelA} (raw; n={nA})")
-    ax.fill_between(time_axis, mA - seA, mA + seA, alpha=0.2)
-    (lineB,) = ax.plot(time_axis, mB, label=f"{labelB} (raw; n={nB})")
-    ax.fill_between(time_axis, mB - seB, mB + seB, alpha=0.2)
-
-    # Confound-regressed (dashed; no band to avoid clutter)
-    if crA is not None and crB is not None:
-        mA2, _, nA2 = crA
-        mB2, _, nB2 = crB
-        if mA2.size == mA.size:
-            ax.plot(time_axis, mA2, linestyle="--", color=lineA.get_color(), label=f"{labelA} (confound-reg; n={nA2})")
-        if mB2.size == mB.size:
-            ax.plot(time_axis, mB2, linestyle="--", color=lineB.get_color(), label=f"{labelB} (confound-reg; n={nB2})")
-
-    if vlines:
-        for x in vlines:
-            ax.axvline(x, linestyle=":", alpha=0.6)
-
-    ax.set_title(title)
-    ax.set_xlabel("Time from event (s)")
-    ax.set_ylabel(ylabel)
-    ax.legend(frameon=True)
-    fig.tight_layout()
-    fig.savefig(out_png, dpi=150)
-    plt.close(fig)
 
 # ------------------------------- Core pipeline --------------------------------
 
@@ -386,27 +406,32 @@ def process_one_feat(feat: Path) -> RunResult | None:
 
     ts_psc = to_psc(ts_raw)
     ts_z   = to_z(ts_raw)
-    T = ts_raw.size
 
-    # Optional confound regression (uses FEAT confoundevs.txt when present)
-    confounds = load_confound_evs(feat, T)
-    confounds_applied = False
-    ts_psc_cr = ts_z_cr = None
-    if confounds is not None:
-        try:
-            ts_clean = regress_out_confounds(ts_raw, confounds)
-            ts_psc_cr = to_psc(ts_clean)
-            ts_z_cr   = to_z(ts_clean)
-            confounds_applied = True
-        except Exception as e:
-            print(f"[WARN] Confound regression failed in {feat}: {e}")
-            confounds_applied = False
-            ts_psc_cr = ts_z_cr = None
+    # Optional nuisance regression using FEAT confound EVs (if available).
+    confounds_used = 0
+    n_confounds = 0
+    ts_psc_conf = None
+    ts_z_conf = None
+
+    conf_path = find_confoundevs_file(feat)
+    if conf_path is not None:
+        X = load_confound_matrix(conf_path, T)
+        if X is not None:
+            n_confounds = int(X.shape[1])
+            ts_clean = regress_out(ts_raw, X)
+            ts_psc_conf = to_psc(ts_clean)
+            ts_z_conf   = to_z(ts_clean)
+            confounds_used = 1
+
+    T = ts_raw.size
 
     # Load EVs
     ev_dir = get_ev_dir(sub, ses, run)
     ant_R = load_ev(ev_dir / "_anticipation_reward.txt")
     ant_N = load_ev(ev_dir / "_anticipation_neutral.txt")
+    # For timing markers, we also read the 3-column ANT EVs (durations = cue-offset -> target-onset).
+    ant_R_path = ev_dir / "_anticipation_reward.txt"
+    ant_N_path = ev_dir / "_anticipation_neutral.txt"
 
     # Feedback (pooled by valence for plotting)
     fb_pos = np.sort(np.concatenate([
@@ -417,6 +442,14 @@ def process_one_feat(feat: Path) -> RunResult | None:
         load_ev(ev_dir / "_feedback_negative_reward.txt"),
         load_ev(ev_dir / "_feedback_negative_neutral.txt"),
     ]))
+
+
+    # Timing markers (all relative to the ANT event onset used in extraction).
+    all_ant_onsets = np.sort(np.concatenate([ant_R, ant_N])) if (ant_R.size or ant_N.size) else np.array([])
+    all_fb_onsets = np.sort(np.concatenate([fb_pos, fb_neg])) if (fb_pos.size or fb_neg.size) else np.array([])
+
+    isi_median_s = median_isi_from_ant_evs(ant_R_path, ant_N_path)
+    fb_delay_median_s = median_fb_delay_from_evs(all_ant_onsets, all_fb_onsets)
 
     # Feedback (separate conditions for discrete TP summaries)
     fb_PR = load_ev(ev_dir / "_feedback_positive_reward.txt")
@@ -442,21 +475,39 @@ def process_one_feat(feat: Path) -> RunResult | None:
         "Neutral": mean_and_sem(N_z_w),
     }
 
-    # Optional confound-regressed ANT windows
-    ant_psc_cr = ant_z_cr = None
-    if confounds_applied and ts_psc_cr is not None and ts_z_cr is not None:
-        R_psc_w_cr = sample_windows(ts_psc_cr, ant_R, tr, TMIN, TMAX)
-        N_psc_w_cr = sample_windows(ts_psc_cr, ant_N, tr, TMIN, TMAX)
-        R_z_w_cr   = sample_windows(ts_z_cr,   ant_R, tr, TMIN, TMAX)
-        N_z_w_cr   = sample_windows(ts_z_cr,   ant_N, tr, TMIN, TMAX)
 
-        ant_psc_cr = {
-            "Reward": mean_and_sem(R_psc_w_cr),
-            "Neutral": mean_and_sem(N_psc_w_cr),
+    # Confound-regressed curves (optional). We compute the same windows if ts_psc_conf/ts_z_conf exist.
+    ant_psc_conf = {}
+    ant_z_conf   = {}
+    fb_psc_conf  = {}
+    fb_z_conf    = {}
+    if confounds_used and ts_psc_conf is not None and ts_z_conf is not None:
+        R_psc_w_c = sample_windows(ts_psc_conf, ant_R, tr, TMIN, TMAX)
+        N_psc_w_c = sample_windows(ts_psc_conf, ant_N, tr, TMIN, TMAX)
+        R_z_w_c   = sample_windows(ts_z_conf,   ant_R, tr, TMIN, TMAX)
+        N_z_w_c   = sample_windows(ts_z_conf,   ant_N, tr, TMIN, TMAX)
+
+        ant_psc_conf = {
+            "Reward": mean_and_sem(R_psc_w_c),
+            "Neutral": mean_and_sem(N_psc_w_c),
         }
-        ant_z_cr = {
-            "Reward": mean_and_sem(R_z_w_cr),
-            "Neutral": mean_and_sem(N_z_w_cr),
+        ant_z_conf = {
+            "Reward": mean_and_sem(R_z_w_c),
+            "Neutral": mean_and_sem(N_z_w_c),
+        }
+
+        P_psc_w_c = sample_windows(ts_psc_conf, fb_pos, tr, TMIN, TMAX)
+        G_psc_w_c = sample_windows(ts_psc_conf, fb_neg, tr, TMIN, TMAX)
+        P_z_w_c   = sample_windows(ts_z_conf,   fb_pos, tr, TMIN, TMAX)
+        G_z_w_c   = sample_windows(ts_z_conf,   fb_neg, tr, TMIN, TMAX)
+
+        fb_psc_conf = {
+            "Positive": mean_and_sem(P_psc_w_c),
+            "Negative": mean_and_sem(G_psc_w_c),
+        }
+        fb_z_conf = {
+            "Positive": mean_and_sem(P_z_w_c),
+            "Negative": mean_and_sem(G_z_w_c),
         }
 
     # FB windows (valence pooled)
@@ -473,23 +524,6 @@ def process_one_feat(feat: Path) -> RunResult | None:
         "Positive": mean_and_sem(P_z_w),
         "Negative": mean_and_sem(G_z_w),
     }
-
-    # Optional confound-regressed FB windows (valence pooled)
-    fb_psc_cr = fb_z_cr = None
-    if confounds_applied and ts_psc_cr is not None and ts_z_cr is not None:
-        P_psc_w_cr = sample_windows(ts_psc_cr, fb_pos, tr, TMIN, TMAX)
-        G_psc_w_cr = sample_windows(ts_psc_cr, fb_neg, tr, TMIN, TMAX)
-        P_z_w_cr   = sample_windows(ts_z_cr,   fb_pos, tr, TMIN, TMAX)
-        G_z_w_cr   = sample_windows(ts_z_cr,   fb_neg, tr, TMIN, TMAX)
-
-        fb_psc_cr = {
-            "Positive": mean_and_sem(P_psc_w_cr),
-            "Negative": mean_and_sem(G_psc_w_cr),
-        }
-        fb_z_cr = {
-            "Positive": mean_and_sem(P_z_w_cr),
-            "Negative": mean_and_sem(G_z_w_cr),
-        }
 
     # ---------------- Discrete 4th‑TR summaries (no interpolation) -------------
     def m(arr: np.ndarray) -> float | None:
@@ -550,254 +584,296 @@ def process_one_feat(feat: Path) -> RunResult | None:
         tp_means_psc=tp_means_psc,
         tp_means_z=tp_means_z,
         tp_counts=tp_counts,
-        ant_psc_cr=ant_psc_cr,
-        ant_z_cr=ant_z_cr,
-        fb_psc_cr=fb_psc_cr,
-        fb_z_cr=fb_z_cr,
-        confounds_applied=confounds_applied,
+        confounds_used=confounds_used,
+        n_confounds=n_confounds,
+        ant_psc_conf=ant_psc_conf,
+        ant_z_conf=ant_z_conf,
+        fb_psc_conf=fb_psc_conf,
+        fb_z_conf=fb_z_conf,
+        cue_dur_s=0.75,
+        isi_median_s=isi_median_s,
+        fb_delay_median_s=fb_delay_median_s,
     )
-
 
 
 def save_run_plots(res: RunResult) -> None:
     run_out = OUT_TC_DIR / "runs" / f"sub-{res.sub}" / f"ses-{res.ses}" / f"run-{res.run}" / res.echo
 
+    # Build plot-specific timing markers.
+    # ANT plots are anchored at the ANT event onset used in extraction (t=0).
+    vlines_ant: List[Tuple[float, str]] = [
+        (-res.cue_dur_s, "cue onset"),
+        (0.0, "cue offset / ANT onset"),
+    ]
+    if not np.isnan(res.isi_median_s):
+        vlines_ant.append((res.isi_median_s, "median target onset"))
+    if not np.isnan(res.fb_delay_median_s):
+        vlines_ant.append((res.fb_delay_median_s, "median feedback onset"))
+    # Wu-style comparability: 6 s after cue onset.
+    vlines_ant.append((6.0 - res.cue_dur_s, "Wu: +6s from cue onset"))
+    vlines_ant.append((6.0, "+6s from ANT onset"))
+
+    # FB plots are anchored at feedback onset (t=0).
+    vlines_fb: List[Tuple[float, str]] = [
+        (0.0, "feedback onset"),
+        (6.0, "+6s"),
+    ]
+
+    # Optional overlay curves (confound-regressed) — plotted as dashed lines.
+    ant_psc_oR = res.ant_psc_conf.get("Reward") if (res.confounds_used and res.ant_psc_conf) else None
+    ant_psc_oN = res.ant_psc_conf.get("Neutral") if (res.confounds_used and res.ant_psc_conf) else None
+    ant_z_oR   = res.ant_z_conf.get("Reward")   if (res.confounds_used and res.ant_z_conf)   else None
+    ant_z_oN   = res.ant_z_conf.get("Neutral")  if (res.confounds_used and res.ant_z_conf)   else None
+
+    fb_psc_oP  = res.fb_psc_conf.get("Positive") if (res.confounds_used and res.fb_psc_conf) else None
+    fb_psc_oN  = res.fb_psc_conf.get("Negative") if (res.confounds_used and res.fb_psc_conf) else None
+    fb_z_oP    = res.fb_z_conf.get("Positive")   if (res.confounds_used and res.fb_z_conf)   else None
+    fb_z_oN    = res.fb_z_conf.get("Negative")   if (res.confounds_used and res.fb_z_conf)   else None
+
+
+
     # Anticipation: PSC and Z
-    if res.confounds_applied and res.ant_psc_cr is not None and res.ant_z_cr is not None:
-        plot_two_conditions_dualconf(
-            res.time_axis,
-            res.ant_psc["Reward"], "Reward",
-            res.ant_psc["Neutral"], "Neutral",
-            res.ant_psc_cr["Reward"],
-            res.ant_psc_cr["Neutral"],
-            title=f"VS — sub {res.sub} ses {res.ses} run {res.run} [{res.echo}] (ANT, PSC)",
-            ylabel="% signal change (PSC)",
-            out_png=run_out / "anticipation_psc.png",
-        )
-        plot_two_conditions_dualconf(
-            res.time_axis,
-            res.ant_z["Reward"], "Reward",
-            res.ant_z["Neutral"], "Neutral",
-            res.ant_z_cr["Reward"],
-            res.ant_z_cr["Neutral"],
-            title=f"VS — sub {res.sub} ses {res.ses} run {res.run} [{res.echo}] (ANT, Z)",
-            ylabel="Z-scored signal",
-            out_png=run_out / "anticipation_z.png",
-        )
-    else:
-        plot_two_conditions(
-            res.time_axis,
-            res.ant_psc["Reward"], "Reward",
-            res.ant_psc["Neutral"], "Neutral",
-            title=f"VS — sub {res.sub} ses {res.ses} run {res.run} [{res.echo}] (ANT, PSC)",
-            ylabel="% signal change (PSC)",
-            out_png=run_out / "anticipation_psc.png",
-        )
-        plot_two_conditions(
-            res.time_axis,
-            res.ant_z["Reward"], "Reward",
-            res.ant_z["Neutral"], "Neutral",
-            title=f"VS — sub {res.sub} ses {res.ses} run {res.run} [{res.echo}] (ANT, Z)",
-            ylabel="Z-scored signal",
-            out_png=run_out / "anticipation_z.png",
-        )
+    plot_two_conditions(
+        res.time_axis,
+        res.ant_psc["Reward"], "Reward",
+        res.ant_psc["Neutral"], "Neutral",
+        title=f"VS — sub {res.sub} ses {res.ses} run {res.run} [{res.echo}] (ANT, PSC)",
+        ylabel="% signal change (PSC)",
+        out_png=run_out / "anticipation_psc.png",
+        vlines=vlines_ant,
+        overlayA=ant_psc_oR,
+        overlayB=ant_psc_oN,
+        overlay_label="conf-reg",
+    )
+    plot_two_conditions(
+        res.time_axis,
+        res.ant_z["Reward"], "Reward",
+        res.ant_z["Neutral"], "Neutral",
+        title=f"VS — sub {res.sub} ses {res.ses} run {res.run} [{res.echo}] (ANT, Z)",
+        ylabel="Z (SD units)",
+        out_png=run_out / "anticipation_z.png",
+        vlines=vlines_ant,
+        overlayA=ant_z_oR,
+        overlayB=ant_z_oN,
+        overlay_label="conf-reg",
+    )
 
     # Feedback (valence): PSC and Z
-    if res.confounds_applied and res.fb_psc_cr is not None and res.fb_z_cr is not None:
-        plot_two_conditions_dualconf(
-            res.time_axis,
-            res.fb_psc["Positive"], "Feedback +",
-            res.fb_psc["Negative"], "Feedback −",
-            res.fb_psc_cr["Positive"],
-            res.fb_psc_cr["Negative"],
-            title=f"VS — sub {res.sub} ses {res.ses} run {res.run} [{res.echo}] (FB, PSC)",
-            ylabel="% signal change (PSC)",
-            out_png=run_out / "feedback_psc.png",
-        )
-        plot_two_conditions_dualconf(
-            res.time_axis,
-            res.fb_z["Positive"], "Feedback +",
-            res.fb_z["Negative"], "Feedback −",
-            res.fb_z_cr["Positive"],
-            res.fb_z_cr["Negative"],
-            title=f"VS — sub {res.sub} ses {res.ses} run {res.run} [{res.echo}] (FB, Z)",
-            ylabel="Z-scored signal",
-            out_png=run_out / "feedback_z.png",
-        )
-    else:
-        plot_two_conditions(
-            res.time_axis,
-            res.fb_psc["Positive"], "Feedback +",
-            res.fb_psc["Negative"], "Feedback −",
-            title=f"VS — sub {res.sub} ses {res.ses} run {res.run} [{res.echo}] (FB, PSC)",
-            ylabel="% signal change (PSC)",
-            out_png=run_out / "feedback_psc.png",
-        )
-        plot_two_conditions(
-            res.time_axis,
-            res.fb_z["Positive"], "Feedback +",
-            res.fb_z["Negative"], "Feedback −",
-            title=f"VS — sub {res.sub} ses {res.ses} run {res.run} [{res.echo}] (FB, Z)",
-            ylabel="Z-scored signal",
-            out_png=run_out / "feedback_z.png",
-        )
+    plot_two_conditions(
+        res.time_axis,
+        res.fb_psc["Positive"], "Feedback +",
+        res.fb_psc["Negative"], "Feedback −",
+        title=f"VS — sub {res.sub} ses {res.ses} run {res.run} [{res.echo}] (FB, PSC)",
+        ylabel="% signal change (PSC)",
+        out_png=run_out / "feedback_psc.png",
+        vlines=vlines_fb,
+        overlayA=fb_psc_oP,
+        overlayB=fb_psc_oN,
+        overlay_label="conf-reg",
+    )
+    plot_two_conditions(
+        res.time_axis,
+        res.fb_z["Positive"], "Feedback +",
+        res.fb_z["Negative"], "Feedback −",
+        title=f"VS — sub {res.sub} ses {res.ses} run {res.run} [{res.echo}] (FB, Z)",
+        ylabel="Z (SD units)",
+        out_png=run_out / "feedback_z.png",
+    )
 
-    # Save run-level summary: points at +6s (FSL-aligned) and +4th TR (classic MID)
-    # This is intentionally raw-only (confound-regressed curves are for visualization/QC).
-    summ_path = run_out / "summary_points.tsv"
-    summ_path.parent.mkdir(parents=True, exist_ok=True)
+    # Save a summary file
+    summary = (
+        f"Run: sub-{res.sub} ses-{res.ses} run-{res.run} echo={res.echo}\n"
+        f"ANT  Reward n={res.ant_psc['Reward'][2]}, Neutral n={res.ant_psc['Neutral'][2]}\n"
+        f"FB   Positive n={res.fb_psc['Positive'][2]}, Negative n={res.fb_psc['Negative'][2]}\n"
+    )
+    txt_path = run_out / "summary.txt"
+    txt_path.parent.mkdir(parents=True, exist_ok=True)
+    txt_path.write_text(summary)
 
-    with summ_path.open("w") as f:
-        f.write("sub    ses run echo    ")
-        f.write("ant_R_psc  ant_N_psc   ant_R_z ant_N_z ")
-        f.write("fb_pos_psc fb_neg_psc  fb_pos_z    fb_neg_z    ")
-        f.write("tp_total   tp_good\n")
-        f.write(f"{res.sub}\t{res.ses}\t{res.run}\t{res.echo}\t")
-        f.write(f"{res.points_psc['ant_R']:.6f}\t{res.points_psc['ant_N']:.6f}\t")
-        f.write(f"{res.points_z['ant_R']:.6f}\t{res.points_z['ant_N']:.6f}\t")
-        f.write(f"{res.points_psc['fb_pos']:.6f}\t{res.points_psc['fb_neg']:.6f}\t")
-        f.write(f"{res.points_z['fb_pos']:.6f}\t{res.points_z['fb_neg']:.6f}\t")
-        f.write(f"{res.tp_counts['total']}\t{res.tp_counts['good']}\n")
+    # Save per‑run discrete 4th‑TR summaries (TSV)
+    tp_path = run_out / "tp_4thTR.tsv"
+    header = [
+        "sub","ses","run","echo",
+        "ANT_REWARD_PSC","ANT_NEUTRAL_PSC",
+        "FB_POS_REWARD_PSC","FB_NEG_REWARD_PSC","FB_POS_NEUTRAL_PSC","FB_NEG_NEUTRAL_PSC",
+        "ANT_REWARD_Z","ANT_NEUTRAL_Z",
+        "FB_POS_REWARD_Z","FB_NEG_REWARD_Z","FB_POS_NEUTRAL_Z","FB_NEG_NEUTRAL_Z",
+        "N_ANT_REWARD","N_ANT_NEUTRAL","N_FB_POS_REWARD","N_FB_NEG_REWARD","N_FB_POS_NEUTRAL","N_FB_NEG_NEUTRAL"
+    ]
+    row = [
+        res.sub, res.ses, res.run, res.echo,
+        _fmt(res.tp_means_psc.get("ANT_REWARD")),
+        _fmt(res.tp_means_psc.get("ANT_NEUTRAL")),
+        _fmt(res.tp_means_psc.get("FB_POS_REWARD")),
+        _fmt(res.tp_means_psc.get("FB_NEG_REWARD")),
+        _fmt(res.tp_means_psc.get("FB_POS_NEUTRAL")),
+        _fmt(res.tp_means_psc.get("FB_NEG_NEUTRAL")),
+        _fmt(res.tp_means_z.get("ANT_REWARD")),
+        _fmt(res.tp_means_z.get("ANT_NEUTRAL")),
+        _fmt(res.tp_means_z.get("FB_POS_REWARD")),
+        _fmt(res.tp_means_z.get("FB_NEG_REWARD")),
+        _fmt(res.tp_means_z.get("FB_POS_NEUTRAL")),
+        _fmt(res.tp_means_z.get("FB_NEG_NEUTRAL")),
+        str(res.tp_counts.get("ANT_REWARD",0)),
+        str(res.tp_counts.get("ANT_NEUTRAL",0)),
+        str(res.tp_counts.get("FB_POS_REWARD",0)),
+        str(res.tp_counts.get("FB_NEG_REWARD",0)),
+        str(res.tp_counts.get("FB_POS_NEUTRAL",0)),
+        str(res.tp_counts.get("FB_NEG_NEUTRAL",0)),
+    ]
+    tp_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(tp_path, 'w') as f:
+        f.write("\t".join(header) + "\n")
+        f.write("\t".join(row) + "\n")
 
 
+# -------------------------- Subject‑level aggregation --------------------------
 
-def aggregate_subject(results: List[RunResult], sub: str) -> None:
-    """Aggregate across runs within each echo type, and emit subject-level plots + TSV."""
-    by_echo: Dict[str, List[RunResult]] = {}
+def aggregate_subject(results: List[RunResult], subject: str) -> None:
+    pool: Dict[str, Dict[str, Dict[str, List[Tuple[np.ndarray, int]]]]] = {}
+    time_axis = None
+
+    # Collect timing markers across runs (for ANT plots).
+    marker_pool: Dict[str, Dict[str, List[float]]] = {}  # echo -> {'isi':[], 'fb':[], 'cue':[]}
+
+
     for res in results:
-        by_echo.setdefault(res.echo, []).append(res)
+        if res.sub != subject:
+            continue
+        if time_axis is None:
+            time_axis = res.time_axis
+        echo = res.echo
+        marker_pool.setdefault(echo, {'cue': [], 'isi': [], 'fb': []})
+        marker_pool[echo]['cue'].append(res.cue_dur_s)
+        if not np.isnan(res.isi_median_s):
+            marker_pool[echo]['isi'].append(res.isi_median_s)
+        if not np.isnan(res.fb_delay_median_s):
+            marker_pool[echo]['fb'].append(res.fb_delay_median_s)
 
-    for echo, runs in by_echo.items():
-        outdir = OUT_TC_DIR / "subjects" / f"sub-{sub}" / echo
-        outdir.mkdir(parents=True, exist_ok=True)
+        pool.setdefault(echo, {
+            "ANT_PSC": {"Reward": [], "Neutral": []},
+            "ANT_Z":   {"Reward": [], "Neutral": []},
+            "FB_PSC":  {"Positive": [], "Negative": []},
+            "FB_Z":    {"Positive": [], "Negative": []},
+            "ANT_PSC_CONF": {"Reward": [], "Neutral": []},
+            "ANT_Z_CONF":   {"Reward": [], "Neutral": []},
+            "FB_PSC_CONF":  {"Positive": [], "Negative": []},
+            "FB_Z_CONF":    {"Positive": [], "Negative": []},
+        })
+        pool[echo]["ANT_PSC"]["Reward"].append((res.ant_psc["Reward"][0], res.ant_psc["Reward"][2]))
+        pool[echo]["ANT_PSC"]["Neutral"].append((res.ant_psc["Neutral"][0], res.ant_psc["Neutral"][2]))
+        pool[echo]["ANT_Z"]["Reward"].append((res.ant_z["Reward"][0], res.ant_z["Reward"][2]))
+        pool[echo]["ANT_Z"]["Neutral"].append((res.ant_z["Neutral"][0], res.ant_z["Neutral"][2]))
+        pool[echo]["FB_PSC"]["Positive"].append((res.fb_psc["Positive"][0], res.fb_psc["Positive"][2]))
+        pool[echo]["FB_PSC"]["Negative"].append((res.fb_psc["Negative"][0], res.fb_psc["Negative"][2]))
+        pool[echo]["FB_Z"]["Positive"].append((res.fb_z["Positive"][0], res.fb_z["Positive"][2]))
+        pool[echo]["FB_Z"]["Negative"].append((res.fb_z["Negative"][0], res.fb_z["Negative"][2]))
+        # Optional confound-regressed curves
+        if res.confounds_used and res.ant_psc_conf and res.fb_psc_conf:
+            pool[echo]["ANT_PSC_CONF"]["Reward"].append((res.ant_psc_conf["Reward"][0], res.ant_psc_conf["Reward"][2]))
+            pool[echo]["ANT_PSC_CONF"]["Neutral"].append((res.ant_psc_conf["Neutral"][0], res.ant_psc_conf["Neutral"][2]))
+            pool[echo]["ANT_Z_CONF"]["Reward"].append((res.ant_z_conf["Reward"][0], res.ant_z_conf["Reward"][2]))
+            pool[echo]["ANT_Z_CONF"]["Neutral"].append((res.ant_z_conf["Neutral"][0], res.ant_z_conf["Neutral"][2]))
+            pool[echo]["FB_PSC_CONF"]["Positive"].append((res.fb_psc_conf["Positive"][0], res.fb_psc_conf["Positive"][2]))
+            pool[echo]["FB_PSC_CONF"]["Negative"].append((res.fb_psc_conf["Negative"][0], res.fb_psc_conf["Negative"][2]))
+            pool[echo]["FB_Z_CONF"]["Positive"].append((res.fb_z_conf["Positive"][0], res.fb_z_conf["Positive"][2]))
+            pool[echo]["FB_Z_CONF"]["Negative"].append((res.fb_z_conf["Negative"][0], res.fb_z_conf["Negative"][2]))
 
-        # Helper: stack run-level mean curves (each run contributes one curve)
-        def stack(items: List[Tuple[np.ndarray, np.ndarray, int]]) -> Tuple[np.ndarray, np.ndarray, int]:
-            return weighted_mean_and_sem(items)
 
-        # ----- ANT (raw)
-        ant_psc_R = stack([r.ant_psc["Reward"] for r in runs])
-        ant_psc_N = stack([r.ant_psc["Neutral"] for r in runs])
-        ant_z_R   = stack([r.ant_z["Reward"] for r in runs])
-        ant_z_N   = stack([r.ant_z["Neutral"] for r in runs])
+    if time_axis is None:
+        print(f"[INFO] No runs aggregated for subject {subject}.")
+        return
 
-        # Optional ANT (confound-regressed): only include runs where it was actually applied
-        runs_cr = [r for r in runs if r.confounds_applied and r.ant_psc_cr is not None and r.ant_z_cr is not None]
-        ant_psc_R_cr = ant_psc_N_cr = ant_z_R_cr = ant_z_N_cr = None
-        if len(runs_cr) > 0:
-            ant_psc_R_cr = stack([r.ant_psc_cr["Reward"] for r in runs_cr])  # type: ignore[index]
-            ant_psc_N_cr = stack([r.ant_psc_cr["Neutral"] for r in runs_cr])  # type: ignore[index]
-            ant_z_R_cr   = stack([r.ant_z_cr["Reward"] for r in runs_cr])  # type: ignore[index]
-            ant_z_N_cr   = stack([r.ant_z_cr["Neutral"] for r in runs_cr])  # type: ignore[index]
+    subj_out = OUT_TC_DIR / "subjects" / f"sub-{subject}"
 
-        # ----- FB (raw)
-        fb_psc_P = stack([r.fb_psc["Positive"] for r in runs])
-        fb_psc_G = stack([r.fb_psc["Negative"] for r in runs])
-        fb_z_P   = stack([r.fb_z["Positive"] for r in runs])
-        fb_z_G   = stack([r.fb_z["Negative"] for r in runs])
+    def weighted_mean_and_sem(items: List[Tuple[np.ndarray, int]]) -> Tuple[np.ndarray, np.ndarray, int]:
+        if len(items) == 0:
+            return np.array([]), np.array([]), 0
+        means = np.vstack([m for (m, n) in items])
+        sem = np.nanstd(means, axis=0, ddof=1) / np.sqrt(max(len(items), 1))
+        n_total = int(np.sum([max(n, 0) for (m, n) in items]))
+        mean = np.nanmean(means, axis=0)
+        return mean, sem, n_total
 
-        # Optional FB (confound-regressed)
-        runs_cr_fb = [r for r in runs if r.confounds_applied and r.fb_psc_cr is not None and r.fb_z_cr is not None]
-        fb_psc_P_cr = fb_psc_G_cr = fb_z_P_cr = fb_z_G_cr = None
-        if len(runs_cr_fb) > 0:
-            fb_psc_P_cr = stack([r.fb_psc_cr["Positive"] for r in runs_cr_fb])  # type: ignore[index]
-            fb_psc_G_cr = stack([r.fb_psc_cr["Negative"] for r in runs_cr_fb])  # type: ignore[index]
-            fb_z_P_cr   = stack([r.fb_z_cr["Positive"] for r in runs_cr_fb])  # type: ignore[index]
-            fb_z_G_cr   = stack([r.fb_z_cr["Negative"] for r in runs_cr_fb])  # type: ignore[index]
+    for echo, families in pool.items():
+        # Subject-level timing markers (ANT plots).
+        cue_dur = float(np.nanmedian(np.array(marker_pool.get(echo, {}).get('cue', [0.75]))))
+        isi_med = float(np.nanmedian(np.array(marker_pool.get(echo, {}).get('isi', [])))) if marker_pool.get(echo, {}).get('isi') else float('nan')
+        fb_med  = float(np.nanmedian(np.array(marker_pool.get(echo, {}).get('fb', []))))  if marker_pool.get(echo, {}).get('fb')  else float('nan')
 
-        # Use the first run's time axis (all runs for an echo should match)
-        t_axis = runs[0].time_axis
+        vlines_ant: List[Tuple[float, str]] = [(-cue_dur, 'cue onset'), (0.0, 'cue offset / ANT onset')]
+        if not np.isnan(isi_med):
+            vlines_ant.append((isi_med, 'median target onset'))
+        if not np.isnan(fb_med):
+            vlines_ant.append((fb_med, 'median feedback onset'))
+        vlines_ant.append((6.0 - cue_dur, 'Wu: +6s from cue onset'))
+        vlines_ant.append((6.0, '+6s from ANT onset'))
 
-        # ---- Plots
-        if ant_psc_R_cr is not None and ant_psc_N_cr is not None:
-            plot_two_conditions_dualconf(
-                t_axis,
-                ant_psc_R, "Reward",
-                ant_psc_N, "Neutral",
-                ant_psc_R_cr, ant_psc_N_cr,
-                title=f"VS — subject {sub} [{echo}] (ANT, PSC)",
-                ylabel="% signal change (PSC)",
-                out_png=outdir / "anticipation_psc.png",
-            )
-            plot_two_conditions_dualconf(
-                t_axis,
-                ant_z_R, "Reward",
-                ant_z_N, "Neutral",
-                ant_z_R_cr, ant_z_N_cr,
-                title=f"VS — subject {sub} [{echo}] (ANT, Z)",
-                ylabel="Z-scored signal",
-                out_png=outdir / "anticipation_z.png",
-            )
-        else:
-            plot_two_conditions(
-                t_axis,
-                ant_psc_R, "Reward",
-                ant_psc_N, "Neutral",
-                title=f"VS — subject {sub} [{echo}] (ANT, PSC)",
-                ylabel="% signal change (PSC)",
-                out_png=outdir / "anticipation_psc.png",
-            )
-            plot_two_conditions(
-                t_axis,
-                ant_z_R, "Reward",
-                ant_z_N, "Neutral",
-                title=f"VS — subject {sub} [{echo}] (ANT, Z)",
-                ylabel="Z-scored signal",
-                out_png=outdir / "anticipation_z.png",
-            )
+        vlines_fb: List[Tuple[float, str]] = [(0.0, 'feedback onset'), (6.0, '+6s')]
 
-        if fb_psc_P_cr is not None and fb_psc_G_cr is not None:
-            plot_two_conditions_dualconf(
-                t_axis,
-                fb_psc_P, "Feedback +",
-                fb_psc_G, "Feedback −",
-                fb_psc_P_cr, fb_psc_G_cr,
-                title=f"VS — subject {sub} [{echo}] (FB, PSC)",
-                ylabel="% signal change (PSC)",
-                out_png=outdir / "feedback_psc.png",
-            )
-            plot_two_conditions_dualconf(
-                t_axis,
-                fb_z_P, "Feedback +",
-                fb_z_G, "Feedback −",
-                fb_z_P_cr, fb_z_G_cr,
-                title=f"VS — subject {sub} [{echo}] (FB, Z)",
-                ylabel="Z-scored signal",
-                out_png=outdir / "feedback_z.png",
-            )
-        else:
-            plot_two_conditions(
-                t_axis,
-                fb_psc_P, "Feedback +",
-                fb_psc_G, "Feedback −",
-                title=f"VS — subject {sub} [{echo}] (FB, PSC)",
-                ylabel="% signal change (PSC)",
-                out_png=outdir / "feedback_psc.png",
-            )
-            plot_two_conditions(
-                t_axis,
-                fb_z_P, "Feedback +",
-                fb_z_G, "Feedback −",
-                title=f"VS — subject {sub} [{echo}] (FB, Z)",
-                ylabel="Z-scored signal",
-                out_png=outdir / "feedback_z.png",
-            )
+        # ANTICIPATION — PSC
+        ant_psc_R = weighted_mean_and_sem(families["ANT_PSC"]["Reward"])
+        ant_psc_N = weighted_mean_and_sem(families["ANT_PSC"]["Neutral"])
+        # Optional confound-regressed overlays (computed across runs that had confounds).
+        ant_psc_Rc = weighted_mean_and_sem(families["ANT_PSC_CONF"]["Reward"])
+        ant_psc_Nc = weighted_mean_and_sem(families["ANT_PSC_CONF"]["Neutral"])
+        plot_two_conditions(
+            time_axis, ant_psc_R, "Reward", ant_psc_N, "Neutral",
+            title=f"VS — subject {subject} [{echo}] (ANT, PSC)",
+            ylabel="% signal change (PSC)",
+            out_png=subj_out / echo / "anticipation_psc.png",
+            vlines=vlines_ant,
+            overlayA=ant_psc_Rc,
+            overlayB=ant_psc_Nc,
+            overlay_label="conf-reg",
+        )
+        # ANTICIPATION — Z
+        ant_z_R = weighted_mean_and_sem(families["ANT_Z"]["Reward"])
+        ant_z_N = weighted_mean_and_sem(families["ANT_Z"]["Neutral"])
+        ant_z_Rc = weighted_mean_and_sem(families["ANT_Z_CONF"]["Reward"])
+        ant_z_Nc = weighted_mean_and_sem(families["ANT_Z_CONF"]["Neutral"])
+        plot_two_conditions(
+            time_axis, ant_z_R, "Reward", ant_z_N, "Neutral",
+            title=f"VS — subject {subject} [{echo}] (ANT, Z)",
+            ylabel="Z (SD units)",
+            out_png=subj_out / echo / "anticipation_z.png",
+        )
+        # FEEDBACK (valence) — PSC
+        fb_psc_P = weighted_mean_and_sem(families["FB_PSC"]["Positive"])
+        fb_psc_N = weighted_mean_and_sem(families["FB_PSC"]["Negative"])
+        fb_psc_Pc = weighted_mean_and_sem(families["FB_PSC_CONF"]["Positive"])
+        fb_psc_Nc = weighted_mean_and_sem(families["FB_PSC_CONF"]["Negative"])
+        plot_two_conditions(
+            time_axis, fb_psc_P, "Feedback +", fb_psc_N, "Feedback −",
+            title=f"VS — subject {subject} [{echo}] (FB, PSC)",
+            ylabel="% signal change (PSC)",
+            out_png=subj_out / echo / "feedback_psc.png",
+        )
+        # FEEDBACK (valence) — Z
+        fb_z_P = weighted_mean_and_sem(families["FB_Z"]["Positive"])
+        fb_z_N = weighted_mean_and_sem(families["FB_Z"]["Negative"])
+        fb_z_Pc = weighted_mean_and_sem(families["FB_Z_CONF"]["Positive"])
+        fb_z_Nc = weighted_mean_and_sem(families["FB_Z_CONF"]["Negative"])
+        plot_two_conditions(
+            time_axis, fb_z_P, "Feedback +", fb_z_N, "Feedback −",
+            title=f"VS — subject {subject} [{echo}] (FB, Z)",
+            ylabel="Z (SD units)",
+            out_png=subj_out / echo / "feedback_z.png",
+        )
+        summary = (
+            f"Subject {subject} — Echo: {echo}\n"
+            f"ANT  Reward n={ant_psc_R[2]}, Neutral n={ant_psc_N[2]}\n"
+            f"FB   Positive n={fb_psc_P[2]}, Negative n={fb_psc_N[2]}\n"
+        )
+        (subj_out / echo / "summary.txt").write_text(summary)
 
-        # ---- Subject-level summary TSV (raw-only; same columns as before)
-        summ = outdir / "summary_points.tsv"
-        with summ.open("w") as f:
-            f.write("sub\techo\tant_R_psc\tant_N_psc\tant_R_z\tant_N_z\tfb_pos_psc\tfb_neg_psc\tfb_pos_z\tfb_neg_z\n")
-            # mean of run-level point estimates (raw)
-            ant_R = float(np.nanmean([r.points_psc["ant_R"] for r in runs]))
-            ant_N = float(np.nanmean([r.points_psc["ant_N"] for r in runs]))
-            ant_Rz = float(np.nanmean([r.points_z["ant_R"] for r in runs]))
-            ant_Nz = float(np.nanmean([r.points_z["ant_N"] for r in runs]))
-            fb_P = float(np.nanmean([r.points_psc["fb_pos"] for r in runs]))
-            fb_G = float(np.nanmean([r.points_psc["fb_neg"] for r in runs]))
-            fb_Pz = float(np.nanmean([r.points_z["fb_pos"] for r in runs]))
-            fb_Gz = float(np.nanmean([r.points_z["fb_neg"] for r in runs]))
-            f.write(f"{sub}\t{echo}\t{ant_R:.6f}\t{ant_N:.6f}\t{ant_Rz:.6f}\t{ant_Nz:.6f}\t{fb_P:.6f}\t{fb_G:.6f}\t{fb_Pz:.6f}\t{fb_Gz:.6f}\n")
 
+# ---------------------------------- Driver ------------------------------------
+
+def _fmt(x: float | None) -> str:
+    if x is None or not np.isfinite(x):
+        return ""
+    return f"{x:.6f}"
 
 def main():
     if not FEAT_LIST_PATH.exists():
@@ -818,6 +894,8 @@ def main():
 
     # Process all FEATs
     results: List[RunResult] = []
+    tr_values: List[float] = []
+
     rows_for_tp: List[List[str]] = []
 
     for feat in feat_paths:
@@ -826,6 +904,7 @@ def main():
             continue
         save_run_plots(res)
         results.append(res)
+        tr_values.append(float(res.tr_used))
         rows_for_tp.append([
             res.sub,res.ses,res.run,res.echo,
             _fmt(res.tp_means_psc.get("ANT_REWARD")),
@@ -849,6 +928,15 @@ def main():
         ])
 
     # Aggregate by subject (split by echo)
+
+    # TR sanity check across all processed runs
+    if tr_values:
+        tr_unique = sorted(set([round(v, 6) for v in tr_values]))
+        if len(tr_unique) > 1:
+            print(f"[WARN] Multiple TR values observed across runs: {tr_unique}")
+        else:
+            print(f"[INFO] TR consistent across runs: {tr_unique[0]:.6f} s")
+
     subjects = sorted({r.sub for r in results})
     for sub in subjects:
         aggregate_subject(results, sub)
@@ -863,7 +951,7 @@ def main():
         "FB_POS_REWARD_Z","FB_NEG_REWARD_Z","FB_POS_NEUTRAL_Z","FB_NEG_NEUTRAL_Z",
         "N_ANT_REWARD","N_ANT_NEUTRAL","N_FB_POS_REWARD","N_FB_NEG_REWARD","N_FB_POS_NEUTRAL","N_FB_NEG_NEUTRAL"
     ]
-    tsv_path = SUMMARY_DIR / "summary_at_4thTR_mid-unsmoothed.tsv"
+    tsv_path = SUMMARY_DIR / "summary_at_4thTR_mid-unsmoothed-new.tsv"
 
     with open(tsv_path, 'w') as f:
         f.write("\t".join(header) + "\n")
