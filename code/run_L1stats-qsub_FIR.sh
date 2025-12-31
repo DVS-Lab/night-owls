@@ -15,5 +15,5 @@ while [ $counter -lt ${#myArray[@]} ]; do
 	let counter=$counter+$ntasks
 
 	# Loop over each task script and submit with the same subject chunk
-	qsub -v subjects="${subjects[@]}" L1stats.qsub
+	qsub -v subjects="${subjects[@]}" L1stats_FIR.qsub
 done
