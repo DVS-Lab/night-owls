@@ -4,16 +4,20 @@
 scriptdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 maindir="$(dirname "$scriptdir")"
 
-mapfile -t myArray < "${scriptdir}/sublist.txt" 
 
-# grab the first n elements
-ntasks=1
-counter=0
-		
-while [ $counter -lt ${#myArray[@]} ]; do
-	subjects=${myArray[@]:$counter:$ntasks}
-	let counter=$counter+$ntasks
+declare -A SKIP=(
+  ["101:04"]=1
+  ["101:05"]=1
+  ["101:12"]=1
+  ["103:12"]=1
+)
 
-	# Loop over each task script and submit with the same subject chunk
-	qsub -v subjects="${subjects[@]}" L1stats_FIR.qsub
+for sub in 101 103 104 105; do
+    for ses in {01..12}; do
+      if [[ -n "${SKIP[$sub:$ses]}" ]]; then
+        echo "Skipping sub $sub ses $ses"
+        continue
+      fi
+      qsub -v sub="$sub",ses="$ses" "${scriptdir}/L1stats_FIR.qsub"
+    done
 done
