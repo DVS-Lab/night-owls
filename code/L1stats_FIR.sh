@@ -93,18 +93,13 @@ if [[ "${TASK}" == "mid" ]]; then
     feat $OTEMPLATE
 
 else 
-    # empty EVs (specific to sharedreward)
+    # empty EVs (specific to sharedreward) don't work with FIR modeling in FEAT, so need separate template
     EV_MISSED_DEC=${EVDIR}/_miss_decision.txt
     if [ -e $EV_MISSED_DEC ]; then
         SHAPE_MISSED_DEC=3
-    else
-        SHAPE_MISSED_DEC=10
-    fi
-    EV_MISSED_OUTCOME=${EVDIR}/_miss_outcome.txt
-    if [ -e $EV_MISSED_OUTCOME ]; then
         SHAPE_MISSED_OUTCOME=3
     else
-        SHAPE_MISSED_OUTCOME=10
+        ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}_FIR_NoEmpty.fsf
     fi
 
     # create template and run analyses

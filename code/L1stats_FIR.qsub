@@ -26,14 +26,14 @@ mkdir -p $logdir
 rm -f $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
 touch $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
 
-scriptname=${scriptdir}/L1stats-loop_FIR.sh
+scriptname=${scriptdir}/L1stats_FIR.sh
 
 # should spin off 16 tasks per job/node (2x2x2x2)
 for echo in single-echo multi-echo; do
 	for confounds in cnfds-fmriprep cnfds-tedana; do
     	for task in mid sharedreward; do
 			for run in 1 2; do
-				echo "bash ${scriptname} ${sub} ${ses} ${run} ${task} ${echo} ${confound}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
+				echo "bash ${scriptname} ${sub} ${ses} ${run} ${task} ${echo} ${confounds}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
 			done
 		done
 	done
