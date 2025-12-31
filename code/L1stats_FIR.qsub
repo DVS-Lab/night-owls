@@ -2,7 +2,7 @@
 #PBS -l walltime=4:00:00
 #PBS -N L1statsFIR
 #PBS -q normal
-#PBS -l nodes=1:ppn=28
+#PBS -l nodes=7:ppn=28
 
 
 cd $PBS_O_WORKDIR
