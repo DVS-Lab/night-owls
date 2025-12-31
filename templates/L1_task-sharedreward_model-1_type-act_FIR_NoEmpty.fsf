@@ -30,13 +30,13 @@ set fmri(featwatcher_yn) 0
 set fmri(sscleanup_yn) 0
 
 # Output directory
-set fmri(outputdir) "/Users/tug87422/Downloads/sub-101/__tmpFIR-sharedreward-NoEmpty"
+set fmri(outputdir) "OUTPUT"
 
 # TR(s)
 set fmri(tr) 1.615000 
 
 # Total volumes
-set fmri(npts) 265
+set fmri(npts) NVOLUMES
 
 # Delete volumes
 set fmri(ndelete) 0
@@ -276,13 +276,13 @@ set fmri(fnirt_config) "T1_2_MNI152_2mm"
 set fmri(ncopeinputs) 0
 
 # 4D AVW data or FEAT directory (1)
-set feat_files(1) "/Users/tug87422/Downloads/L1_sub-101_ses-03_task-sharedreward_model-1_type-act_run-1_space-mni_multi-echo_cnfds-tedana_unsmoothed.feat/filtered_func_data"
+set feat_files(1) "DATA"
 
 # Add confound EVs text file
 set fmri(confoundevs) 1
 
 # Confound EVs text file for analysis 1
-set confoundev_files(1) "/Users/tug87422/Downloads/L1_sub-101_ses-03_task-sharedreward_model-1_type-act_run-1_space-mni_multi-echo_cnfds-tedana_unsmoothed.feat/confoundevs.txt"
+set confoundev_files(1) "CONFOUNDEVS"
 
 # EV 1 title
 set fmri(evtitle1) "dec_c"
@@ -317,7 +317,7 @@ set fmri(tempfilt_yn1) 0
 set fmri(deriv_yn1) 0
 
 # Custom EV file (EV 1)
-set fmri(custom1) "/Users/tug87422/Downloads/L1_sub-101_ses-03_task-sharedreward_model-1_type-act_run-1_space-mni_multi-echo_cnfds-tedana_unsmoothed.feat/custom_timing_files/ev1.txt"
+set fmri(custom1) "EVDIR_guess_computer.txt"
 
 # FIR basis functions number (EV 1)
 set fmri(basisfnum1) 10
@@ -388,7 +388,7 @@ set fmri(tempfilt_yn2) 0
 set fmri(deriv_yn2) 0
 
 # Custom EV file (EV 2)
-set fmri(custom2) "/Users/tug87422/Downloads/L1_sub-101_ses-03_task-sharedreward_model-1_type-act_run-1_space-mni_multi-echo_cnfds-tedana_unsmoothed.feat/custom_timing_files/ev2.txt"
+set fmri(custom2) "EVDIR_guess_face.txt"
 
 # FIR basis functions number (EV 2)
 set fmri(basisfnum2) 10
@@ -459,7 +459,7 @@ set fmri(tempfilt_yn3) 0
 set fmri(deriv_yn3) 0
 
 # Custom EV file (EV 3)
-set fmri(custom3) "/Users/tug87422/Downloads/L1_sub-101_ses-03_task-sharedreward_model-1_type-act_run-1_space-mni_multi-echo_cnfds-tedana_unsmoothed.feat/custom_timing_files/ev3.txt"
+set fmri(custom3) "EVDIR_outcome_computer_punish.txt"
 
 # FIR basis functions number (EV 3)
 set fmri(basisfnum3) 10
@@ -530,7 +530,7 @@ set fmri(tempfilt_yn4) 0
 set fmri(deriv_yn4) 0
 
 # Custom EV file (EV 4)
-set fmri(custom4) "/Users/tug87422/Downloads/L1_sub-101_ses-03_task-sharedreward_model-1_type-act_run-1_space-mni_multi-echo_cnfds-tedana_unsmoothed.feat/custom_timing_files/ev4.txt"
+set fmri(custom4) "EVDIR_outcome_computer_neutral.txt"
 
 # FIR basis functions number (EV 4)
 set fmri(basisfnum4) 10
@@ -601,7 +601,7 @@ set fmri(tempfilt_yn5) 0
 set fmri(deriv_yn5) 0
 
 # Custom EV file (EV 5)
-set fmri(custom5) "/Users/tug87422/Downloads/L1_sub-101_ses-03_task-sharedreward_model-1_type-act_run-1_space-mni_multi-echo_cnfds-tedana_unsmoothed.feat/custom_timing_files/ev5.txt"
+set fmri(custom5) "EVDIR_outcome_computer_reward.txt"
 
 # FIR basis functions number (EV 5)
 set fmri(basisfnum5) 10
@@ -672,7 +672,7 @@ set fmri(tempfilt_yn6) 0
 set fmri(deriv_yn6) 0
 
 # Custom EV file (EV 6)
-set fmri(custom6) "/Users/tug87422/Downloads/L1_sub-101_ses-03_task-sharedreward_model-1_type-act_run-1_space-mni_multi-echo_cnfds-tedana_unsmoothed.feat/custom_timing_files/ev6.txt"
+set fmri(custom6) "EVDIR_outcome_stranger_punish.txt"
 
 # FIR basis functions number (EV 6)
 set fmri(basisfnum6) 10
@@ -743,7 +743,7 @@ set fmri(tempfilt_yn7) 0
 set fmri(deriv_yn7) 0
 
 # Custom EV file (EV 7)
-set fmri(custom7) "/Users/tug87422/Downloads/L1_sub-101_ses-03_task-sharedreward_model-1_type-act_run-1_space-mni_multi-echo_cnfds-tedana_unsmoothed.feat/custom_timing_files/ev7.txt"
+set fmri(custom7) "EVDIR_outcome_stranger_neutral.txt"
 
 # FIR basis functions number (EV 7)
 set fmri(basisfnum7) 10
@@ -814,7 +814,7 @@ set fmri(tempfilt_yn8) 0
 set fmri(deriv_yn8) 0
 
 # Custom EV file (EV 8)
-set fmri(custom8) "/Users/tug87422/Downloads/L1_sub-101_ses-03_task-sharedreward_model-1_type-act_run-1_space-mni_multi-echo_cnfds-tedana_unsmoothed.feat/custom_timing_files/ev8.txt"
+set fmri(custom8) "EVDIR_outcome_stranger_reward.txt"
 
 # FIR basis functions number (EV 8)
 set fmri(basisfnum8) 10
