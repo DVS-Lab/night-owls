@@ -74,7 +74,7 @@ OTEMPLATE=${MAINOUTPUT}/L1_sub-${sub}_task-${TASK}_model-${model}_type-${TYPE}_s
 
 # check for output and skip existing
 if [ -e ${OUTPUT}.feat/cluster_mask_zstat1.nii.gz ]; then
-    continue
+    exit
 else
     echo "missing feat output: $OUTPUT " >> ${logdir}/sub-${sub}_ses-${ses}_re-runL1.log
     rm -rf ${OUTPUT}.feat
