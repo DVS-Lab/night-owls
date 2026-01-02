@@ -43,7 +43,11 @@ _RE_KV = {
     "confounds": re.compile(r"cnfds-([A-Za-z0-9]+)"),
 }
 
-_RE_CONTRAST = re.compile(r'/ContrastName(\d+)\s+"([^"]*)"\s*$')
+# FEAT design.con often looks like:
+#   /ContrastName1    ant_rew (1)
+# sometimes it can be quoted:
+#   /ContrastName1    "ant_rew (1)"
+_RE_CONTRAST = re.compile(r"^/ContrastName(\d+)\s+(.+?)\s*$")
 _RE_BIN = re.compile(r"^\s*(.+?)\s*\((\d+)\)\s*$")
 
 
@@ -66,7 +70,6 @@ def parse_feat_metadata(feat_dir: Path) -> dict:
 
 
 def find_design_con(feat_dir: Path) -> Path:
-    # FEAT typically uses <feat>/design.con
     candidates = [feat_dir / "design.con", feat_dir / "stats" / "design.con"]
     for c in candidates:
         if c.exists():
@@ -75,13 +78,25 @@ def find_design_con(feat_dir: Path) -> Path:
 
 
 def read_contrast_names(design_con: Path) -> dict[int, str]:
+    """
+    Parse FEAT design.con ContrastName lines into {cope_index: cope_name}.
+    Handles both quoted and unquoted names.
+    """
     names: dict[int, str] = {}
-    for line in design_con.read_text(errors="ignore").splitlines():
-        m = _RE_CONTRAST.match(line.strip())
-        if m:
-            idx = int(m.group(1))
-            nm = m.group(2).strip()
-            names[idx] = nm
+    for raw in design_con.read_text(errors="ignore").splitlines():
+        line = raw.strip()
+        if not line.startswith("/ContrastName"):
+            continue
+        m = _RE_CONTRAST.match(line)
+        if not m:
+            continue
+        idx = int(m.group(1))
+        nm = m.group(2).strip()
+        # remove surrounding quotes if present
+        if (len(nm) >= 2) and ((nm[0] == nm[-1]) and nm[0] in ("'", '"')):
+            nm = nm[1:-1].strip()
+        names[idx] = nm
+
     if not names:
         raise ValueError(f"Could not parse any /ContrastName entries in {design_con}")
     return names
@@ -113,7 +128,7 @@ def roi_mean_3d(img_path: Path, mask_shape: tuple[int, int, int], mask_idx: np.n
 
 
 def parse_condition_and_bin(cope_name: str) -> tuple[str, int | None]:
-    m = _RE_BIN.match(cope_name)
+    m = _RE_BIN.match(cope_name.strip())
     if not m:
         return cope_name.strip(), None
     return m.group(1).strip(), int(m.group(2))
@@ -148,6 +163,7 @@ def main() -> None:
     n_feats = 0
     n_rows = 0
     n_skipped_task = 0
+    n_warn_design = 0
 
     with OUT_CSV.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=header)
@@ -166,8 +182,13 @@ def main() -> None:
 
             max_c = TASK_MAX_COPES[task]
 
-            design_con = find_design_con(feat_dir)
-            cope_names = read_contrast_names(design_con)
+            try:
+                design_con = find_design_con(feat_dir)
+                cope_names = read_contrast_names(design_con)
+            except Exception as e:
+                n_warn_design += 1
+                print(f"WARN: {e} | skipping FEAT: {feat_dir}", flush=True)
+                continue
 
             stats_dir = feat_dir / "stats"
 
@@ -179,9 +200,6 @@ def main() -> None:
 
                 cname = cope_names[cope_idx]
                 cond, bin_ = parse_condition_and_bin(cname)
-                if bin_ is None:
-                    # For FIR plots we need bin; keep it but it won’t plot.
-                    pass
 
                 val = roi_mean_3d(cope_path, mask_shape, mask_idx)
 
