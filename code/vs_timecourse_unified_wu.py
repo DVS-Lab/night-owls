@@ -13,7 +13,7 @@ What this script does (baked-in; no CLI args):
   (mean +/- SEM across events).
 - Produces session- and subject-level QC summaries by averaging run-level curves.
 
-Outputs (under <project_root>/derivatives/extractions/timecourses-unified-wu_noargs_v1/):
+Outputs (under <project_root>/derivatives/extractions/timecourses-unified-wu_noargs_v2/):
 - tables/run_curves_long_wu.csv.gz  (long-format per-run curves)
 - run_qc/*.png                      (per-run curves)
 - session_qc/*.png                  (run-averaged session summaries)
@@ -372,22 +372,24 @@ def sr_ev_sets(ev_dir: Path) -> Dict[str, Dict[str, Tuple[np.ndarray, np.ndarray
     d_str  = load_ev_3col(ev_dir / "_guess_face.txt")
     out["sr_decision_partner_extra"] = {"Computer": d_comp, "Stranger": d_str}
 
-    # outcomes pooled across partner
+    # outcomes pooled
     reward_on, reward_d = [], []
     neutral_on, neutral_d = [], []
     punish_on, punish_d = [], []
+    onset_to_val: Dict[float, str] = {}
 
-    # partner-specific outcome EVs (if they exist)
-    for suf in ["_c", "_s"]:
-        r = load_ev_3col(ev_dir / f"_outcome_rew{suf}.txt")
-        n = load_ev_3col(ev_dir / f"_outcome_neu{suf}.txt")
-        p = load_ev_3col(ev_dir / f"_outcome_pun{suf}.txt")
-        if r[0].size:
-            reward_on.append(r[0]); reward_d.append(r[1])
-        if n[0].size:
-            neutral_on.append(n[0]); neutral_d.append(n[1])
-        if p[0].size:
-            punish_on.append(p[0]); punish_d.append(p[1])
+    for p in ev_dir.glob("_outcome_*.txt"):
+        ons, durs = load_ev_3col(p)
+        nm = p.name.lower()
+        if "reward" in nm:
+            reward_on.append(ons); reward_d.append(durs)
+            for o in ons: onset_to_val[float(o)] = "Reward"
+        elif "punish" in nm:
+            punish_on.append(ons); punish_d.append(durs)
+            for o in ons: onset_to_val[float(o)] = "Punish"
+        else:
+            neutral_on.append(ons); neutral_d.append(durs)
+            for o in ons: onset_to_val[float(o)] = "Neutral"
 
     def cat(xs: List[np.ndarray]) -> np.ndarray:
         return np.sort(np.concatenate(xs)) if any(x.size for x in xs) else np.array([])
@@ -401,41 +403,24 @@ def sr_ev_sets(ev_dir: Path) -> Dict[str, Dict[str, Tuple[np.ndarray, np.ndarray
         "Punish": (cat(punish_on), catd(punish_d)),
     }
 
-    # Decision split by future outcome (uses outcome onsets to label later)
-    # Only used as an "extra" QC view; requires outcome EVs to exist.
-    onset_to_val: Dict[float, str] = {}
-    for o in out["sr_outcome_primary"]["Reward"][0]:
-        onset_to_val[float(o)] = "Reward"
-    for o in out["sr_outcome_primary"]["Punish"][0]:
-        onset_to_val[float(o)] = "Punish"
-    for o in out["sr_outcome_primary"]["Neutral"][0]:
-        onset_to_val[float(o)] = "Neutral"
+    # decision split by subsequent outcome valence
+    d_all = cat([d_comp[0], d_str[0]])
+    all_outs = np.sort(np.array(list(onset_to_val.keys()))) if onset_to_val else np.array([])
+    bins = {"Reward": [], "Neutral": [], "Punish": []}
+    if d_all.size and all_outs.size:
+        for d in d_all:
+            j = np.searchsorted(all_outs, d, side="right")
+            if j < all_outs.size:
+                o = float(all_outs[j])
+                if (o - d) < SR_MAX_DEC_TO_OUT_GAP_S:
+                    bins[onset_to_val[o]].append(float(d))
 
-    # For each decision onset, find the closest subsequent outcome onset within a window
-    dec_all = np.sort(np.concatenate([d_comp[0], d_str[0]])) if (d_comp[0].size or d_str[0].size) else np.array([])
-    out_all = np.sort(np.concatenate([
-        out["sr_outcome_primary"]["Reward"][0],
-        out["sr_outcome_primary"]["Neutral"][0],
-        out["sr_outcome_primary"]["Punish"][0],
-    ])) if any(out["sr_outcome_primary"][k][0].size for k in ["Reward","Neutral","Punish"]) else np.array([])
-
-    by_val: Dict[str, List[float]] = {"Reward": [], "Neutral": [], "Punish": []}
-    by_dur: Dict[str, List[float]] = {"Reward": [], "Neutral": [], "Punish": []}
-
-    if dec_all.size and out_all.size:
-        for d in dec_all.astype(float):
-            j = np.searchsorted(out_all, d, side="right")
-            if j < out_all.size:
-                gap = float(out_all[j] - d)
-                if gap > 0 and gap <= SR_MAX_DEC_TO_OUT_GAP_S:
-                    val = onset_to_val.get(float(out_all[j]))
-                    if val in by_val:
-                        by_val[val].append(d)
-                        # duration of decision EV is stored in its own EV file; we approximate with 0 here
-                        by_dur[val].append(0.0)
-
+    # durations for decision split: use decision durations (same EVs), not outcome
+    d_durs = np.concatenate([d_comp[1], d_str[1]]) if (d_comp[1].size or d_str[1].size) else np.array([])
     out["sr_decision_by_future_outcome_extra"] = {
-        k: (np.array(v, float), np.array(by_dur[k], float)) for k, v in by_val.items()
+        "Reward": (np.array(sorted(bins["Reward"])), d_durs),
+        "Neutral": (np.array(sorted(bins["Neutral"])), d_durs),
+        "Punish": (np.array(sorted(bins["Punish"])), d_durs),
     }
 
     return out
@@ -600,7 +585,7 @@ def main() -> None:
     fsl_deriv = root / "derivatives" / "fsl"
     ev_base = fsl_deriv / "EVFiles"
 
-    out_base = root / "derivatives" / "extractions" / "timecourses-unified-wu_noargs_v1"
+    out_base = root / "derivatives" / "extractions" / "timecourses-unified-wu_noargs_v2"
     out_tables = out_base / "tables"
     out_runplots = out_base / "run_qc"
     out_session_qc = out_base / "session_qc"
@@ -652,6 +637,19 @@ def main() -> None:
                     c.feat_dir
                 ])
     print(f"[INFO] Wrote: {out_csv}")
+
+# ------------------ COUNT SUMMARY ------------------
+try:
+    from collections import Counter
+    c_task = Counter((c.task for c in all_curves))
+    c_pg = Counter(((c.task, c.plot_group) for c in all_curves))
+    print("[INFO] COUNT SUMMARY: curves by task:", dict(c_task))
+    print("[INFO] COUNT SUMMARY: curves by (task, plot_group):")
+    for (t, pg), n in sorted(c_pg.items()):
+        print(f"  - {t:12s} {pg:30s} {n}")
+except Exception:
+    pass
+
 
     # ----------------- Run-level QC plots -----------------
     # Group curves by run + plot_group
