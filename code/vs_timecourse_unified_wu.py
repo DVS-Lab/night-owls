@@ -638,19 +638,6 @@ def main() -> None:
                 ])
     print(f"[INFO] Wrote: {out_csv}")
 
-# ------------------ COUNT SUMMARY ------------------
-try:
-    from collections import Counter
-    c_task = Counter((c.task for c in all_curves))
-    c_pg = Counter(((c.task, c.plot_group) for c in all_curves))
-    print("[INFO] COUNT SUMMARY: curves by task:", dict(c_task))
-    print("[INFO] COUNT SUMMARY: curves by (task, plot_group):")
-    for (t, pg), n in sorted(c_pg.items()):
-        print(f"  - {t:12s} {pg:30s} {n}")
-except Exception:
-    pass
-
-
     # ----------------- Run-level QC plots -----------------
     # Group curves by run + plot_group
     run_bucket: Dict[Tuple[str,str,str,str,str,str,str], Dict[str, Tuple[np.ndarray,np.ndarray,int,float,float]]] = {}
