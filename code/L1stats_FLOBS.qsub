@@ -1,0 +1,42 @@
+#!/bin/bash
+#PBS -l walltime=2:00:00
+#PBS -N L1statsFIR
+#PBS -q normal
+#PBS -l nodes=1:ppn=28
+#PBS -m n
+#PBS -o /home/tug87422/scratch/smithlab-shared/night-owls/logs/pbs
+#PBS -e /home/tug87422/scratch/smithlab-shared/night-owls/logs/pbs
+
+
+cd $PBS_O_WORKDIR
+umask 0000
+
+# --- environment guards (fail early if submit-side -v was missing anything) ---
+: "${sub:?required}"
+: "${ses:?required}"
+
+# ensure paths are correct
+shareddir=/gpfs/scratch/tug87422/smithlab-shared
+projectdir=$shareddir/night-owls
+scriptdir=$projectdir/code
+bidsdir=$projectdir/bids
+logdir=$projectdir/logs
+mkdir -p $logdir
+
+rm -f $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
+touch $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
+
+scriptname=${scriptdir}/L1stats_FIR.sh
+
+# should spin off 16 tasks per job/node (2x2x2x2)
+for echo in single-echo multi-echo; do
+	for confounds in cnfds-fmriprep cnfds-tedana; do
+    	for task in mid sharedreward; do
+			for run in 1 2; do
+				echo "bash ${scriptname} ${sub} ${ses} ${run} ${task} ${echo} ${confounds}" >> $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
+			done
+		done
+	done
+done
+
+torque-launch -p "$logdir/chk_L1stats_${sub}_${PBS_JOBID}.txt" "$logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt"
