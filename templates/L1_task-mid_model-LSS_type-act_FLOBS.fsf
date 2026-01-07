@@ -30,13 +30,13 @@ set fmri(featwatcher_yn) 0
 set fmri(sscleanup_yn) 0
 
 # Output directory
-set fmri(outputdir) "/Users/tug87422/Downloads/__tmpL1-mid-FLOBS_SingleTrial"
+set fmri(outputdir) "OUTPUT"
 
 # TR(s)
 set fmri(tr) 1.615000 
 
 # Total volumes
-set fmri(npts) 283
+set fmri(npts) NVOLUMES
 
 # Delete volumes
 set fmri(ndelete) 0
@@ -276,13 +276,13 @@ set fmri(fnirt_config) "T1_2_MNI152_2mm"
 set fmri(ncopeinputs) 0
 
 # 4D AVW data or FEAT directory (1)
-set feat_files(1) "/Users/tug87422/Downloads/sub-101/ses-01/L1_sub-101_ses-01_task-mid_model-1_type-act_run-1_space-mni_multi-echo_cnfds-fmriprep+.feat/filtered_func_data"
+set feat_files(1) "DATA"
 
 # Add confound EVs text file
 set fmri(confoundevs) 1
 
 # Confound EVs text file for analysis 1
-set confoundev_files(1) "/Users/tug87422/Downloads/sub-101/ses-01/L1_sub-101_ses-01_task-mid_model-1_type-act_run-1_space-mni_multi-echo_cnfds-fmriprep+.feat/confoundevs.txt"
+set confoundev_files(1) "CONFOUNDEVS"
 
 # EV 1 title
 set fmri(evtitle1) "single"
@@ -317,13 +317,13 @@ set fmri(tempfilt_yn1) 0
 set fmri(deriv_yn1) 0
 
 # Custom EV file (EV 1)
-set fmri(custom1) "/Users/tug87422/Downloads/sub-101/ses-01/L1_sub-101_ses-01_task-mid_model-1_type-act_run-1_space-mni_multi-echo_cnfds-fmriprep+.feat/custom_timing_files/ev6.txt"
+set fmri(custom1) "SINGLETRIAL"
 
 # FIR basis functions number (EV 1)
 set fmri(basisfnum1) 3
 
 # Optimal/custom HRF convolution file (EV 1)
-set fmri(bfcustom1) "/Users/tug87422/fsl/data/feat5/default_flobs.flobs/hrfbasisfns.txt"
+set fmri(bfcustom1) "FSLDIR/data/feat5/default_flobs.flobs/hrfbasisfns.txt"
 
 # Orth basis functions wrt each other
 set fmri(basisorth1) 1
@@ -382,13 +382,13 @@ set fmri(tempfilt_yn2) 0
 set fmri(deriv_yn2) 0
 
 # Custom EV file (EV 2)
-set fmri(custom2) "/Users/tug87422/Downloads/sub-101/ses-01/L1_sub-101_ses-01_task-mid_model-1_type-act_run-1_space-mni_multi-echo_cnfds-fmriprep+.feat/custom_timing_files/ev2.txt"
+set fmri(custom2) "OTHERTRIAL"
 
 # FIR basis functions number (EV 2)
 set fmri(basisfnum2) 3
 
 # Optimal/custom HRF convolution file (EV 2)
-set fmri(bfcustom2) "/Users/tug87422/fsl/data/feat5/default_flobs.flobs/hrfbasisfns.txt"
+set fmri(bfcustom2) "FSLDIR/data/feat5/default_flobs.flobs/hrfbasisfns.txt"
 
 # Orth basis functions wrt each other
 set fmri(basisorth2) 1
@@ -447,13 +447,13 @@ set fmri(tempfilt_yn3) 0
 set fmri(deriv_yn3) 0
 
 # Custom EV file (EV 3)
-set fmri(custom3) "/Users/tug87422/Downloads/sub-101/ses-01/L1_sub-101_ses-01_task-mid_model-1_type-act_run-1_space-mni_multi-echo_cnfds-fmriprep+.feat/custom_timing_files/ev3.txt"
+set fmri(custom3) "EVDIR_feedback_negative_reward.txt"
 
 # FIR basis functions number (EV 3)
 set fmri(basisfnum3) 3
 
 # Optimal/custom HRF convolution file (EV 3)
-set fmri(bfcustom3) "/Users/tug87422/fsl/data/feat5/default_flobs.flobs/hrfbasisfns.txt"
+set fmri(bfcustom3) "FSLDIR/data/feat5/default_flobs.flobs/hrfbasisfns.txt"
 
 # Orth basis functions wrt each other
 set fmri(basisorth3) 1
@@ -512,13 +512,13 @@ set fmri(tempfilt_yn4) 0
 set fmri(deriv_yn4) 0
 
 # Custom EV file (EV 4)
-set fmri(custom4) "/Users/tug87422/Downloads/sub-101/ses-01/L1_sub-101_ses-01_task-mid_model-1_type-act_run-1_space-mni_multi-echo_cnfds-fmriprep+.feat/custom_timing_files/ev4.txt"
+set fmri(custom4) "EVDIR_feedback_positive_reward.txt"
 
 # FIR basis functions number (EV 4)
 set fmri(basisfnum4) 3
 
 # Optimal/custom HRF convolution file (EV 4)
-set fmri(bfcustom4) "/Users/tug87422/fsl/data/feat5/default_flobs.flobs/hrfbasisfns.txt"
+set fmri(bfcustom4) "FSLDIR/data/feat5/default_flobs.flobs/hrfbasisfns.txt"
 
 # Orth basis functions wrt each other
 set fmri(basisorth4) 1
@@ -577,13 +577,13 @@ set fmri(tempfilt_yn5) 0
 set fmri(deriv_yn5) 0
 
 # Custom EV file (EV 5)
-set fmri(custom5) "/Users/tug87422/Downloads/sub-101/ses-01/L1_sub-101_ses-01_task-mid_model-1_type-act_run-1_space-mni_multi-echo_cnfds-fmriprep+.feat/custom_timing_files/ev5.txt"
+set fmri(custom5) "EVDIR_feedback_negative_neutral.txt"
 
 # FIR basis functions number (EV 5)
 set fmri(basisfnum5) 3
 
 # Optimal/custom HRF convolution file (EV 5)
-set fmri(bfcustom5) "/Users/tug87422/fsl/data/feat5/default_flobs.flobs/hrfbasisfns.txt"
+set fmri(bfcustom5) "FSLDIR/data/feat5/default_flobs.flobs/hrfbasisfns.txt"
 
 # Orth basis functions wrt each other
 set fmri(basisorth5) 1
@@ -642,13 +642,13 @@ set fmri(tempfilt_yn6) 0
 set fmri(deriv_yn6) 0
 
 # Custom EV file (EV 6)
-set fmri(custom6) "/Users/tug87422/Downloads/sub-101/ses-01/L1_sub-101_ses-01_task-mid_model-1_type-act_run-1_space-mni_multi-echo_cnfds-fmriprep+.feat/custom_timing_files/ev6.txt"
+set fmri(custom6) "EVDIR_feedback_positive_neutral.txt"
 
 # FIR basis functions number (EV 6)
 set fmri(basisfnum6) 3
 
 # Optimal/custom HRF convolution file (EV 6)
-set fmri(bfcustom6) "/Users/tug87422/fsl/data/feat5/default_flobs.flobs/hrfbasisfns.txt"
+set fmri(bfcustom6) "FSLDIR/data/feat5/default_flobs.flobs/hrfbasisfns.txt"
 
 # Orth basis functions wrt each other
 set fmri(basisorth6) 1
