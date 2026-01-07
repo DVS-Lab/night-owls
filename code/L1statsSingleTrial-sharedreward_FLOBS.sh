@@ -57,9 +57,9 @@ OTHERTRIAL=${SSLEVDIR}run-${run}_OtherTrials${trial}.txt
 # empty EVs (specific to sharedreward) don't work with basis functions in FEAT, so need separate template
 EV_MISSED_DEC=${EVDIR}/_miss_decision.txt
 if [ -e $EV_MISSED_DEC ]; then
-	ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${MODEL}_type-${TYPE}_FLOBS_NoEmpty.fsf
-else
 	ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${MODEL}_type-${TYPE}_FLOBS.fsf
+else
+	ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${MODEL}_type-${TYPE}_FLOBS_NoMisses.fsf
 fi
 
 

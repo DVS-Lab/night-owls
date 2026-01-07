@@ -100,7 +100,7 @@ else
         SHAPE_MISSED_DEC=3 # doesn't do anything
         SHAPE_MISSED_OUTCOME=3 # doesn't do anything
     else
-        ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}_FLOBS_NoEmpty.fsf
+        ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}_FLOBS_NoMisses.fsf
     fi
 
     # create template and run analyses
