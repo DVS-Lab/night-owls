@@ -276,7 +276,7 @@ set fmri(fnirt_config) "T1_2_MNI152_2mm"
 set fmri(ncopeinputs) 0
 
 # 4D AVW data or FEAT directory (1)
-set feat_files(1) "/DATA"
+set feat_files(1) "DATA"
 
 # Add confound EVs text file
 set fmri(confoundevs) 1
