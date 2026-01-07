@@ -15,7 +15,7 @@ declare -A SKIP=(
 for sub in 101 103 104 105; do
   for acq in multiecho single; do
     for confounds in tedana base; do
-      for task in mid sharedreward; do
+      for task in sharedreward; do # removed mid since it's done
         for ses in {01..12}; do
           if [[ -n "${SKIP[$sub:$ses]}" ]]; then
             echo "Skipping sub $sub ses $ses"
