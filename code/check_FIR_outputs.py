@@ -26,7 +26,7 @@ from collections import defaultdict
 SCRIPT_DIR = Path(__file__).resolve().parent
 ROOT_DIR   = SCRIPT_DIR.parent
 FSL_DERIV  = ROOT_DIR / "derivatives" / "fsl"
-EV_BASE    = FSL_DERIV / "EVFiles-FIR"
+EV_BASE    = FSL_DERIV / "EVFiles"
 FMRIPREP   = ROOT_DIR / "derivatives" / "fmriprep"
 CNF_DIR    = FSL_DERIV / "confounds_tedana"
 
@@ -70,7 +70,7 @@ def _feat_dir(sub: str, ses: str, task: str, run: str, echo: str, cnfd: str) -> 
         FSL_DERIV
         / f"sub-{sub}"
         / f"ses-{ses}"
-        / f"L1_sub-{sub}_ses-{ses}_task-{task}_model-1_type-act_run-{run}_space-mni_{echo}_{cnfd}_unsmoothed_FIR.feat"
+        / f"L1_sub-{sub}_ses-{ses}_task-{task}_model-1_type-act_run-{run}_space-mni_{echo}_{cnfd}_unsmoothed_FLOBS.feat"
     )
 
 
