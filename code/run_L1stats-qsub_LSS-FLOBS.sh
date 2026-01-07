@@ -12,8 +12,7 @@ declare -A SKIP=(
   ["103:12"]=1
 )
 
-#for sub in 101 103 104 105; do
-for sub in 105; do
+for sub in 101 103 104 105; do
   for acq in multiecho single; do
     for confounds in tedana base; do
       for task in mid sharedreward; do
@@ -23,7 +22,7 @@ for sub in 105; do
             continue
           fi
           qsub -v task="$task",sub="$sub",confounds="$confounds",acq="$acq",ses="$ses" \
-               "${scriptdir}/L1stats_LSS.qsub"
+               "${scriptdir}/L1stats_LSS-FLOBS.qsub"
         done
       done
     done

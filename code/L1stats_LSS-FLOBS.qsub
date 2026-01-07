@@ -1,6 +1,6 @@
 #!/bin/bash
 #PBS -l walltime=0:60:00
-#PBS -N L1stats_LSS
+#PBS -N L1stats_LSS-FLOBS
 #PBS -q normal
 #PBS -l nodes=4:ppn=28
 #PBS -m n
@@ -61,7 +61,7 @@ for space in MNI152NLin6Asym; do
 			fi
 
 			if [ -e $DATA ]; then  # don't run unless the data exists
-				echo "bash ${scriptdir}/L1statsSingleTrial-${task}.sh ${sub} ${ses} ${run} ${trial} ${acq} ${space} ${confounds}" >> $logdir/cmd_L1stats_${PBS_JOBID}.txt						
+				echo "bash ${scriptdir}/L1statsSingleTrial-${task}_FLOBS.sh ${sub} ${ses} ${run} ${trial} ${acq} ${space} ${confounds}" >> $logdir/cmd_L1stats_${PBS_JOBID}.txt						
 			else
 				echo "missing: ${DATA}"
 			fi
