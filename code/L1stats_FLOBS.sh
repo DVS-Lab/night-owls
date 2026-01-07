@@ -59,7 +59,7 @@ if [ ! -e $CONFOUNDEVS ]; then
     exit # exiting to ensure nothing gets run without confounds
 fi
 
-EVDIR=${maindir}/derivatives/fsl/EVFiles-FIR/sub-${sub}/ses-${ses}/${TASK}/run-${run}/
+EVDIR=${maindir}/derivatives/fsl/EVFiles/sub-${sub}/ses-${ses}/${TASK}/run-${run}/
 if [ ! -e $EVDIR ]; then
     echo ${sub} ${acq} "EVDIR missing"
     echo "missing events files: $EVDIR " >> ${logdir}/sub-${sub}_ses-${ses}_re-runL1.log
@@ -68,9 +68,9 @@ fi
 
 # set output
 TYPE=act
-OUTPUT=${MAINOUTPUT}/L1_sub-${sub}_ses-${ses}_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_space-${space}_${echo}_${confound}_unsmoothed_FIR
-ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}_FIR.fsf
-OTEMPLATE=${MAINOUTPUT}/L1_sub-${sub}_task-${TASK}_model-${model}_type-${TYPE}_ses-${ses}_run-${run}_space-${space}_${echo}_${confound}_FIR.fsf
+OUTPUT=${MAINOUTPUT}/L1_sub-${sub}_ses-${ses}_task-${TASK}_model-${model}_type-${TYPE}_run-${run}_space-${space}_${echo}_${confound}_unsmoothed_FLOBS
+ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}_FLOBS.fsf
+OTEMPLATE=${MAINOUTPUT}/L1_sub-${sub}_task-${TASK}_model-${model}_type-${TYPE}_ses-${ses}_run-${run}_space-${space}_${echo}_${confound}_FLOBS.fsf
 
 # check for output and skip existing
 if [ -e ${OUTPUT}.feat/cluster_mask_zstat1.nii.gz ]; then
@@ -89,6 +89,7 @@ if [[ "${TASK}" == "mid" ]]; then
     -e 's@SMOOTH@'$sm'@g' \
     -e 's@CONFOUNDEVS@'$CONFOUNDEVS'@g' \
     -e 's@NVOLUMES@'$NVOLUMES'@g' \
+    -e 's@FSLDIR@'$FSLDIR'@g' \
     <$ITEMPLATE> $OTEMPLATE
     feat $OTEMPLATE
 
@@ -96,10 +97,10 @@ else
     # empty EVs (specific to sharedreward) don't work with FIR modeling in FEAT, so need separate template
     EV_MISSED_DEC=${EVDIR}/_miss_decision.txt
     if [ -e $EV_MISSED_DEC ]; then
-        SHAPE_MISSED_DEC=3
-        SHAPE_MISSED_OUTCOME=3
+        SHAPE_MISSED_DEC=3 # doesn't do anything
+        SHAPE_MISSED_OUTCOME=3 # doesn't do anything
     else
-        ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}_FIR_NoEmpty.fsf
+        ITEMPLATE=${maindir}/templates/L1_task-${TASK}_model-${model}_type-${TYPE}_FLOBS_NoEmpty.fsf
     fi
 
     # create template and run analyses
@@ -109,8 +110,7 @@ else
     -e 's@SMOOTH@'$sm'@g' \
     -e 's@CONFOUNDEVS@'$CONFOUNDEVS'@g' \
     -e 's@NVOLUMES@'$NVOLUMES'@g' \
-    -e 's@SHAPE_MISSED_DEC@'$SHAPE_MISSED_DEC'@g' \
-    -e 's@SHAPE_MISSED_OUTCOME@'$SHAPE_MISSED_OUTCOME'@g' \
+    -e 's@FSLDIR@'$FSLDIR'@g' \
     <$ITEMPLATE> $OTEMPLATE
     feat $OTEMPLATE
 fi

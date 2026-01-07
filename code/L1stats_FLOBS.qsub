@@ -26,7 +26,7 @@ mkdir -p $logdir
 rm -f $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
 touch $logdir/cmd_L1stats_${sub}_${PBS_JOBID}.txt
 
-scriptname=${scriptdir}/L1stats_FIR.sh
+scriptname=${scriptdir}/L1stats_FLOBS.sh
 
 # should spin off 16 tasks per job/node (2x2x2x2)
 for echo in single-echo multi-echo; do

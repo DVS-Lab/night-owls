@@ -18,6 +18,6 @@ for sub in 101 103 104 105; do
         echo "Skipping sub $sub ses $ses"
         continue
       fi
-      qsub -v sub="$sub",ses="$ses" "${scriptdir}/L1stats_FIR.qsub"
+      qsub -v sub="$sub",ses="$ses" "${scriptdir}/L1stats_FLOBS.qsub"
     done
 done
