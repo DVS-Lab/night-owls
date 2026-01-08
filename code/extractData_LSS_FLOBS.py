@@ -1,32 +1,41 @@
 #!/usr/bin/env python3
-"""Extract LSS-FLOBS trial-wise metrics from FEAT outputs.
+"""Extract trial-wise metrics from LSS-FLOBS FEAT outputs.
 
-What it outputs (per trial, per run/acq/conf):
-  - zstat mean within ROI masks
-  - beta for FLOBS basis 1 (PE1) mean within ROI masks, scaled by PPheights
-  - signed, PPheight-scaled RMS across FLOBS basis betas (PE1-PE3), computed voxelwise within ROI masks
+This script is meant to replace the older bash LSS extractor for the new
+per-trial FEAT directory structure.
+
+Per trial, it writes:
+  - ROI means for zstat{N}
+  - ROI means for FLOBS basis-1 beta (PE1), scaled by its /PPheights
+  - ROI means for signed RMS across FLOBS basis betas (PE1-PE3), after scaling
+    each PE by its own /PPheights
+  - Whole-brain correlations against the Brain Reward Signature (BRS) map for:
+      zstat{N}, scaled PE1, and scaled signed RMS
 
 Missing trials/outputs are written as 'n/a'.
 
-Directory layout expected (example):
+Expected directory layout (example):
   derivatives/fsl/sub-101/LSS-FLOBS/ses-01/mid/
-    L1_task-mid_model-LSS-type-act_sub-101_ses-01_run-2_sm-0_trial-56_acq-single_space-MNI152NLin6Asym_confounds-tedana_FLOBS.feat/
+    L1_task-mid_model-LSS-type-act_sub-101_ses-01_run-2_sm-0_trial-56_
+      acq-single_space-MNI152NLin6Asym_confounds-tedana_FLOBS.feat/
 
 Within each .feat:
   - stats/zstat{N}.nii.gz
   - stats/pe{idx}.nii.gz
   - design.mat (for /PPheights)
 
+Masks/maps (defaults match your previous bash script):
+  - masks/space-MNI152NLin6Asym_desc-NAcc_mask.nii.gz
+  - masks/BRS_Cortical_3pt1.nii.gz
+  - masks/space-MNI152NLin6Asym_desc-BrainRewardSignature_map.nii.gz
+
 Usage:
   python extractData_LSS_FLOBS.py
 
-Optional overrides:
-  --sm 0
-  --pe-indices 1 2 3
-  --zstat-index 1
-  --tasks mid sharedreward
-  --acqs multiecho single
-  --confs base tedana
+Helpful overrides:
+  python extractData_LSS_FLOBS.py --sm 5
+  python extractData_LSS_FLOBS.py --pe-indices 7 8 9
+  python extractData_LSS_FLOBS.py --zstat-index 2
 """
 
 from __future__ import annotations
@@ -44,7 +53,7 @@ try:
     import nibabel as nib
 except ImportError as e:
     raise SystemExit(
-        "ERROR: nibabel is required. Try `python -c 'import nibabel'` in your environment."
+        "ERROR: nibabel is required. In conda, try `conda install -c conda-forge nibabel`."
     ) from e
 
 
@@ -53,7 +62,10 @@ NA = "n/a"
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
-        description="Extract zstat, scaled PE1 beta, and scaled signed RMS (PE1-PE3) from LSS-FLOBS trial FEAT outputs."
+        description=(
+            "Extract zstat, scaled PE1 beta, scaled signed RMS (PE1-PE3), and BRS correlations "
+            "from LSS-FLOBS trial FEAT outputs."
+        )
     )
 
     p.add_argument(
@@ -149,42 +161,68 @@ def trials_for(task: str) -> int:
     return 0
 
 
-def load_mask(mask_path: Path) -> np.ndarray:
+def load_bool_mask(mask_path: Path) -> np.ndarray:
     img = nib.load(str(mask_path))
     data = img.get_fdata(dtype=np.float32)
     mask = data > 0.5
-    if mask.sum() == 0:
+    if int(mask.sum()) == 0:
         raise SystemExit(f"ERROR: Mask has zero voxels after thresholding: {mask_path}")
     return mask
 
 
-def roi_mean_from_img(img_path: Path, mask: np.ndarray) -> Optional[float]:
+def load_float_img(img_path: Path) -> Optional[np.ndarray]:
     if not img_path.is_file():
         return None
-    data = nib.load(str(img_path)).get_fdata(dtype=np.float32)
-    vals = data[mask]
+    return nib.load(str(img_path)).get_fdata(dtype=np.float32)
+
+
+def masked_mean(arr: np.ndarray, mask: np.ndarray) -> Optional[float]:
+    vals = arr[mask]
+    if vals.size == 0:
+        return None
+    # (No special NaN handling expected here, but be safe.)
+    vals = vals[np.isfinite(vals)]
     if vals.size == 0:
         return None
     return float(np.mean(vals))
 
 
-def load_roi_vectors(pe_paths: Sequence[Path], mask: np.ndarray) -> Optional[List[np.ndarray]]:
-    """Load each PE image and return the masked voxel vectors (same length)."""
-    arrays: List[np.ndarray] = []
-    for p in pe_paths:
-        if not p.is_file():
-            return None
-        data = nib.load(str(p)).get_fdata(dtype=np.float32)
-        arrays.append(data[mask])
-    if any(a.size == 0 for a in arrays):
+def pearson_corr(a: np.ndarray, b: np.ndarray, mask: np.ndarray) -> Optional[float]:
+    """Pearson correlation of two volumes under a boolean mask."""
+    va = a[mask]
+    vb = b[mask]
+    if va.size < 2 or vb.size < 2:
         return None
-    return arrays
+
+    good = np.isfinite(va) & np.isfinite(vb)
+    va = va[good]
+    vb = vb[good]
+    if va.size < 2:
+        return None
+
+    va = va.astype(np.float64, copy=False)
+    vb = vb.astype(np.float64, copy=False)
+
+    va = va - va.mean()
+    vb = vb - vb.mean()
+
+    denom = np.sqrt(np.sum(va * va) * np.sum(vb * vb))
+    if denom == 0:
+        return None
+
+    return float(np.sum(va * vb) / denom)
+
+
+def safe_fmt(x: Optional[float]) -> str:
+    if x is None or (isinstance(x, float) and (np.isnan(x) or np.isinf(x))):
+        return NA
+    return f"{x:.6g}"
 
 
 def parse_design_mat_ppheights(design_mat: Path) -> Optional[List[float]]:
     """Parse /PPheights from a FEAT design.mat.
 
-    Returns list of floats length NumWaves, or None if not parseable.
+    Returns a list of floats in *column order* (length NumWaves) or None.
     """
     if not design_mat.is_file():
         return None
@@ -265,6 +303,7 @@ def feat_dir_for(
     sm: str,
 ) -> Optional[Path]:
     """Return FEAT directory for this combo, trying both unpadded and 2-digit padded trial."""
+
     trial_candidates = [str(trial), f"{trial:02d}"]
 
     for tr in trial_candidates:
@@ -286,12 +325,6 @@ def feat_dir_for(
     return None
 
 
-def safe_fmt(x: Optional[float]) -> str:
-    if x is None or (isinstance(x, float) and (np.isnan(x) or np.isinf(x))):
-        return NA
-    return f"{x:.6g}"
-
-
 def main() -> None:
     args = parse_args()
 
@@ -303,16 +336,21 @@ def main() -> None:
     outdir = args.outdir if args.outdir is not None else root / "derivatives" / "extractions"
     outdir.mkdir(parents=True, exist_ok=True)
 
-    # Masks (same ones your bash script used)
+    # Paths (matching the bash script)
     nacc_path = maskdir / "space-MNI152NLin6Asym_desc-NAcc_mask.nii.gz"
     cort_path = maskdir / "BRS_Cortical_3pt1.nii.gz"
+    brs_map_path = maskdir / "space-MNI152NLin6Asym_desc-BrainRewardSignature_map.nii.gz"
 
-    for p in (nacc_path, cort_path):
+    for p in (nacc_path, cort_path, brs_map_path):
         if not p.is_file():
-            raise SystemExit(f"ERROR: Missing mask: {p}")
+            raise SystemExit(f"ERROR: Missing mask/map: {p}")
 
-    nacc_mask = load_mask(nacc_path)
-    cort_mask = load_mask(cort_path)
+    nacc_mask = load_bool_mask(nacc_path)
+    cort_mask = load_bool_mask(cort_path)
+
+    brs_map = load_float_img(brs_map_path)
+    if brs_map is None:
+        raise SystemExit(f"ERROR: Could not load BRS map: {brs_map_path}")
 
     sessions = discover_sessions(deriv_fsl)
     if not sessions:
@@ -321,9 +359,9 @@ def main() -> None:
             "Check that derivatives are mounted and the path is correct."
         )
 
-    outfile = outdir / args.outfile
-
     pe1_idx, pe2_idx, pe3_idx = args.pe_indices
+
+    outfile = outdir / args.outfile
 
     header = [
         "sub",
@@ -334,19 +372,22 @@ def main() -> None:
         "acq",
         "confounds",
         "trial",
-        # NAcc
+        # ROI means
         "NAcc_zstat_mean",
         "NAcc_beta_pe1_scaled_mean",
         "NAcc_signed_rms_scaled_mean",
-        # Cortex
         "BRS_Cort_zstat_mean",
         "BRS_Cort_beta_pe1_scaled_mean",
         "BRS_Cort_signed_rms_scaled_mean",
+        # BRS correlations
+        "BRS_corr_zstat",
+        "BRS_corr_pe1_scaled",
+        "BRS_corr_signed_rms_scaled",
         # PPheights used
         "PPheight_pe1",
         "PPheight_pe2",
         "PPheight_pe3",
-        # sanity paths
+        # sanity path
         "feat_dir",
     ]
 
@@ -380,51 +421,95 @@ def main() -> None:
                                     sm=args.sm,
                                 )
 
-                                # Defaults: n/a
+                                # Defaults
                                 nacc_z = nacc_b1 = nacc_rms = None
                                 cort_z = cort_b1 = cort_rms = None
+                                brs_corr_z = brs_corr_pe1 = brs_corr_rms = None
                                 pp1 = pp2 = pp3 = None
 
                                 if feat_dir is not None:
                                     stats_dir = feat_dir / "stats"
-                                    zstat_path = stats_dir / f"zstat{args.zstat_index}.nii.gz"
 
-                                    # design scaling
+                                    # --- zstat (contrast-level statistic) ---
+                                    zstat_path = stats_dir / f"zstat{args.zstat_index}.nii.gz"
+                                    zstat = load_float_img(zstat_path)
+
+                                    wbmask: Optional[np.ndarray] = None
+                                    if zstat is not None:
+                                        if zstat.shape != brs_map.shape:
+                                            raise SystemExit(
+                                                f"ERROR: Shape mismatch between zstat and BRS map.\n"
+                                                f"  zstat: {zstat_path} shape={zstat.shape}\n"
+                                                f"  brs:   {brs_map_path} shape={brs_map.shape}\n"
+                                                "This usually means the files are not in the same space/grid."
+                                            )
+
+                                        # Whole-brain mask like the bash script: abs(z) > 0
+                                        wbmask = (np.abs(zstat) > 0) & np.isfinite(zstat)
+
+                                        nacc_z = masked_mean(zstat, nacc_mask)
+                                        cort_z = masked_mean(zstat, cort_mask)
+
+                                        brs_corr_z = pearson_corr(zstat, brs_map, wbmask)
+
+                                    # --- design scaling (PPheights) ---
                                     ppheights = parse_design_mat_ppheights(feat_dir / "design.mat")
                                     if ppheights and max(pe1_idx, pe2_idx, pe3_idx) <= len(ppheights):
                                         pp1 = ppheights[pe1_idx - 1]
                                         pp2 = ppheights[pe2_idx - 1]
                                         pp3 = ppheights[pe3_idx - 1]
 
-                                    # zstat means
-                                    nacc_z = roi_mean_from_img(zstat_path, nacc_mask)
-                                    cort_z = roi_mean_from_img(zstat_path, cort_mask)
+                                    # --- FLOBS metrics (scaled PE1 and scaled signed RMS) ---
+                                    pe1_path = stats_dir / f"pe{pe1_idx}.nii.gz"
+                                    pe2_path = stats_dir / f"pe{pe2_idx}.nii.gz"
+                                    pe3_path = stats_dir / f"pe{pe3_idx}.nii.gz"
 
-                                    # FLOBS betas
-                                    pe_paths = [
-                                        stats_dir / f"pe{pe1_idx}.nii.gz",
-                                        stats_dir / f"pe{pe2_idx}.nii.gz",
-                                        stats_dir / f"pe{pe3_idx}.nii.gz",
-                                    ]
+                                    if (
+                                        pp1 is not None
+                                        and pp2 is not None
+                                        and pp3 is not None
+                                        and pp1 != 0
+                                        and pp2 != 0
+                                        and pp3 != 0
+                                        and pe1_path.is_file()
+                                        and pe2_path.is_file()
+                                        and pe3_path.is_file()
+                                    ):
+                                        pe1 = load_float_img(pe1_path)
+                                        pe2 = load_float_img(pe2_path)
+                                        pe3 = load_float_img(pe3_path)
 
-                                    if pp1 is not None and pp2 is not None and pp3 is not None and pp1 != 0 and pp2 != 0 and pp3 != 0:
-                                        # Load masked voxel vectors (voxelwise signed RMS, then mean)
-                                        nacc_vecs = load_roi_vectors(pe_paths, nacc_mask)
-                                        cort_vecs = load_roi_vectors(pe_paths, cort_mask)
+                                        if pe1 is None or pe2 is None or pe3 is None:
+                                            # Leave as NA
+                                            pass
+                                        else:
+                                            if pe1.shape != brs_map.shape:
+                                                raise SystemExit(
+                                                    f"ERROR: Shape mismatch between PE and BRS map.\n"
+                                                    f"  pe1: {pe1_path} shape={pe1.shape}\n"
+                                                    f"  brs: {brs_map_path} shape={brs_map.shape}"
+                                                )
 
-                                        if nacc_vecs is not None:
-                                            p1 = nacc_vecs[0] / pp1
-                                            p2 = nacc_vecs[1] / pp2
-                                            p3 = nacc_vecs[2] / pp3
-                                            nacc_b1 = float(np.mean(p1))
-                                            nacc_rms = float(np.mean(np.sign(p1) * np.sqrt(p1 * p1 + p2 * p2 + p3 * p3)))
+                                            pe1_s = pe1 / float(pp1)
+                                            pe2_s = pe2 / float(pp2)
+                                            pe3_s = pe3 / float(pp3)
 
-                                        if cort_vecs is not None:
-                                            p1 = cort_vecs[0] / pp1
-                                            p2 = cort_vecs[1] / pp2
-                                            p3 = cort_vecs[2] / pp3
-                                            cort_b1 = float(np.mean(p1))
-                                            cort_rms = float(np.mean(np.sign(p1) * np.sqrt(p1 * p1 + p2 * p2 + p3 * p3)))
+                                            signed_rms = np.sign(pe1_s) * np.sqrt(pe1_s * pe1_s + pe2_s * pe2_s + pe3_s * pe3_s)
+
+                                            nacc_b1 = masked_mean(pe1_s, nacc_mask)
+                                            cort_b1 = masked_mean(pe1_s, cort_mask)
+
+                                            nacc_rms = masked_mean(signed_rms, nacc_mask)
+                                            cort_rms = masked_mean(signed_rms, cort_mask)
+
+                                            # For correlations, prefer the same wbmask used for zstat
+                                            # (matches the older bash behavior). If zstat was missing,
+                                            # fall back to a PE-based mask.
+                                            if wbmask is None:
+                                                wbmask = (np.abs(pe1_s) > 0) & np.isfinite(pe1_s)
+
+                                            brs_corr_pe1 = pearson_corr(pe1_s, brs_map, wbmask)
+                                            brs_corr_rms = pearson_corr(signed_rms, brs_map, wbmask)
 
                                 w.writerow(
                                     [
@@ -442,6 +527,9 @@ def main() -> None:
                                         safe_fmt(cort_z),
                                         safe_fmt(cort_b1),
                                         safe_fmt(cort_rms),
+                                        safe_fmt(brs_corr_z),
+                                        safe_fmt(brs_corr_pe1),
+                                        safe_fmt(brs_corr_rms),
                                         safe_fmt(pp1),
                                         safe_fmt(pp2),
                                         safe_fmt(pp3),
