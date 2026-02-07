@@ -1,6 +1,6 @@
 # READ ME
 
-The read me in the parent directory describes the core processing code steps. The Mattoni2025 subdirectory contains R code for analysis in the main night owls manuscript. The read me below describes additional files generated for various supplemental and exploratory processing steps and analyses. It was largely generated through the use of AI and should be interpretted with substantial caution. 
+We largely refer readers to thr read me in the parent directory above, which describes the core processing code steps. The Mattoni2025 subdirectory also contains R code for analysis in the main night owls manuscript. All information below was mostly AI-generated and describes additional files generated for various supplemental and exploratory processing steps and analyses. It should be interpretted with substantial caution. 
 
 ```
 <project-root>/
