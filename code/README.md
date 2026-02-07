@@ -1,6 +1,6 @@
-# Night Owls project code (scripts overview)
+# READ ME
 
-This archive contains the `code/` directory for an fMRI project with multi-session, multi-run data and (for most sequences) multi-echo EPI. The scripts are designed to be run **from the `code/` directory**, with the expectation that the project root is the parent directory:
+The read me in the parent directory describes the core processing code steps. The Mattoni2025 subdirectory contains R code for analysis in the main night owls manuscript. The read me below describes additional files generated for various supplemental and exploratory processing steps and analyses. It was largely generated through the use of AI and should be interpretted with substantial caution. 
 
 ```
 <project-root>/
