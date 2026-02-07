@@ -35,7 +35,7 @@ A typical end-to-end workflow looks like this (not every step is always required
    - **Alternative “single job script” approach**:
      - `fmriprep-hpc-anat.sh` + `run_fmriprep-hpc-anat.sh`
 
-4. **(Optional) Distortion correction with WarpKit**
+4. ** Distortion correction with WarpKit**
    - `warpkit-hpc.sh` + `run_warpkit-hpc.sh`
 
 5. **Multi-echo denoising with tedana (multi-echo runs)**
@@ -118,7 +118,7 @@ FSL FEAT output directories embed analysis settings in the folder name, for exam
 - `fmriprep-hpc-anat.sh` / `run_fmriprep-hpc-anat.sh` — alternative “one script submits many subjects” workflow.
 - `fmriprepOrganize.sh` — organizes/rsyncs outputs from an intermediate `derivatives/anat-only/` staging layout into `derivatives/fmriprep/`.
 
-**WarpKit (optional)**
+**WarpKit**
 - `warpkit-hpc.sh` — PBS job script to run WarpKit-based distortion correction for (sub, ses) pairs.
 - `run_warpkit-hpc.sh` — reads `sublist-ses.txt` and submits a single WarpKit job carrying all pairs.
 
@@ -150,7 +150,7 @@ There are multiple first-level “families.” The naming is consistent:
 - **Standard GLM** (canonical HRF):
   - `L1stats-loop.sh` + `L1stats.qsub` + `run_L1stats-qsub.sh`
 
-- **FLOBS basis set**:
+- **FLOBS basis set (exploratory)**:
   - `L1stats_FLOBS.sh` + `L1stats_FLOBS.qsub` + `run_L1stats-qsub_FLOBS.sh`
 
 - **FIR model**:
@@ -207,17 +207,6 @@ Group-level:
 
 ---
 
-### 9) Paper-specific analysis scripts (Mattoni2025/)
-The `Mattoni2025/` folder contains analysis scripts used for a manuscript. They are **not general pipeline code** and include **hard-coded local paths** (Windows-style) that will need to be edited before reuse:
-- `Mattoni2025/analysis_MRIQC_AUC.R` — relates MRIQC metrics to AUC-style outcomes.
-- `Mattoni2025/analysis_similarity.R` — analyzes similarity metrics.
-- `Mattoni2025/analysis_similarity_ICC.R` — ICC analyses of similarity measures.
-- `Mattoni2025/analysis_timecourse_tSNR.R` — relationships involving tSNR and time courses.
-- `Mattoni2025/load_data.R` — shared loading/cleaning routines.
-- `Mattoni2025/plot_overlap_examples.R` — visualization of overlap examples.
-
----
-
 ## Notes for new users of this code base
 
 - **Hard-coded paths are common.** Search for `maindir=`, `projectdir=`, `bidsdir=`, and `/gpfs/` and update to your environment.
@@ -225,4 +214,3 @@ The `Mattoni2025/` folder contains analysis scripts used for a manuscript. They 
 - **Software dependencies:** scripts assume availability of **FSL**, **AFNI** (for `3dBlurToFWHM`, `3dFWHMx`), **ANTs** (for `antsApplyTransforms`), and container runtimes (**Singularity/Apptainer**). Python scripts typically require `numpy`, `pandas`, `nibabel`, `matplotlib`, and (for similarity) `pyrelimri`.
 - **Run location matters:** many scripts infer the project root as the parent of `code/`. Run them from `code/` unless the script explicitly states otherwise.
 
-If you want this README to double as a “how-to”, a good next step is to add one short section per pipeline stage with the *exact command you currently use* on your system (local vs HPC), since those details are the pieces that vary most across labs and clusters.
