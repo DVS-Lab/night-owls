@@ -2,10 +2,13 @@ library(tidyverse)
 library(psych)
 
 subj <- c('sub-101','sub-103','sub-104','sub-105')
-lss <- read.delim('C:/Users/mmatt/Desktop/Projects/NightOwls/night-owls/derivatives/extractions/extractions_LSS.tsv')
+lss <- read_delim('C:/Users/mmatt/Desktop/Projects/NightOwls/night-owls/derivatives/extractions/extractions_LSS_smoothed.tsv',
+                  delim = "\t", escape_double = FALSE, 
+                  trim_ws = TRUE)
 lss <- lss[do.call(order, lss[, 1:8]), ]
 
 lss$label<-NA
+lss$ses <- as.numeric(lss$ses)
 lss_mid <- lss[lss$task=='mid',]
 lss_sr <- lss[lss$task=='sharedreward',]
 
@@ -99,7 +102,7 @@ for (isub in subs) {
         # subset data
         subdat <- subset(lss_mid_rew, lss_mid_rew$sub == isub & lss_mid_rew$run==irun & lss_mid_rew$space == ispace &
                            lss_mid_rew$acq == iecho & lss_mid_rew$confounds == iconfound)  
-        subdat_vs <- subdat[,c('sub','ses','run','VS_mean')]
+        subdat_vs <- subdat[,c('sub','ses','run','NAcc_zstat_mean')]
         subdat_brs <- subdat[,c('sub','ses','run','BRS_corr')]
         
         colname <- paste0("sub-", isub,'_run-',irun, "_", ispace, "_",
@@ -119,8 +122,8 @@ for (isub in subs) {
           pivot_wider(
             id_cols = c(sub, ses, run),
             names_from = trial,
-            values_from = VS_mean,
-            names_prefix = "VS_mean")
+            values_from = NAcc_zstat_mean,
+            names_prefix = "NAcc_zstat_mean")
         widedat_brs <- subdat_brs %>%
           group_by(sub, ses, run) %>%
           mutate(trial = row_number()) %>%
@@ -132,7 +135,7 @@ for (isub in subs) {
             names_prefix = "BRS_corr")
         
         # keep only trial columns
-        trials_vs <- widedat_vs[ , grepl("VS_mean", names(widedat_vs)), drop = FALSE]
+        trials_vs <- widedat_vs[ , grepl("NAcc_zstat_mean", names(widedat_vs)), drop = FALSE]
         trials_brs <- widedat_brs[ , grepl("BRS_corr", names(widedat_brs)), drop = FALSE]
         
         
@@ -181,10 +184,6 @@ mid_rel_grp <- mid_rel_avg %>%
   summarise(VS=mean(VS, na.rm=TRUE),BRS=mean(BRS,na.rm=T)) %>%
   mutate(sub="Group") %>%
   ungroup()
-#Ignore single-echo tedana combo (nonsensical)
-mean(mid_rel_grp$VS)[-4]
-mean(mid_rel_grp$BRS)[-4]
-
 
 
 #Shared Reward
@@ -197,7 +196,7 @@ for (irun in runs)
         # subset data
         subdat <- subset(lss_sr_rew, lss_sr_rew$sub == isub & lss_sr_rew$run == irun & lss_sr_rew$space == ispace &
                            lss_sr_rew$acq == iecho & lss_sr_rew$confounds == iconfound)  
-        subdat_vs <- subdat[,c('sub','ses','run','VS_mean')]
+        subdat_vs <- subdat[,c('sub','ses','run','NAcc_zstat_mean')]
         subdat_brs <- subdat[,c('sub','ses','run','BRS_corr')]
         
         colname <- paste0("sub-", isub, "_run-",irun, "_", ispace, "_",
@@ -217,8 +216,8 @@ for (irun in runs)
           pivot_wider(
             id_cols = c(sub, ses, run),
             names_from = trial,
-            values_from = VS_mean,
-            names_prefix = "VS_mean")
+            values_from = NAcc_zstat_mean,
+            names_prefix = "NAcc_zstat_mean")
         widedat_brs <- subdat_brs %>%
           group_by(sub, ses, run) %>%
           mutate(trial = row_number()) %>%  
@@ -230,7 +229,7 @@ for (irun in runs)
             names_prefix = "BRS_corr")
         
         # keep only trial columns
-        trials_vs <- widedat_vs[ , grepl("VS_mean", names(widedat_vs)), drop = FALSE]
+        trials_vs <- widedat_vs[ , grepl("NAcc_zstat_mean", names(widedat_vs)), drop = FALSE]
         trials_brs <- widedat_brs[ , grepl("BRS_corr", names(widedat_brs)), drop = FALSE]
         
         
@@ -279,8 +278,7 @@ sr_rel_grp <- sr_rel_avg %>%
   summarise(VS=mean(VS, na.rm=TRUE),BRS=mean(BRS,na.rm=T)) %>%
   mutate(sub="Group") %>%
   ungroup()
-mean(sr_rel_grp$VS)[-4]
-mean(sr_rel_grp$BRS)[-4]
+
 
 
 
@@ -299,8 +297,8 @@ for (isub in subs) {
           # subset data
           subdat <- subset(lss_mid_rew, lss_mid_rew$sub == isub & lss_mid_rew$space == ispace &
                              lss_mid_rew$acq == iecho & lss_mid_rew$confounds == iconfound)  
-          subdat_vs <- subdat[,c('sub','ses','VS_mean','run')]
-          subdat_vs$VS_mean_resid <- resid(lm(VS_mean ~ run,subdat_vs))
+          subdat_vs <- subdat[,c('sub','ses','NAcc_zstat_mean','run')]
+          subdat_vs$NAcc_zstat_mean_resid <- resid(lm(NAcc_zstat_mean ~ run,subdat_vs))
           subdat_brs <- subdat[,c('sub','ses','BRS_corr','run')]
           subdat_brs$BRS_corr_resid <- resid(lm(BRS_corr ~ run,subdat_brs))
           
@@ -322,8 +320,8 @@ for (isub in subs) {
             pivot_wider(
               id_cols = c(sub, ses),
               names_from = trial,
-              values_from = VS_mean_resid,
-              names_prefix = "VS_mean")
+              values_from = NAcc_zstat_mean_resid,
+              names_prefix = "NAcc_zstat_mean")
           widedat_brs <- subdat_brs %>%
             group_by(sub, ses) %>%
             mutate(trial = row_number()) %>%   # create a trial index
@@ -335,7 +333,7 @@ for (isub in subs) {
               names_prefix = "BRS_corr")
           
           # keep only trial columns
-          trials_vs <- widedat_vs[ , grepl("VS_mean", names(widedat_vs)), drop = FALSE]
+          trials_vs <- widedat_vs[ , grepl("NAcc_zstat_mean", names(widedat_vs)), drop = FALSE]
           trials_brs <- widedat_brs[ , grepl("BRS_corr", names(widedat_brs)), drop = FALSE]
           
           
@@ -398,8 +396,8 @@ for (isub in subs) {
           # subset data
           subdat <- subset(lss_sr_rew, lss_sr_rew$sub == isub & lss_sr_rew$space == ispace &
                              lss_sr_rew$acq == iecho & lss_sr_rew$confounds == iconfound)  
-          subdat_vs <- subdat[,c('sub','ses','VS_mean','run')]
-          subdat_vs$VS_mean_resid <- resid(lm(VS_mean ~ run,subdat_vs))
+          subdat_vs <- subdat[,c('sub','ses','NAcc_zstat_mean','run')]
+          subdat_vs$NAcc_zstat_mean_resid <- resid(lm(NAcc_zstat_mean ~ run,subdat_vs))
           subdat_brs <- subdat[,c('sub','ses','BRS_corr','run')]
           subdat_brs$BRS_corr_resid <- resid(lm(BRS_corr ~ run,subdat_brs))
           
@@ -420,8 +418,8 @@ for (isub in subs) {
             pivot_wider(
               id_cols = c(sub, ses),
               names_from = trial,
-              values_from = VS_mean_resid,
-              names_prefix = "VS_mean")
+              values_from = NAcc_zstat_mean_resid,
+              names_prefix = "NAcc_zstat_mean")
           widedat_brs <- subdat_brs %>%
             group_by(sub, ses) %>%
             mutate(trial = row_number()) %>%   # create a trial index
@@ -433,7 +431,7 @@ for (isub in subs) {
               names_prefix = "BRS_corr")
           
           # keep only trial columns
-          trials_vs <- widedat_vs[ , grepl("VS_mean", names(widedat_vs)), drop = FALSE]
+          trials_vs <- widedat_vs[ , grepl("NAcc_zstat_mean", names(widedat_vs)), drop = FALSE]
           trials_brs <- widedat_brs[ , grepl("BRS_corr", names(widedat_brs)), drop = FALSE]
           
           
