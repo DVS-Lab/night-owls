@@ -8,7 +8,7 @@ library(partR2)
 
 
 subj <- c('sub-101','sub-103','sub-104','sub-105')
-l1stats <- read.delim('C:/Users/mmatt/Desktop/Projects/NightOwls/night-owls/derivatives/extractions/extractions_L1stats.tsv')
+l1stats <- read.delim('C:/Users/mmatt/Desktop/Projects/NightOwls/night-owls/derivatives/extractions/extractions_L1stats-revised_smoothed.tsv')
 l1_mid <- l1stats[l1stats$task=='mid' & l1stats$label=='anticipation_reward>neutral',]
 l1_sr <- l1stats[l1stats$task=='sharedreward' & l1stats$label=='S-C_rew>pun',]
 
@@ -51,6 +51,8 @@ l1_mid_intra <- l1_mid_intra[order(l1_mid_intra$sub, l1_mid_intra$ses, l1_mid_in
 l1_mid_intra$ses_f <- factor(l1_mid_intra$ses)
 l1_mid_intra$sub <- factor(l1_mid_intra$sub)
 l1_mid_intra$kss.r <- 9-l1_mid_intra$kss
+l1_mid_intra$run_f <- factor(l1_mid_intra$run)
+
 
 
 l1_sr_prec_behav <- merge(l1_sr_prec,behav_long_cb,by=c('sub','ses'))
@@ -62,6 +64,7 @@ l1_sr_intra <- l1_sr_intra[order(l1_sr_intra$sub, l1_sr_intra$ses, l1_sr_intra$r
 l1_sr_intra$ses_f <- factor(l1_sr_intra$ses)
 l1_sr_intra$sub <- factor(l1_sr_intra$sub)
 l1_sr_intra$kss.r <- 9-l1_sr_intra$kss
+l1_sr_intra$run_f <- factor(l1_sr_intra$run)
 
 
 

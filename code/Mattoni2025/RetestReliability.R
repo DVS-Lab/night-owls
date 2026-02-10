@@ -5,14 +5,13 @@ library(lme4)
 library(lmerTest)
 
 subj <- c('sub-101','sub-103','sub-104','sub-105')
-l1stats <- read.delim('C:/Users/mmatt/Desktop/Projects/NightOwls/night-owls/derivatives/extractions/extractions_L1stats.tsv')
+l1stats <- read.delim('C:/Users/mmatt/Desktop/Projects/NightOwls/night-owls/derivatives/extractions/extractions_L1stats-revised_smoothed.tsv')
 l1_mid <- l1stats[l1stats$task=='mid' & l1stats$label=='anticipation_reward>neutral',]
 l1_sr <- l1stats[l1stats$task=='sharedreward' & l1stats$label=='S-C_rew>pun',]
 
 subs <- substr(subj,5,8)
 sessions <- seq(1:12)
 runs <- seq(1:2)
-#spaces <- c("mni", "t1w")
 spaces <- c("mni")
 echoes <- c("single", "multiecho")
 confounds <- c("fmriprep", "tedana")
@@ -50,11 +49,11 @@ for (ispace in spaces) {
         }
         subdat <- merge(subdat,mriqc,all.x=T,by=c('sub','ses','run','task'))
         if (irun==1 | irun ==2){
-          mlm_vs <- lmer(VS_mean ~ ses + mean_fd + (1 | sub),subdat)
+          mlm_vs <- lmer(NAcc_zstat_mean ~ ses + mean_fd + (1 | sub),subdat)
           mlm_brs <- lmer(BRS_corr ~ ses + mean_fd + (1 | sub),subdat) 
           }
         else {
-          mlm_vs <- lmer(VS_mean ~ ses + run + mean_fd + (1 | sub),subdat)
+          mlm_vs <- lmer(NAcc_zstat_mean ~ ses + run + mean_fd + (1 | sub),subdat)
           mlm_brs <- lmer(BRS_corr ~ ses + run + mean_fd + (1 | sub),subdat)
         }
         
@@ -114,11 +113,11 @@ for (ispace in spaces) {
         }
         subdat <- merge(subdat,mriqc,all.x=T,by=c('sub','ses','run','task'))
         if (irun==1 | irun ==2){
-          mlm_vs <- lmer(VS_mean ~ ses + mean_fd + (1 | sub),subdat)
+          mlm_vs <- lmer(NAcc_zstat_mean ~ ses + mean_fd + (1 | sub),subdat)
           mlm_brs <- lmer(BRS_corr ~ ses + mean_fd +  (1 | sub),subdat) 
         }
         else {
-          mlm_vs <- lmer(VS_mean ~ ses + run + mean_fd + (1 | sub),subdat)
+          mlm_vs <- lmer(NAcc_zstat_mean ~ ses + run + mean_fd + (1 | sub),subdat)
           mlm_brs <- lmer(BRS_corr ~ ses + run + mean_fd + (1 | sub),subdat)
         }
         
