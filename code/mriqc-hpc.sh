@@ -4,6 +4,7 @@
 #PBS -N mriqc
 #PBS -q normal
 #PBS -l nodes=1:ppn=28
+#PBS -l mem=128gb
 
 # load modules and go to workdir
 module load fsl/6.0.2
