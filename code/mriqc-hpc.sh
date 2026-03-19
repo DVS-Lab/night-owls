@@ -69,7 +69,7 @@ for sub in ${subjects[@]}; do
 	--participant_label $sub \
 	--no-datalad-get \
 	--no-sub \
-	--modalities bold \
+	--modalities T1w \
         -w /workdir >> $logdir/cmd_mriqc_${PBS_JOBID}.txt
 done
 
