@@ -25,19 +25,18 @@ for j in j_files:
     try:
         sub  = re.search(r"(sub-[^_]+)", fname).group(1)
         ses  = re.search(r"(ses-[^_]+)", fname).group(1)
-        run  = re.search(r"(run-[^_]+)", fname).group(1)
+        # T1w scans don't have runs - remove this line
     except AttributeError:
         print(f"⚠️ Skipping unmatched file: {fname}")
         continue
 
-    # Image ID = through run
-    image_id = f"{sub}_{ses}_{run}"
+    # Image ID = sub_ses only
+    image_id = f"{sub}_{ses}"
 
     rows.append({
         "image": image_id,
         "sub": sub,
         "ses": ses,
-        "run": run,
         "cnr": data.get("cnr", None),
         "snr_total": data.get("snr_total", None),
         "efc": data.get("efc", None),
@@ -53,11 +52,11 @@ print(f"✅ Parsed {len(df)} JSON files into dataframe")
 if df.empty:
     raise RuntimeError("No files were parsed. Check regex patterns and filenames.")
 
-# Simple sort by sub → ses → run
-df = df.sort_values(by=["sub", "ses", "run"])
+# Simple sort by sub → ses
+df = df.sort_values(by=["sub", "ses"])
 
-# Reorder columns
-columns_order = ["sub", "ses", "run", "image", "cnr", "snr_total", "efc", "fber", "cjv", "qi_1"]
+# Reorder columns (removed 'run')
+columns_order = ["sub", "ses", "image", "cnr", "snr_total", "efc", "fber", "cjv", "qi_1"]
 df = df[columns_order]
 
 # Round numeric columns to 3 decimal places
@@ -69,9 +68,9 @@ print(f"✅ Summary CSV saved: {out_file}")
 
 # --- Create per-subject QC files ---
 for sub, group in df.groupby(["sub"]):
-    # Create the row label: sub_ses-run
+    # Create the row label: sub_ses (no run)
     qc_group = group.copy()
-    qc_group["row_label"] = qc_group["sub"] + "_" + qc_group["ses"] + "-" + qc_group["run"]
+    qc_group["row_label"] = qc_group["sub"] + "_" + qc_group["ses"]
     qc_df = qc_group[["row_label", "cnr", "snr_total", "efc", "fber", "cjv", "qi_1"]]
     
     qc_file = os.path.join(
