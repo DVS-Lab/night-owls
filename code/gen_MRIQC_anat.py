@@ -25,7 +25,6 @@ for j in j_files:
     try:
         sub  = re.search(r"(sub-[^_]+)", fname).group(1)
         ses  = re.search(r"(ses-[^_]+)", fname).group(1)
-        # T1w scans don't have runs - remove this line
     except AttributeError:
         print(f"⚠️ Skipping unmatched file: {fname}")
         continue
@@ -55,7 +54,7 @@ if df.empty:
 # Simple sort by sub → ses
 df = df.sort_values(by=["sub", "ses"])
 
-# Reorder columns (removed 'run')
+# Reorder columns
 columns_order = ["sub", "ses", "image", "cnr", "snr_total", "efc", "fber", "cjv", "qi_1"]
 df = df[columns_order]
 
@@ -67,8 +66,8 @@ df.to_csv(out_file, index=False)
 print(f"✅ Summary CSV saved: {out_file}")
 
 # --- Create per-subject QC files ---
-for sub, group in df.groupby(["sub"]):
-    # Create the row label: sub_ses (no run)
+for sub, group in df.groupby("sub"):  # Changed from ["sub"] to "sub"
+    # Create the row label: sub_ses
     qc_group = group.copy()
     qc_group["row_label"] = qc_group["sub"] + "_" + qc_group["ses"]
     qc_df = qc_group[["row_label", "cnr", "snr_total", "efc", "fber", "cjv", "qi_1"]]
