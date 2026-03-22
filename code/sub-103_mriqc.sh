@@ -4,8 +4,6 @@
 #PBS -q normal
 #PBS -l nodes=1:ppn=28
 #PBS -l mem=100gb
-#PBS -o /gpfs/scratch/tun47039/night-owls/logs/mriqc_103.o
-#PBS -e /gpfs/scratch/tun47039/night-owls/logs/mriqc_103.e
 
 module load fsl/6.0.2
 source $FSLDIR/etc/fslconf/fsl.sh
