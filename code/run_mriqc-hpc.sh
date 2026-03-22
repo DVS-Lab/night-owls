@@ -7,7 +7,7 @@ scriptdir=$maindir/code
 mapfile -t myArray < ${scriptdir}/sublist.txt
 
 # grab the first 10 elements
-ntasks=2
+ntasks=1
 counter=0
 
 while [ $counter -lt ${#myArray[@]} ]; do
